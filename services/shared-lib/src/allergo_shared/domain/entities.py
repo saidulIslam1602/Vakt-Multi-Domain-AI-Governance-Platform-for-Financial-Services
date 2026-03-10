@@ -70,6 +70,56 @@ class ExtractionResult(BaseModel):
     approval_required: bool = False
     """LLM-assessed flag: true when amount or terms suggest human approval needed"""
 
+    # ── Location / store fields ────────────────────────────────────────────────
+    store_location: str | None = None
+    """Store, branch, or office location the document relates to"""
+    department: str | None = None
+    """Business department or business unit"""
+
+    # ── Legal / compliance fields ──────────────────────────────────────────────
+    governing_law: str | None = None
+    """Jurisdiction or governing law clause (e.g. 'Norwegian law', 'English law')"""
+    termination_clause: str | None = None
+    """Summary of termination rights and notice periods"""
+    penalty_clause: str | None = None
+    """Penalty, liquidated damages, or exit fee description"""
+    liability_cap: str | None = None
+    """Limitation of liability amount or description"""
+    force_majeure: bool = False
+    """True if document contains a force majeure clause"""
+    indemnity_clause: bool = False
+    """True if document contains an indemnity / hold-harmless clause"""
+    dispute_resolution: str | None = None
+    """Dispute resolution mechanism (e.g. 'arbitration', 'mediation', 'court')"""
+    legal_obligations: list[str] = Field(default_factory=list)
+    """Key obligations with deadlines extracted from the document"""
+    legal_risk_flag: bool = False
+    """True if LLM detects unusual or high-risk legal terms"""
+
+    # ── Financial report / P&L fields ─────────────────────────────────────────
+    report_period: str | None = None
+    """Reporting period, e.g. 'Q3 2025', 'FY2025', '2025-01-01 to 2025-03-31'"""
+    report_type: str | None = None
+    """Type of report: 'balance_sheet', 'income_statement', 'cash_flow', 'budget', 'forecast', 'other'"""
+    total_revenue: str | None = None
+    """Total revenue / top-line figure with currency"""
+    total_expenses: str | None = None
+    """Total operating expenses with currency"""
+    ebitda: str | None = None
+    """EBITDA figure with currency if present"""
+    net_profit: str | None = None
+    """Net profit / net income with currency"""
+    report_line_items: list[dict] = Field(default_factory=list)
+    """Structured P&L or balance-sheet line items: [{account, amount, period}]"""
+
+    # ── General Ledger / journal entry fields ─────────────────────────────────
+    ledger_entries: list[dict] = Field(default_factory=list)
+    """Journal entries: [{date, account_code, account_name, debit, credit, description}]"""
+    posting_period: str | None = None
+    """Accounting period for journal entries, e.g. '2025-02'"""
+    journal_ref: str | None = None
+    """Journal entry reference number"""
+
 
 class Document(BaseModel):
     """Core document entity used for status tracking and metadata."""

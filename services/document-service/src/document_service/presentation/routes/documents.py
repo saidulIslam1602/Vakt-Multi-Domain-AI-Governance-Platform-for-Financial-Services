@@ -54,6 +54,35 @@ class ExtractionPatch(BaseModel):
     gl_account: str | None = None
     approval_required: bool | None = None
 
+    # ── Location / store fields ────────────────────────────────────────────────
+    store_location: str | None = None
+    department: str | None = None
+
+    # ── Legal / compliance fields ──────────────────────────────────────────────
+    governing_law: str | None = None
+    termination_clause: str | None = None
+    penalty_clause: str | None = None
+    liability_cap: str | None = None
+    force_majeure: bool | None = None
+    indemnity_clause: bool | None = None
+    dispute_resolution: str | None = None
+    legal_obligations: list[str] | None = None
+    legal_risk_flag: bool | None = None
+
+    # ── Financial report / P&L fields ─────────────────────────────────────────
+    report_period: str | None = None
+    report_type: str | None = None
+    total_revenue: str | None = None
+    total_expenses: str | None = None
+    ebitda: str | None = None
+    net_profit: str | None = None
+    report_line_items: list[dict] | None = None
+
+    # ── General Ledger / journal entry fields ─────────────────────────────────
+    ledger_entries: list[dict] | None = None
+    posting_period: str | None = None
+    journal_ref: str | None = None
+
 
 class DocumentDetailResponse(BaseModel):
     document_id: str

@@ -30,24 +30,46 @@ from chat_service.infrastructure.db_reader import FinancialDbReader
 
 logger = get_logger(__name__)
 
-MAX_TOOL_ROUNDS = 4
+MAX_TOOL_ROUNDS = 6
 
-_SYSTEM_PROMPT = """You are an intelligent CFO finance assistant for Allergo Nordic.
-Your job is to answer questions about the organisation's financial documents:
-invoices, contracts, purchase orders, expense claims, and financial reports.
+_SYSTEM_PROMPT = """You are an advanced CFO intelligence assistant for Allergo Nordic.
+Your purpose is to eliminate CFO overhead by answering any question about the organisation's
+documents with precision, grounding every answer in retrieved data.
 
 You have access to two tools:
-• search_document_content   — retrieves relevant text passages from documents (use for clauses, wording, summaries)
-• query_financial_database  — queries structured financial metadata (use for numbers, dates, lists, counts)
+• search_document_content   — retrieves exact text passages from documents (clauses, wording,
+                              definitions, legal language, report narratives)
+• query_financial_database  — queries structured metadata (numbers, dates, aggregations,
+                              lists, compliance flags, ledger entries)
+
+Document types you understand:
+  invoices, contracts, purchase orders, expense claims, financial reports (P&L, balance sheet,
+  cash flow, budget, forecast), general ledger exports, and any other financial document.
+
+Query types available in query_financial_database:
+  overdue_invoices, due_soon_invoices, expiring_contracts, pending_approvals,
+  count_by_category, list_by_vendor, get_document_summary, dashboard_snapshot,
+  aggregate_by_location, spend_by_period, spend_by_cost_center,
+  legal_obligations, ledger_by_account.
 
 Guidelines:
 - ALWAYS use at least one tool before answering. Never answer from memory alone.
-- For questions about amounts, due dates, vendor details, or counts → use query_financial_database.
-- For questions about contract clauses, obligations, definitions, or document content → use search_document_content.
-- For complex questions, use BOTH tools and synthesise the results.
+- For numbers, amounts, dates, counts, aggregations → use query_financial_database.
+- For clauses, wording, legal text, report narratives, document content → use search_document_content.
+- For strategic questions (shutdown, cost comparison, risk assessment) → use BOTH tools:
+    1. query_financial_database for the financial data (spend, contracts, location aggregates)
+    2. search_document_content for the legal and contractual context
+    Then synthesise a structured recommendation.
+- For legal questions: use legal_obligations query type AND search for specific clause wording.
+- For ledger/accounting: use ledger_by_account for journal entries, spend_by_period for trends.
+- For location/store analysis: use aggregate_by_location then search for relevant contracts.
+- Call tools multiple times if needed — up to 6 rounds. Do not stop early on complex questions.
+
+Response format:
 - Be concise, professional, and direct — the user is a busy CFO.
 - Present amounts with currency (e.g. NOK 125,000).
 - Format lists as bullet points with key details on each line.
+- For strategic decisions, use a short structured recommendation with: Facts → Risk → Recommendation.
 - If data is not available in any tool result, say so clearly. Never fabricate numbers.
 - After your answer, suggest 2–3 relevant follow-up questions the CFO might want to ask next.
   Format them as a JSON block at the very end:
@@ -66,6 +88,11 @@ _INTENT_MAP = {
     "get_document_summary": "document_lookup",
     "dashboard_snapshot": "analytics",
     "search_document_content": "content_search",
+    "aggregate_by_location": "location_analytics",
+    "spend_by_period": "spend_analytics",
+    "spend_by_cost_center": "spend_analytics",
+    "legal_obligations": "legal_compliance",
+    "ledger_by_account": "ledger_query",
 }
 
 
@@ -389,6 +416,51 @@ class RagUseCase:
         if q == "dashboard_snapshot":
             snap = await self._db.get_dashboard_snapshot(tenant_id)
             return {"query": q, "snapshot": snap}
+
+        if q == "aggregate_by_location":
+            rows = await self._db.aggregate_by_location(
+                tenant_id,
+                document_category=args.get("document_category"),
+                date_from=args.get("date_from"),
+                date_to=args.get("date_to"),
+            )
+            return {"query": q, "count": len(rows), "locations": rows}
+
+        if q == "spend_by_period":
+            rows = await self._db.spend_by_period(
+                tenant_id,
+                period_unit=args.get("period_unit", "month"),
+                document_category=args.get("document_category"),
+                date_from=args.get("date_from"),
+                date_to=args.get("date_to"),
+            )
+            return {"query": q, "period_unit": args.get("period_unit", "month"), "periods": rows}
+
+        if q == "spend_by_cost_center":
+            rows = await self._db.spend_by_cost_center(
+                tenant_id,
+                document_category=args.get("document_category"),
+                date_from=args.get("date_from"),
+                date_to=args.get("date_to"),
+            )
+            return {"query": q, "count": len(rows), "cost_centers": rows}
+
+        if q == "legal_obligations":
+            rows = await self._db.get_legal_obligations(
+                tenant_id,
+                include_risk_only=bool(args.get("include_risk_only", False)),
+                location=args.get("location"),
+            )
+            return {"query": q, "count": len(rows), "contracts": rows}
+
+        if q == "ledger_by_account":
+            rows = await self._db.ledger_by_account(
+                tenant_id,
+                account_code=args.get("account_code"),
+                posting_period=args.get("posting_period"),
+                location=args.get("location"),
+            )
+            return {"query": q, "count": len(rows), "ledger_documents": rows}
 
         return {"error": f"Unknown query_type: {q}"}
 
