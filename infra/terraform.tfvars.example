@@ -1,0 +1,23 @@
+# ── Terraform variable values — copy to terraform.tfvars (never commit!) ─
+#
+# Usage:
+#   cp terraform.tfvars.example terraform.tfvars
+#   # edit terraform.tfvars with your values
+#   terraform init && terraform plan
+
+# Deployment environment: dev | staging | prod
+environment = "dev"
+
+# Azure region for most resources
+location = "norwayeast"
+
+# Azure region for Azure OpenAI (GPT-4o available in Sweden Central)
+azure_openai_location = "swedencentral"
+
+# PostgreSQL admin password — use a strong secret in production
+# Tip: generate with: openssl rand -base64 32
+postgres_admin_password = "<your-strong-db-password>"
+
+# NextAuth.js session signing secret (min 32 chars)
+# Tip: generate with: openssl rand -base64 32
+nextauth_secret = "<your-nextauth-secret-min-32-chars>"

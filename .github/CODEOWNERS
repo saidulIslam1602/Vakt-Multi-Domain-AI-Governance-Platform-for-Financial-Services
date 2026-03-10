@@ -1,0 +1,6 @@
+# Global owner — required reviewer for every pull request
+*   @saidulIslam1602
+
+# Infrastructure changes require explicit review
+infra/   @saidulIslam1602
+.github/ @saidulIslam1602

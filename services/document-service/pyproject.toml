@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "allergo-document-service"
+version = "0.1.0"
+description = "Document metadata CRUD API — view, edit extracted metadata, track job status"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "azure-identity>=1.15",
+    "azure-storage-blob>=12.19",
+    "asyncpg>=0.29",
+    "httpx>=0.27",
+    "structlog>=24.1",
+    "PyJWT>=2.8",
+    "cryptography>=42.0",
+    "allergo-shared @ file://../shared-lib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.1",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "ruff>=0.4",
+    "mypy>=1.9",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/document_service"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

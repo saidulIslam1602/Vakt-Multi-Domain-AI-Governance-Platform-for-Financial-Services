@@ -1,0 +1,1 @@
+"""Search service infrastructure layer."""

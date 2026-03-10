@@ -1,0 +1,1 @@
+"""Allergo Nordic — Chat Service."""

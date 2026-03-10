@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sidebar-width: 248px;
+}
+
+@layer base {
+  body {
+    @apply text-sm text-slate-700 bg-slate-50;
+  }
+  h1 { @apply text-2xl font-bold tracking-tight text-slate-900; }
+  h2 { @apply text-lg font-semibold tracking-tight text-slate-800; }
+  h3 { @apply text-sm font-semibold text-slate-800; }
+}
+
+@layer components {
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2
+           text-sm font-medium text-white shadow-sm
+           hover:bg-brand-700 active:bg-brand-800
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed transition-all;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2
+           text-sm font-medium text-slate-700 shadow-sm
+           hover:bg-slate-50 hover:border-slate-300
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
+           disabled:opacity-50 transition-all;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-lg px-3 py-1.5
+           text-sm font-medium text-slate-600
+           hover:bg-slate-100 hover:text-slate-900
+           focus:outline-none transition-colors;
+  }
+
+  /* ── Cards ── */
+  .card {
+    @apply rounded-2xl border border-slate-100 bg-white shadow-sm;
+  }
+  .card-hover {
+    @apply card hover:shadow-md hover:border-slate-200 transition-all;
+  }
+
+  /* ── Badges ── */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* ── Section label (Nordic pattern: small uppercase above heading) ── */
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest text-brand-600 mb-1;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    @apply mb-8;
+  }
+
+  /* ── Input ── */
+  .input {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900
+           placeholder-slate-400 shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent
+           transition-shadow;
+  }
+}

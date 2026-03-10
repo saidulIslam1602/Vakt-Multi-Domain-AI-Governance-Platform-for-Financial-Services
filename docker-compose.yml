@@ -1,0 +1,203 @@
+name: allergo-nordic
+
+services:
+
+  # ── Infrastructure ─────────────────────────────────────────────────────────
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: allergo
+      POSTGRES_USER: allergo
+      POSTGRES_PASSWORD: allergo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./services/ingest-service/src/ingest_service/infrastructure/db/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U allergo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: allergo
+      RABBITMQ_DEFAULT_PASS: allergo
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0
+    ports:
+      - "10000:10000"
+    volumes:
+      - azurite_data:/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "10000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ── Python services ────────────────────────────────────────────────────────
+
+  ingest-service:
+    build:
+      context: .
+      dockerfile: services/ingest-service/Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      AUTH_ENABLED: "false"
+      DATABASE_URL: postgresql://allergo:allergo@postgres:5432/allergo
+      AZURE_BLOB_ACCOUNT_URL: http://azurite:10000/devstoreaccount1
+      AZURE_SERVICEBUS_NAMESPACE_FQDN: rabbitmq:5672
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      azurite:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  processing-service:
+    build:
+      context: .
+      dockerfile: services/processing-service/Dockerfile
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      DATABASE_URL: postgresql://allergo:allergo@postgres:5432/allergo
+      AZURE_BLOB_ACCOUNT_URL: http://azurite:10000/devstoreaccount1
+      AZURE_SERVICEBUS_NAMESPACE_FQDN: rabbitmq:5672
+      AZURE_SEARCH_ENDPOINT: http://elasticsearch:9200
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_VERSION: "2024-02-01"
+      AZURE_OPENAI_CHAT_DEPLOYMENT: gpt-4o
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  document-service:
+    build:
+      context: .
+      dockerfile: services/document-service/Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      AUTH_ENABLED: "false"
+      DATABASE_URL: postgresql://allergo:allergo@postgres:5432/allergo
+      AZURE_STORAGE_ACCOUNT_URL: http://azurite:10000/devstoreaccount1
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      azurite:
+        condition: service_healthy
+    restart: unless-stopped
+
+  search-service:
+    build:
+      context: .
+      dockerfile: services/search-service/Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      AUTH_ENABLED: "false"
+      AZURE_SEARCH_ENDPOINT: http://elasticsearch:9200
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_VERSION: "2024-02-01"
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  chat-service:
+    build:
+      context: .
+      dockerfile: services/chat-service/Dockerfile
+    ports:
+      - "8004:8000"
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      AUTH_ENABLED: "false"
+      DATABASE_URL: postgresql://allergo:allergo@postgres:5432/allergo
+      AZURE_SEARCH_ENDPOINT: http://elasticsearch:9200
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_VERSION: "2024-02-01"
+      AZURE_OPENAI_CHAT_DEPLOYMENT: gpt-4o
+      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Frontend ───────────────────────────────────────────────────────────────
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      INGEST_SERVICE_URL: http://ingest-service:8000
+      DOCUMENT_SERVICE_URL: http://document-service:8000
+      SEARCH_SERVICE_URL: http://search-service:8000
+      CHAT_SERVICE_URL: http://chat-service:8000
+    depends_on:
+      - ingest-service
+      - document-service
+      - search-service
+      - chat-service
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  azurite_data:
+  es_data:

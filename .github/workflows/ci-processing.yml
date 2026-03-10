@@ -1,0 +1,20 @@
+name: CI — processing-service
+
+on:
+  push:
+    paths:
+      - "services/processing-service/**"
+      - "services/shared-lib/**"
+      - ".github/workflows/ci-processing.yml"
+  pull_request:
+    paths:
+      - "services/processing-service/**"
+      - "services/shared-lib/**"
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci-python-service.yml
+    with:
+      service_name: processing-service
+      service_dir: services/processing-service
+    secrets: inherit
