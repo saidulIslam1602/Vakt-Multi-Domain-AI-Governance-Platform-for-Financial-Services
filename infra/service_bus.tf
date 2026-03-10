@@ -1,7 +1,7 @@
 # Azure Service Bus — document event pipeline
 
 resource "azurerm_servicebus_namespace" "main" {
-  name                = "${local.prefix}-sb"
+  name                = "${local.prefix}bus"
   location            = local.location
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "Standard"
@@ -9,9 +9,9 @@ resource "azurerm_servicebus_namespace" "main" {
 }
 
 resource "azurerm_servicebus_topic" "document_events" {
-  name                = "document-events"
-  namespace_id        = azurerm_servicebus_namespace.main.id
-  enable_partitioning = true
+  name                  = "document-events"
+  namespace_id          = azurerm_servicebus_namespace.main.id
+  partitioning_enabled  = true
   max_size_in_megabytes = 1024
   default_message_ttl   = "P7D"
 }

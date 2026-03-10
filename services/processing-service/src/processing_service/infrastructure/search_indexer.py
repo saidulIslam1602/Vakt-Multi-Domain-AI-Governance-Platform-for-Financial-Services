@@ -39,6 +39,8 @@ async def ensure_index(index_client: SearchIndexClient, index_name: str) -> None
         SimpleField(name="document_id", type=SearchFieldDataType.String, filterable=True),
         SimpleField(name="tenant_id", type=SearchFieldDataType.String, filterable=True),
         SimpleField(name="chunk_index", type=SearchFieldDataType.Int32),
+        SimpleField(name="filename", type=SearchFieldDataType.String, filterable=True),
+        SimpleField(name="page_number", type=SearchFieldDataType.Int32, filterable=True),
         SearchableField(name="text", type=SearchFieldDataType.String, analyzer_name="en.lucene"),
         SearchField(
             name="embedding",
@@ -104,6 +106,8 @@ async def index_chunks(
                     "document_id": chunk.document_id,
                     "tenant_id": chunk.tenant_id,
                     "chunk_index": chunk.chunk_index,
+                    "filename": chunk.metadata.get("filename", ""),
+                    "page_number": chunk.page_number,
                     "text": chunk.text,
                     "embedding": embedding,
                 }

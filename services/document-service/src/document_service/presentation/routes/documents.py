@@ -18,11 +18,41 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 
 class ExtractionPatch(BaseModel):
+    # ── Core fields (all document types) ─────────────────────────────────────
     dates: list[str] | None = None
     parties: list[str] | None = None
     amounts: list[str] | None = None
     key_terms: list[str] | None = None
     summary: str | None = None
+    confidence_score: float | None = None
+    raw: dict | None = None
+
+    # ── CFO / Finance-specific fields ─────────────────────────────────────────
+    document_category: str | None = None
+    invoice_number: str | None = None
+    invoice_date: str | None = None
+    due_date: str | None = None
+    total_amount: str | None = None
+    net_amount: str | None = None
+    vat_amount: str | None = None
+    vat_rate: str | None = None
+    currency: str | None = None
+    vendor_name: str | None = None
+    vendor_org_number: str | None = None
+    vendor_address: str | None = None
+    vendor_iban: str | None = None
+    buyer_name: str | None = None
+    buyer_org_number: str | None = None
+    payment_terms: str | None = None
+    bank_account: str | None = None
+    reference_number: str | None = None
+    contract_value: str | None = None
+    contract_start_date: str | None = None
+    contract_end_date: str | None = None
+    renewal_clause: str | None = None
+    cost_center: str | None = None
+    gl_account: str | None = None
+    approval_required: bool | None = None
 
 
 class DocumentDetailResponse(BaseModel):

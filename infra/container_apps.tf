@@ -17,9 +17,17 @@ resource "azurerm_container_registry" "main" {
 }
 
 locals {
-  acr_url = azurerm_container_registry.main.login_server
+  acr_url     = azurerm_container_registry.main.login_server
   db_url  = "postgresql://allergoadmin:${var.postgres_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/allergo?sslmode=require"
   sb_fqdn = "${azurerm_servicebus_namespace.main.name}.servicebus.windows.net"
+  img = {
+    ingest     = "${azurerm_container_registry.main.login_server}/ingest-service:latest"
+    document   = "${azurerm_container_registry.main.login_server}/document-service:latest"
+    processing = "${azurerm_container_registry.main.login_server}/processing-service:latest"
+    search     = "${azurerm_container_registry.main.login_server}/search-service:latest"
+    chat       = "${azurerm_container_registry.main.login_server}/chat-service:latest"
+    frontend   = "${azurerm_container_registry.main.login_server}/frontend:latest"
+  }
 }
 
 # --- Ingest Service ---
@@ -32,13 +40,18 @@ resource "azurerm_container_app" "ingest" {
 
   identity { type = "SystemAssigned" }
 
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
 
     container {
       name   = "ingest"
-      image  = "${local.acr_url}/ingest-service:latest"
+      image  = local.img.ingest
       cpu    = 0.5
       memory = "1Gi"
 
@@ -86,13 +99,18 @@ resource "azurerm_container_app" "processing" {
 
   identity { type = "SystemAssigned" }
 
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 10
 
     container {
       name   = "processing"
-      image  = "${local.acr_url}/processing-service:latest"
+      image  = local.img.processing
       cpu    = 1.0
       memory = "2Gi"
 
@@ -130,9 +148,6 @@ resource "azurerm_container_app" "processing" {
         namespace        = azurerm_servicebus_namespace.main.name
         topicName        = azurerm_servicebus_topic.document_events.name
         subscriptionName = azurerm_servicebus_subscription.processing_worker.name
-        # Use workload identity (pod identity) for KEDA authentication;
-        # the processing Container App's managed identity must have Azure Service Bus Data Receiver.
-        clientId = azurerm_container_app.processing.identity[0].principal_id
       }
     }
   }
@@ -148,15 +163,20 @@ resource "azurerm_container_app" "document" {
 
   identity { type = "SystemAssigned" }
 
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
 
     container {
       name   = "document"
-      image  = "${local.acr_url}/document-service:latest"
+      image  = local.img.document
       cpu    = 0.25
-      memory = "512Mi"
+      memory = "0.5Gi"
 
       env {
         name  = "DATABASE_URL"
@@ -189,13 +209,18 @@ resource "azurerm_container_app" "search" {
 
   identity { type = "SystemAssigned" }
 
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
 
     container {
       name   = "search"
-      image  = "${local.acr_url}/search-service:latest"
+      image  = local.img.search
       cpu    = 0.5
       memory = "1Gi"
 
@@ -234,13 +259,18 @@ resource "azurerm_container_app" "chat" {
 
   identity { type = "SystemAssigned" }
 
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
 
     container {
       name   = "chat"
-      image  = "${local.acr_url}/chat-service:latest"
+      image  = local.img.chat
       cpu    = 0.5
       memory = "1Gi"
 
@@ -277,13 +307,20 @@ resource "azurerm_container_app" "frontend" {
   revision_mode                = "Single"
   tags                         = local.tags
 
+  identity { type = "SystemAssigned" }
+
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 3
 
     container {
       name   = "frontend"
-      image  = "${local.acr_url}/frontend:latest"
+      image  = local.img.frontend
       cpu    = 0.5
       memory = "1Gi"
 

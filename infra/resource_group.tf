@@ -1,5 +1,5 @@
 resource "azurerm_resource_group" "main" {
-  name     = "${local.prefix}-rg"
+  name     = "allergo_business_case"
   location = local.location
   tags     = local.tags
 }

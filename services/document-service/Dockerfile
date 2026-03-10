@@ -13,8 +13,8 @@ RUN pip install hatchling
 COPY services/shared-lib /tmp/shared-lib
 COPY services/document-service/pyproject.toml services/document-service/README.md ./
 COPY services/document-service/src ./src
-RUN pip install --prefix=/install "." && \
-    pip install --prefix=/install /tmp/shared-lib
+RUN pip install --prefix=/install /tmp/shared-lib && \
+    PYTHONPATH=/install/lib/python3.11/site-packages pip install --prefix=/install "."
 
 FROM base AS runtime
 COPY --from=builder /install /usr/local

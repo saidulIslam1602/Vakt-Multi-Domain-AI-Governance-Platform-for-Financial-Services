@@ -14,6 +14,7 @@ def chunk_text(
     chunk_size: int = 512,
     overlap: int = 64,
     encoding_name: str = "cl100k_base",
+    filename: str = "",
 ) -> list[DocumentChunk]:
     """Split text into overlapping chunks of at most `chunk_size` tokens."""
     enc = tiktoken.get_encoding(encoding_name)
@@ -38,6 +39,7 @@ def chunk_text(
                 tenant_id=tenant_id,
                 chunk_index=chunk_index,
                 text=chunk_text_str,
+                metadata={"filename": filename} if filename else {},
             )
         )
         chunk_index += 1

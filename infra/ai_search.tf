@@ -7,6 +7,5 @@ resource "azurerm_search_service" "main" {
   sku                 = var.environment == "prod" ? "standard" : "basic"
   replica_count       = var.environment == "prod" ? 2 : 1
   partition_count     = 1
-  semantic_search_sku = "free"
   tags                = local.tags
 }

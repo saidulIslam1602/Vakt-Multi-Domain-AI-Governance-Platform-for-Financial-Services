@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { searchApi, type SearchHit } from "@/lib/api";
 import { Search, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
@@ -92,7 +93,9 @@ export default function SearchPage() {
                 {hit.highlights.length > 0 ? (
                   <p
                     className="text-sm text-slate-600 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: hit.highlights[0] }}
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(hit.highlights[0]),
+                    }}
                   />
                 ) : (
                   <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">

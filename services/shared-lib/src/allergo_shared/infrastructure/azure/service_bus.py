@@ -69,14 +69,14 @@ class AzureServiceBus(MessageQueuePort):
             async with receiver:
                 async for msg in receiver:
                     body = json.loads(str(msg))
-                    yield _AzureQueueMessage(
-                        body=body,
-                        message_id=str(msg.message_id),
-                        correlation_id=str(msg.correlation_id) if msg.correlation_id else None,
-                        delivery_count=msg.delivery_count or 1,
-                        receiver=receiver,
-                        raw=msg,
-                    )
+                      yield _AzureQueueMessage(
+                          body=body,
+                          message_id=str(msg.message_id),
+                          correlation_id=str(msg.correlation_id) if msg.correlation_id else None,
+                          delivery_count=msg.delivery_count if msg.delivery_count is not None else 0,
+                          receiver=receiver,
+                          raw=msg,
+                      )
         except Exception as exc:
             raise QueueError(f"Failed to subscribe to '{topic_or_queue}': {exc}") from exc
 

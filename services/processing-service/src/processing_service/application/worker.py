@@ -145,6 +145,7 @@ class ProcessingWorker:
             tenant_id,
             self._settings.chunk_size_tokens,
             self._settings.chunk_overlap_tokens,
+            filename=filename,
         )
         await self._indexer_fn(chunks)
         await self._db_updater.mark_ready(document_id, tenant_id)
