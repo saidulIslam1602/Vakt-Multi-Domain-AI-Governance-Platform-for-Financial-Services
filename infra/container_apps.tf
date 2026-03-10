@@ -17,7 +17,7 @@ resource "azurerm_container_registry" "main" {
 }
 
 locals {
-  acr_url     = azurerm_container_registry.main.login_server
+  acr_url = azurerm_container_registry.main.login_server
   db_url  = "postgresql://allergoadmin:${var.postgres_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/allergo?sslmode=require"
   sb_fqdn = "${azurerm_servicebus_namespace.main.name}.servicebus.windows.net"
   img = {

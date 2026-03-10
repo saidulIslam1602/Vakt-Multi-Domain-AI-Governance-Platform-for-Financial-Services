@@ -17,9 +17,9 @@ resource "azurerm_servicebus_topic" "document_events" {
 }
 
 resource "azurerm_servicebus_subscription" "processing_worker" {
-  name                = "processing-worker"
-  topic_id            = azurerm_servicebus_topic.document_events.id
-  max_delivery_count  = 5
-  lock_duration       = "PT5M"
+  name                                 = "processing-worker"
+  topic_id                             = azurerm_servicebus_topic.document_events.id
+  max_delivery_count                   = 5
+  lock_duration                        = "PT5M"
   dead_lettering_on_message_expiration = true
 }
