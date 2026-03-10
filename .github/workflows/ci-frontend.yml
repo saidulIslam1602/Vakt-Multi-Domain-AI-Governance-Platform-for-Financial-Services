@@ -68,7 +68,7 @@ jobs:
         working-directory: frontend
         run: |
           IMAGE=${{ vars.ACR_NAME }}.azurecr.io/frontend:${{ github.sha }}
-          docker build -t "$IMAGE" .
+          docker build --no-cache -t "$IMAGE" .
           docker push "$IMAGE"
           docker tag "$IMAGE" ${{ vars.ACR_NAME }}.azurecr.io/frontend:latest
           docker push ${{ vars.ACR_NAME }}.azurecr.io/frontend:latest
