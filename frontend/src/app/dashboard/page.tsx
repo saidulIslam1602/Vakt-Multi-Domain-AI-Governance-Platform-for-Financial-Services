@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { documentsApi } from "@/lib/api";
-import { format } from "date-fns";
-
 // ── Stat card ────────────────────────────────────────────────────────────────
 
 function StatCard({

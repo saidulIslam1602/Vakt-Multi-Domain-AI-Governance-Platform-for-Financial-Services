@@ -400,7 +400,7 @@ function ExtractionField({
   label: string;
   value: string;
   multiline?: boolean;
-  onChange: (v: string) => void;
+  onChange: (_v: string) => void;
 }) {
   return (
     <div>
@@ -432,7 +432,7 @@ function ExtractionListField({
 }: {
   label: string;
   values: string[];
-  onChange: (v: string[]) => void;
+  onChange: (_v: string[]) => void;
 }) {
   return (
     <div>

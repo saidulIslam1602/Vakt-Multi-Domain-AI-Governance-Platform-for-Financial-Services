@@ -148,7 +148,7 @@ function SuggestionChips({
   onSelect,
 }: {
   suggestions: string[];
-  onSelect: (q: string) => void;
+  onSelect: (_q: string) => void;
 }) {
   if (!suggestions.length) return null;
   return (
@@ -173,7 +173,7 @@ function ChatBubble({
   onSuggestionClick,
 }: {
   message: Message;
-  onSuggestionClick: (q: string) => void;
+  onSuggestionClick: (_q: string) => void;
 }) {
   const isUser = message.role === "user";
   return (
@@ -247,7 +247,7 @@ const CFO_QUICK_ASKS = [
   "Total VAT on invoices this quarter?",
 ];
 
-function QuickAskBar({ onSelect }: { onSelect: (q: string) => void }) {
+function QuickAskBar({ onSelect }: { onSelect: (_q: string) => void }) {
   return (
     <div className="flex items-start gap-2 px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white">
       <Sparkles className="h-3.5 w-3.5 text-brand-500 mt-0.5 shrink-0" />
