@@ -1,21 +1,21 @@
-name: CI — ingest-service
+name: CI — search-service
 
 on:
   push:
     paths:
-      - "services/ingest-service/**"
+      - "services/search-service/**"
       - "services/shared-lib/**"
-      - ".github/workflows/ci-ingest.yml"
+      - ".github/workflows/ci-search.yml"
       - ".github/workflows/ci-python-service.yml"
   pull_request:
     paths:
-      - "services/ingest-service/**"
+      - "services/search-service/**"
       - "services/shared-lib/**"
 
 jobs:
   ci:
     uses: ./.github/workflows/ci-python-service.yml
     with:
-      service_name: ingest-service
-      service_dir: services/ingest-service
+      service_name: search-service
+      service_dir: services/search-service
     secrets: inherit

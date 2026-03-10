@@ -6,6 +6,7 @@ on:
       - "services/processing-service/**"
       - "services/shared-lib/**"
       - ".github/workflows/ci-processing.yml"
+      - ".github/workflows/ci-python-service.yml"
   pull_request:
     paths:
       - "services/processing-service/**"
