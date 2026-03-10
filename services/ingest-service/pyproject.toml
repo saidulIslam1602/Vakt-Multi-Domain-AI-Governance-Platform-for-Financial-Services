@@ -23,7 +23,7 @@ dependencies = [
     "opentelemetry-instrumentation-fastapi>=0.45b0",
     "PyJWT>=2.8",
     "cryptography>=42.0",
-    "allergo-shared @ file://../shared-lib",
+    "allergo-shared>=0.1",
 ]
 
 [project.optional-dependencies]

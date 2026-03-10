@@ -24,7 +24,7 @@ dependencies = [
     "structlog>=24.1",
     "asyncpg>=0.29",
     "tenacity>=8.3",
-    "allergo-shared @ file://../shared-lib",
+    "allergo-shared>=0.1",
 ]
 
 [project.optional-dependencies]
