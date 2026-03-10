@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from azure.identity import get_bearer_token_provider
 from azure.identity.aio import DefaultAzureCredential

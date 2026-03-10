@@ -17,7 +17,8 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import VectorizedQuery

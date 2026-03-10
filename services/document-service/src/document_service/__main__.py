@@ -1,6 +1,7 @@
 """Entry point: run the document service with uvicorn."""
 
 import uvicorn
+
 from document_service.presentation.config import get_settings
 
 if __name__ == "__main__":
