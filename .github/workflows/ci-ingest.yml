@@ -2,15 +2,18 @@ name: CI — ingest-service
 
 on:
   push:
+    branches: [main]
     paths:
       - "services/ingest-service/**"
       - "services/shared-lib/**"
       - ".github/workflows/ci-ingest.yml"
       - ".github/workflows/ci-python-service.yml"
   pull_request:
+    branches: [main]
     paths:
       - "services/ingest-service/**"
       - "services/shared-lib/**"
+  workflow_dispatch:
 
 jobs:
   ci:
