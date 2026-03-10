@@ -12,7 +12,7 @@ from typing import Annotated
 
 import asyncpg
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, HttpUrl
 
 from allergo_shared.infrastructure.auth import AuthenticatedUser

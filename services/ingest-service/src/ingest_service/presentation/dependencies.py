@@ -7,7 +7,7 @@ from typing import Annotated
 import asyncpg
 from fastapi import Depends, Request
 
-from allergo_shared.infrastructure.auth import AuthenticatedUser, make_auth_dependency, make_noop_auth_dependency
+from allergo_shared.infrastructure.auth import make_auth_dependency, make_noop_auth_dependency
 from allergo_shared.infrastructure.azure.blob import AzureBlobStorage
 from allergo_shared.infrastructure.azure.service_bus import AzureServiceBus
 
