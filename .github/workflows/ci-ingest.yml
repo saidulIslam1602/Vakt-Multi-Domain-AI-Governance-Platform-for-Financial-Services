@@ -18,6 +18,9 @@ on:
 jobs:
   ci:
     uses: ./.github/workflows/ci-python-service.yml
+    permissions:
+      id-token: write
+      contents: read
     with:
       service_name: ingest-service
       service_dir: services/ingest-service

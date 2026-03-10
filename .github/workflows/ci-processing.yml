@@ -18,6 +18,9 @@ on:
 jobs:
   ci:
     uses: ./.github/workflows/ci-python-service.yml
+    permissions:
+      id-token: write
+      contents: read
     with:
       service_name: processing-service
       service_dir: services/processing-service
