@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import asyncpg
+from azure.identity import DefaultAzureCredential as SyncDefaultAzureCredential
 from azure.identity import get_bearer_token_provider
 from azure.identity.aio import DefaultAzureCredential
 from azure.search.documents.aio import SearchClient
@@ -29,9 +30,10 @@ async def main() -> None:
     logger.info("processing_worker_initializing", version=cfg.service_version)
 
     credential = DefaultAzureCredential()
-    # get_bearer_token_provider returns a Callable[[], str] as required by AsyncAzureOpenAI.
+    # get_bearer_token_provider requires a sync credential; async DefaultAzureCredential
+    # is used below for the async SDK clients (SearchClient, blob, queue).
     token_provider = get_bearer_token_provider(
-        credential, "https://cognitiveservices.azure.com/.default"
+        SyncDefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
     )
 
     pool = await asyncpg.create_pool(cfg.database_url, min_size=2, max_size=10)

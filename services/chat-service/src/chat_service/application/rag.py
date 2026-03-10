@@ -209,7 +209,7 @@ class RagUseCase:
         tools_used: list[str] = []
 
         for _round in range(MAX_TOOL_ROUNDS):
-            response = await self._openai.chat.completions.create(
+            response = await self._openai.chat.completions.create(  # type: ignore[call-overload]
                 model=self._chat_deployment,
                 messages=messages,  # type: ignore[arg-type]
                 tools=TOOLS,  # type: ignore[arg-type]

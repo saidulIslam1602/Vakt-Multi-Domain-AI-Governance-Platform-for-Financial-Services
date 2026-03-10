@@ -51,7 +51,7 @@ def _parse_pdf(data: bytes) -> ParseResult:
             else:
                 # Fallback to OCR for image-only pages
                 pix = page.get_pixmap(dpi=200)
-                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
                 ocr_text = pytesseract.image_to_string(img).strip()
                 if ocr_text:
                     text_parts.append(ocr_text)
