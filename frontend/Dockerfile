@@ -2,14 +2,14 @@
 FROM node:20-alpine AS base
 
 WORKDIR /app
-ENV NODE_ENV=production
 
 FROM base AS deps
 COPY package.json package-lock.json* ./
-# Use npm ci when package-lock.json is committed; fall back to npm install otherwise.
+# Install ALL dependencies (including devDeps) so TypeScript is available at build time.
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 FROM base AS builder
+ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
