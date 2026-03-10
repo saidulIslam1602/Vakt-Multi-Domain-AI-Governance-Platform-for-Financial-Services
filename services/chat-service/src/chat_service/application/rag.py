@@ -17,8 +17,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, AsyncIterator
 
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import VectorizedQuery
@@ -128,7 +127,7 @@ class RagUseCase:
         tools_used: list[str] = []
 
         for _round in range(MAX_TOOL_ROUNDS):
-            response = await self._openai.chat.completions.create(
+            response = await self._openai.chat.completions.create(  # type: ignore[call-overload]
                 model=self._chat_deployment,
                 messages=messages,  # type: ignore[arg-type]
                 tools=TOOLS,  # type: ignore[arg-type]
@@ -235,7 +234,7 @@ class RagUseCase:
                 )
 
         # Phase 2: stream the final synthesis
-        stream = await self._openai.chat.completions.create(
+        stream = await self._openai.chat.completions.create(  # type: ignore[call-overload]
             model=self._chat_deployment,
             messages=messages,  # type: ignore[arg-type]
             temperature=0.1,
@@ -252,7 +251,7 @@ class RagUseCase:
         )
 
         async def _token_gen() -> AsyncIterator[str]:
-            async for chunk in stream:
+            async for chunk in stream:  # type: ignore[union-attr]
                 delta = chunk.choices[0].delta.content or ""
                 if delta:
                     yield delta

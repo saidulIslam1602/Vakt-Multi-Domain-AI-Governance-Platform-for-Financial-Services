@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 
 import asyncpg
+from azure.identity import DefaultAzureCredential as SyncDefaultAzureCredential
 from azure.identity import get_bearer_token_provider
 from azure.identity.aio import DefaultAzureCredential
 from azure.search.documents.aio import SearchClient
@@ -51,7 +52,7 @@ def create_app() -> FastAPI:
         pool = await asyncpg.create_pool(cfg.database_url, min_size=2, max_size=8)
         credential = DefaultAzureCredential()
         token_provider = get_bearer_token_provider(
-            credential, "https://cognitiveservices.azure.com/.default"
+            SyncDefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
         )
         search_client = SearchClient(
             endpoint=cfg.azure_search_endpoint,

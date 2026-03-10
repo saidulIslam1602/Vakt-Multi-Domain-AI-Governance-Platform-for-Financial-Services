@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 
+from azure.identity import DefaultAzureCredential as SyncDefaultAzureCredential
 from azure.identity import get_bearer_token_provider
 from azure.identity.aio import DefaultAzureCredential
 from azure.search.documents.aio import SearchClient
@@ -27,7 +28,7 @@ def create_app() -> FastAPI:
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
         credential = DefaultAzureCredential()
         token_provider = get_bearer_token_provider(
-            credential, "https://cognitiveservices.azure.com/.default"
+            SyncDefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
         )
         search_client = SearchClient(
             endpoint=cfg.azure_search_endpoint,
