@@ -89,8 +89,8 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
         docs_url="/docs" if cfg.environment != "production" else None,
     )
-    app.add_middleware(
-        CORSMiddleware,
+    app.add_middleware(  # type: ignore[call-arg]
+        CORSMiddleware,  # type: ignore[arg-type]
         allow_origins=cfg.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
