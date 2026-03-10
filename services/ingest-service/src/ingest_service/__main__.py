@@ -1,6 +1,7 @@
 """Entry point: run the ingest service with uvicorn."""
 
 import uvicorn
+
 from ingest_service.infrastructure.config import get_settings
 
 if __name__ == "__main__":

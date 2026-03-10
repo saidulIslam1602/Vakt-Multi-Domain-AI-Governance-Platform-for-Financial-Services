@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from datetime import datetime
 
 import asyncpg
@@ -10,7 +9,6 @@ import asyncpg
 from allergo_shared.domain.entities import Document, ExtractionResult
 from allergo_shared.domain.enums import DocumentStatus, DocumentType
 from allergo_shared.domain.value_objects import DocumentId, TenantId
-
 from ingest_service.domain.interfaces.document_repository import DocumentRepository
 
 _INSERT_SQL = """

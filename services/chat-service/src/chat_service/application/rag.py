@@ -22,7 +22,7 @@ from typing import Any, AsyncIterator
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import VectorizedQuery
 from openai import AsyncAzureOpenAI
-from openai.types.chat import ChatCompletionChunk, ChatCompletionMessageToolCall
+from openai.types.chat import ChatCompletionMessageToolCall
 
 from allergo_shared.infrastructure.logging import get_logger
 from chat_service.application.tools import TOOLS

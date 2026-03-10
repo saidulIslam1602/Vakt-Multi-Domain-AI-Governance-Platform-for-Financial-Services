@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,9 +26,6 @@ class Settings(BaseSettings):
     auth_issuer: str
     auth_enabled: bool = True
     cors_origins: list[str] = ["*"]
-
-
-from functools import lru_cache
 
 
 @lru_cache

@@ -14,7 +14,6 @@ from openai import AsyncAzureOpenAI
 from allergo_shared.infrastructure.azure.blob import AzureBlobStorage
 from allergo_shared.infrastructure.azure.service_bus import AzureServiceBus
 from allergo_shared.infrastructure.logging import configure_logging, get_logger
-
 from processing_service.application.worker import ProcessingWorker
 from processing_service.infrastructure.config import get_settings
 from processing_service.infrastructure.db_updater import DocumentStatusUpdater

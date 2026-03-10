@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import VectorizedQuery
