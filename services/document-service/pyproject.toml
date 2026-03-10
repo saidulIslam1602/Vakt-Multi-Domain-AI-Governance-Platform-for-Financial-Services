@@ -31,6 +31,9 @@ dev = [
     "mypy>=1.9",
 ]
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/document_service"]
 
