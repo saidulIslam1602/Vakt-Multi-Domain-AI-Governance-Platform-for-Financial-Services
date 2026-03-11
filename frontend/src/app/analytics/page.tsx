@@ -71,8 +71,8 @@ export default function AnalyticsPage() {
   const { spend_by_month, vendor_concentration, upcoming_expiries } = data;
 
   // Summary stats
-  const totalDocs = spend_by_month.reduce((s, p) => s + p.count, 0);
-  const totalAmount = spend_by_month.reduce((s, p) => s + p.total_amount, 0);
+  const totalDocs = spend_by_month.reduce((s, p) => s + p.document_count, 0);
+  const totalInvoices = spend_by_month.reduce((s, p) => s + p.total_invoices, 0);
   const expiresIn30 = upcoming_expiries.filter((e) => e.days_until_expiry <= 30).length;
 
   return (
@@ -87,13 +87,9 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <StatCard label="Total Documents (12 mo)" value={totalDocs.toLocaleString()} />
         <StatCard
-          label="Total Amount (12 mo)"
-          value={
-            totalAmount > 0
-              ? new Intl.NumberFormat("en-US", { style: "currency", currency: "NOK", maximumFractionDigits: 0 }).format(totalAmount)
-              : "N/A"
-          }
-          sub="from invoices with parsed amounts"
+          label="Total Invoices (12 mo)"
+          value={totalInvoices.toLocaleString()}
+          sub="documents categorised as invoices"
         />
         <StatCard
           label="Contracts Expiring ≤ 30 days"
@@ -115,7 +111,7 @@ export default function AnalyticsPage() {
             <BarChart data={spend_by_month} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis
-                dataKey="month"
+                dataKey="period"
                 tick={{ fontSize: 11, fill: "#94a3b8" }}
                 tickLine={false}
                 axisLine={false}
@@ -125,7 +121,7 @@ export default function AnalyticsPage() {
                 contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
                 cursor={{ fill: "#f8fafc" }}
               />
-              <Bar dataKey="count" name="Documents" fill="#2563eb" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="document_count" name="Documents" fill="#2563eb" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -142,15 +138,14 @@ export default function AnalyticsPage() {
               <PieChart>
                 <Pie
                   data={vendor_concentration}
-                  dataKey="count"
+                  dataKey="document_count"
                   nameKey="vendor_name"
                   cx="50%"
                   cy="50%"
                   outerRadius={90}
-                  label={({ name, payload }: { name?: string; payload?: { percentage?: number } }) => {
-                    const pct = payload?.percentage ?? 0;
-                    const label = (name ?? "").slice(0, 12);
-                    return `${label}… ${pct.toFixed(1)}%`;
+                  label={({ name, value }: { name?: string; value?: number }) => {
+                    const label = (name ?? "").slice(0, 14);
+                    return value ? `${label} (${value})` : label;
                   }}
                   labelLine={false}
                 >

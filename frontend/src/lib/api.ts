@@ -398,15 +398,15 @@ export interface AlertEventResponse {
 }
 
 export interface SpendDataPoint {
-  month: string;     // "2024-01"
-  count: number;
-  total_amount: number;
+  period: string;          // "2024-01"
+  document_count: number;
+  total_invoices: number;
 }
 
 export interface VendorConcentration {
   vendor_name: string;
-  count: number;
-  percentage: number;
+  document_count: number;
+  invoice_count: number;
 }
 
 export interface ExpiryItem {
