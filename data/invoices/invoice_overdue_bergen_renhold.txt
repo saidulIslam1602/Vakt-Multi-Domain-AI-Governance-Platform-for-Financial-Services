@@ -1,0 +1,52 @@
+PURRING / OVERDUE INVOICE NOTICE
+
+Vendor:
+  Bergen Renhold & Facility AS
+  Org.nr: 912 874 331
+  Strandkaien 12, 5013 Bergen, Norway
+  Bank: 3201 44 78901
+  post@bergenrenhold.no
+
+Buyer:
+  Allergo Nordic AS
+  Org.nr: 919 345 872
+  Drammensveien 114, 0277 Oslo
+
+─────────────────────────────────────────────────
+INVOICE NUMBER:   BRF-2025-1147
+INVOICE DATE:     2025-11-01
+ORIGINAL DUE DATE: 2025-12-01
+CURRENT STATUS:   OVERDUE — 100 DAYS PAST DUE
+─────────────────────────────────────────────────
+
+SERVICES RENDERED — NOVEMBER 2025:
+
+  Service                                    Qty     Unit Price        Amount
+  ────────────────────────────────────────────────────────────────────────────
+  Daglig renhold, kontorbygg Oslo             22     NOK  850.00   NOK 18 700.00
+  Vindusvask (kvartal)                         1   NOK 4 500.00   NOK  4 500.00
+  Sanitær forbruksmateriell                    1   NOK 1 200.00   NOK  1 200.00
+  ────────────────────────────────────────────────────────────────────────────
+  Net Amount                                                       NOK 24 400.00
+  VAT (25 %)                                                       NOK  6 100.00
+  ────────────────────────────────────────────────────────────────────────────
+  TOTAL OVERDUE                                                    NOK 30 500.00
+
+  + Late Payment Interest (forsinkelsesrente 8.5% p.a., 100 days):
+  Interest accrued:                                                NOK    711.64
+  ────────────────────────────────────────────────────────────────────────────
+  TOTAL NOW DUE (incl. interest):                                  NOK 31 211.64
+
+PAYMENT DETAILS:
+  Bank Account:    3201 44 78901
+  KID:             91288741100047
+  Currency:        NOK
+  Payment Terms:   IMMEDIATELY — account is overdue
+
+WARNING: Continued non-payment will result in referral to debt collection agency
+(inkassovarsel) in accordance with inkassoloven (Act No. 26 of 13 May 1988).
+
+Cost Center:     Facilities Management
+GL Account:      6610 – Renhold og vedlikehold
+
+Bergen Renhold & Facility AS

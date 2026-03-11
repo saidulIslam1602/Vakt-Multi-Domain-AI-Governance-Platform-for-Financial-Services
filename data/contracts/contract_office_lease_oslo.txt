@@ -1,0 +1,98 @@
+COMMERCIAL OFFICE LEASE AGREEMENT
+
+Parties:
+
+LANDLORD:
+  Oslo Næringseiendom AS
+  Org.nr: 887 432 210
+  Tjuvholmen allé 1-5, 0252 Oslo, Norway
+  contact@oslonæringseiendom.no
+
+TENANT:
+  Allergo Nordic AS
+  Org.nr: 919 345 872
+  Drammensveien 114, 0277 Oslo, Norway
+
+─────────────────────────────────────────────────────────────────────────────
+1. PREMISES
+
+Address:        Drammensveien 114, 5th Floor, 0277 Oslo
+Area:           620 m² gross leasable area
+Use:            Open-plan office, meeting rooms, and server room
+
+2. LEASE PERIOD
+
+Contract Start Date:   2021-06-01
+Contract End Date:     2026-06-30
+Notice Period:         6 months written notice before Contract End Date.
+
+The tenant must notify in writing by 2025-12-31 to avoid automatic 3-year
+renewal commencing 2026-07-01.
+
+STATUS: Renewal notification deadline (2025-12-31) has passed without
+written notice from Tenant. Landlord will treat this as binding renewal.
+Renewed lease period: 2026-07-01 to 2029-06-30.
+
+3. RENT AND COSTS
+
+Annual Base Rent:      NOK 1 860 000.00 (NOK 3 000/m² × 620 m²)
+Monthly Rent:            NOK 155 000.00
+Common Area Costs (est.): NOK 15 500.00/month
+Parking (8 spaces):       NOK 4 000.00/month
+Total Monthly Due:        NOK 174 500.00
+Currency: NOK
+
+Rent Indexation: CPI-adjusted annually each 1 January.
+2026 Rent (CPI +4.2%):  NOK 1 938 120.00/year
+
+4. DEPOSIT
+
+Security deposit of 3 months rent (NOK 523 500.00) held in escrow at
+Handelsbanken, account 9001 34 56123.
+
+5. TERMINATION AND PENALTY
+
+If Tenant terminates the lease before the end of the renewed term (2029-06-30)
+without 6 months notice, a penalty of 6 months full rent (NOK 930 000.00)
+shall be immediately due and payable.
+
+In the event of Tenant default on rent for more than 30 days, Landlord may
+terminate the lease with 14 days written notice.
+
+6. GOVERNING LAW
+
+This lease is governed by Norwegian law, specifically Husleieloven
+(Act of 26 March 1999 No. 17 on Tenancy). Disputes shall be resolved by
+Oslo tingrett.
+
+7. UNUSUAL CLAUSES — LEGAL RISK FLAGS
+
+7.1 UNILATERAL RENT REVIEW: Landlord reserves the right to increase rent by
+    up to 15% above CPI in any year if market comparables in the same building
+    increase by more than 10%. This clause is non-standard and one-sided.
+
+7.2 TENANT RESTORATION: Tenant must restore the premises to original condition
+    at lease end, at Tenant's full cost, including removal of all IT cabling,
+    raised floors, and partition walls. Estimated cost: NOK 350 000–600 000.
+    No cap on restoration costs is defined — LEGAL RISK.
+
+7.3 LANDLORD'S ACCESS: Landlord may access the premises with only 4 hours notice
+    for "routine inspections". Standard commercial leases require 24-48 hours.
+    This clause is considered non-standard.
+
+8. INDEMNIFICATION
+
+Tenant shall indemnify Landlord against all third-party claims arising from
+Tenant's use of the premises.
+
+9. FORCE MAJEURE
+
+Standard force majeure clause applies (natural disasters, government orders).
+
+Department:     Facilities & Real Estate
+Cost Center:    Office Operations – Oslo HQ
+GL Account:     6300 – Husleie og lokalkostnader
+
+Signed:
+Oslo Næringseiendom AS: ________________________  Date: 2021-05-15
+Allergo Nordic AS:      ________________________  Date: 2021-05-18

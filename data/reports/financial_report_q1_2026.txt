@@ -1,0 +1,106 @@
+ALLERGO NORDIC AS
+INCOME STATEMENT — Q1 2026 (January–March)
+Financial Report — Confidential
+
+Organization:  Allergo Nordic AS  |  Org.nr: 919 345 872
+Period:        Q1 2026 (01.01.2026 – 31.03.2026)
+Currency:      NOK (thousands)
+Prepared by:   Finance Operations Team
+Approved by:   CFO — Ingrid Halvorsen
+Report date:   2026-04-08
+Report type:   Income Statement (Resultatregnskap)
+
+═══════════════════════════════════════════════════════════════════════════
+OPERATING REVENUE
+
+  Account   Description                          Q1 2026      Q1 2025    Change %
+  ─────────────────────────────────────────────────────────────────────────────
+  3000      Product Revenue – Subscription SaaS  NOK 8 420    NOK 6 210   +35.6%
+  3100      Professional Services Revenue        NOK 2 180    NOK 1 740   +25.3%
+  3200      Maintenance & Support Contracts      NOK 1 050    NOK   910   +15.4%
+  3300      Other Operating Revenue              NOK   140    NOK    95   +47.4%
+  ─────────────────────────────────────────────────────────────────────────────
+  TOTAL REVENUE                                 NOK 11 790   NOK 8 955   +31.6%
+
+═══════════════════════════════════════════════════════════════════════════
+OPERATING EXPENSES (DRIFTSKOSTNADER)
+
+  Account   Description                          Q1 2026      Q1 2025    Change %
+  ─────────────────────────────────────────────────────────────────────────────
+  4000      Cost of Goods Sold – Hosting          NOK 1 240    NOK   910   +36.3%
+  4100      Third-party Software Licenses         NOK   390    NOK   310   +25.8%
+  5000      Salaries & Wages (Lønnskostnader)     NOK 4 650    NOK 3 980   +16.8%
+  5100      Social Security Contributions (AGA)   NOK   654    NOK   560   +16.8%
+  5200      Pension Contributions                 NOK   232    NOK   199   +16.6%
+  6000      Office Rent – Oslo HQ                 NOK   524    NOK   465   +12.7%
+  6300      IT Infrastructure & Cloud             NOK   810    NOK   560   +44.6%
+  6400      IT Software & Licenses                NOK   285    NOK   230   +23.9%
+  6600      Travel & Entertainment                NOK   142    NOK    88   +61.4%
+  6700      Marketing & Sales                     NOK   320    NOK   215   +48.8%
+  6800      Telecom & Connectivity                NOK    45    NOK    38   +18.4%
+  7000      Depreciation – Equipment              NOK   120    NOK   110   +9.1%
+  7100      Depreciation – Intangible Assets      NOK    85    NOK    70   +21.4%
+  7700      Other Operating Costs                 NOK   198    NOK   142   +39.4%
+  ─────────────────────────────────────────────────────────────────────────────
+  TOTAL OPERATING EXPENSES                       NOK 9 695   NOK 7 877   +23.1%
+
+═══════════════════════════════════════════════════════════════════════════
+PROFITABILITY SUMMARY
+
+  EBITDA (Earnings Before Interest, Tax, Depreciation & Amortisation):
+    EBITDA = Revenue – OpEx (excl. D&A)
+           = NOK 11 790 – NOK 9 490
+           = NOK 2 300   (EBITDA Margin: 19.5%)
+
+  EBIT (Operating Profit):
+    EBIT   = EBITDA – Depreciation & Amortisation (NOK 205)
+           = NOK 2 095   (EBIT Margin: 17.8%)
+
+  Financial Items:
+    Interest Income (bankinnskudd)                  NOK    28
+    Interest Expense (kassekreditt)                NOK   (42)
+    Net Financial Items                            NOK   (14)
+
+  NET PROFIT BEFORE TAX:                           NOK 2 081
+  Income Tax (Skattekostnad, 22%):                NOK  (458)
+  ─────────────────────────────────────────────────────────────────────────────
+  NET PROFIT (Årsresultat):                        NOK 1 623   (Net Margin: 13.8%)
+
+═══════════════════════════════════════════════════════════════════════════
+HEADCOUNT SUMMARY
+
+  Department                Full-Time Employees   Q1 Salary Cost
+  ─────────────────────────────────────────────────────────────────
+  Engineering & Product           18              NOK 1 890 000
+  Sales & Customer Success        10              NOK   980 000
+  Finance & Operations             6              NOK   540 000
+  Leadership & Admin               4              NOK   490 000
+  ─────────────────────────────────────────────────────────────────
+  TOTAL                           38              NOK 3 900 000
+
+═══════════════════════════════════════════════════════════════════════════
+MANAGEMENT COMMENTARY
+
+Q1 2026 demonstrates strong top-line momentum with 31.6% YoY revenue growth
+driven primarily by continued SaaS subscription expansion (+35.6%). The
+company onboarded 12 new enterprise customers in the quarter.
+
+Operating cost growth of 23.1% was intentional, reflecting accelerated
+investment in cloud infrastructure (+44.6%) and go-to-market (+48.8%) to
+support the strategic growth roadmap approved by the Board in December 2025.
+
+EBITDA margin of 19.5% is in line with FY2026 budget targets (20% for Q1).
+
+Key risks for Q2 2026:
+  1. Cloud infrastructure costs expected to increase NOK 150–200k in Q2
+     as new Azure region migration completes.
+  2. Renewal pipeline for Q2 represents NOK 4.2M ARR — retention team engaged.
+  3. Office lease renewal (Oslo HQ) effective 2026-07-01 adds NOK 78k
+     to quarterly rent cost from Q3 onwards.
+
+Reporting Period:     Q1 2026
+Report Type:          Income Statement
+Total Revenue:        NOK 11 790 000
+Total Expenses:       NOK 9 695 000
+EBITDA:               NOK 2 300 000
+Net Profit:           NOK 1 623 000

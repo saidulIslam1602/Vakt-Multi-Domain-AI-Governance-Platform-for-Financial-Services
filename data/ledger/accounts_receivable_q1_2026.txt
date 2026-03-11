@@ -1,0 +1,105 @@
+ALLERGO NORDIC AS
+ACCOUNTS RECEIVABLE LEDGER — Q1 2026
+Kundereskontro / Customer Subledger
+
+Organization:  Allergo Nordic AS  |  Org.nr: 919 345 872
+Period:        Q1 2026 (January–March)
+Ledger Type:   Accounts Receivable (Kundefordringer)
+Currency:      NOK
+Prepared by:   Finance Operations Team
+Report Date:   2026-03-11
+
+═══════════════════════════════════════════════════════════════════════════════
+CUSTOMER LEDGER DETAIL
+
+────────────────────────────────────────────────────────────────────────────────
+CUSTOMER: Equinor ASA  |  Org.nr: 923 609 016  |  Segment: Enterprise
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description                  Amount       Status
+2026-01-01  AN-2026-E001      Jan SaaS — 80 users          NOK 312 000  PAID 2026-01-22
+2026-02-01  AN-2026-E002      Feb SaaS — 80 users          NOK 312 000  PAID 2026-02-20
+2026-03-01  AN-2026-E003      Mar SaaS — 80 users          NOK 312 000  OPEN — due 2026-03-31
+                              ─────────────────────────────────────────────────
+                              Customer AR Outstanding:              NOK 312 000
+                              Annual Contract Value:              NOK 3 744 000
+
+────────────────────────────────────────────────────────────────────────────────
+CUSTOMER: Gjensidige Forsikring ASA  |  Org.nr: 995 568 217  |  Segment: Enterprise
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description                  Amount       Status
+2026-01-01  AN-2026-G001      Jan SaaS — 45 users          NOK 175 500  PAID 2026-01-28
+2026-02-01  AN-2026-G002      Feb SaaS — 45 users          NOK 175 500  PAID 2026-02-27
+2026-03-01  AN-2026-G003      Mar SaaS — 45 users          NOK 175 500  OPEN — due 2026-03-31
+2026-01-20  AN-2026-G010      Onboarding & training Q1      NOK  85 000  PAID 2026-02-15
+                              ─────────────────────────────────────────────────
+                              Customer AR Outstanding:              NOK 175 500
+
+────────────────────────────────────────────────────────────────────────────────
+CUSTOMER: Aker Solutions AS  |  Org.nr: 986 529 651  |  Segment: Mid-Market
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description                  Amount       Status
+2026-01-01  AN-2026-A001      Jan SaaS — 30 users          NOK 117 000  PAID 2026-02-01
+2026-02-01  AN-2026-A002      Feb SaaS — 30 users          NOK 117 000  PAID 2026-03-02
+2026-03-01  AN-2026-A003      Mar SaaS — 30 users          NOK 117 000  OPEN — due 2026-03-31
+2026-02-15  AN-2026-A020      Data migration consulting     NOK 145 000  *** OVERDUE — due 2026-03-02 ***
+                              ─────────────────────────────────────────────────
+                              Customer AR Outstanding:              NOK 262 000
+                              OVERDUE AMOUNT:                       NOK 145 000
+
+────────────────────────────────────────────────────────────────────────────────
+CUSTOMER: Norsk Hydro ASA  |  Org.nr: 914 778 271  |  Segment: Enterprise
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description                  Amount       Status
+2026-02-01  AN-2026-H001      Feb SaaS — 60 users (new)   NOK 234 000  PAID 2026-03-01
+2026-03-01  AN-2026-H002      Mar SaaS — 60 users          NOK 234 000  OPEN — due 2026-03-31
+2026-02-20  AN-2026-H010      Implementation Phase 1       NOK 280 000  OPEN — due 2026-03-22 (OVERDUE)
+                              ─────────────────────────────────────────────────
+                              Customer AR Outstanding:              NOK 514 000
+                              OVERDUE AMOUNT:                       NOK 280 000
+
+────────────────────────────────────────────────────────────────────────────────
+CUSTOMER: Kongsberg Gruppen ASA  |  Org.nr: 943 753 709  |  Segment: Mid-Market
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description                  Amount       Status
+2026-01-01  AN-2026-K001      Jan SaaS — 20 users          NOK  78 000  PAID 2026-02-03
+2026-02-01  AN-2026-K002      Feb SaaS — 20 users          NOK  78 000  PAID 2026-03-03
+2026-03-01  AN-2026-K003      Mar SaaS — 20 users          NOK  78 000  OPEN — due 2026-03-31
+2026-03-05  AN-2026-K015      Support & maintenance Q1      NOK  45 000  OPEN — due 2026-04-04
+                              ─────────────────────────────────────────────────
+                              Customer AR Outstanding:              NOK 123 000
+
+════════════════════════════════════════════════════════════════════════════════
+Q1 2026 REVENUE RECOGNITION SUMMARY
+
+  Customer                   Jan Revenue    Feb Revenue    Mar Revenue    Q1 Total
+  ───────────────────────────────────────────────────────────────────────────────
+  Equinor ASA                NOK 312 000    NOK 312 000    NOK 312 000   NOK 936 000
+  Gjensidige Forsikring      NOK 260 500    NOK 175 500    NOK 175 500   NOK 611 500
+  Aker Solutions             NOK 117 000    NOK 262 000    NOK 117 000   NOK 496 000
+  Norsk Hydro                        —      NOK 514 000    NOK 234 000   NOK 748 000
+  Kongsberg Gruppen           NOK  78 000    NOK  78 000    NOK 123 000   NOK 279 000
+  Other SMB customers        NOK 1 760 167   NOK 891 667   NOK 1 068 500 NOK 3 720 334
+  ───────────────────────────────────────────────────────────────────────────────
+  TOTAL REVENUE              NOK 2 527 667  NOK 2 233 167  NOK 2 030 000 NOK 6 790 834
+
+═══════════════════════════════════════════════════════════════════════════════
+AR AGEING SUMMARY — 11.03.2026
+
+  Customer                     Current      1–30 days   31–60 days   60+ days   Total AR
+  ─────────────────────────────────────────────────────────────────────────────────────────
+  Equinor ASA                  NOK 312 000          —           —          —    NOK 312 000
+  Gjensidige Forsikring        NOK 175 500          —           —          —    NOK 175 500
+  Aker Solutions               NOK 117 000  NOK 145 000          —          —    NOK 262 000
+  Norsk Hydro ASA              NOK 234 000  NOK 280 000          —          —    NOK 514 000
+  Kongsberg Gruppen            NOK 123 000          —           —          —    NOK 123 000
+  Other SMB customers          NOK 321 500   NOK 85 000   NOK 22 000   NOK 8 000  NOK 436 500
+  ─────────────────────────────────────────────────────────────────────────────────────────
+  TOTAL                      NOK 1 283 000  NOK 510 000   NOK 22 000   NOK 8 000  NOK 1 823 000
+
+  COLLECTION EFFICIENCY (Q1):  94.2%
+  BAD DEBT PROVISION (1% of AR): NOK 18 230
+  Days Sales Outstanding (DSO): 24.3 days
+
+Posting Period:  2026-01 to 2026-03
+Ledger Type:     Accounts Receivable
+Journal Ref:     AR-LEDGER-Q1-2026

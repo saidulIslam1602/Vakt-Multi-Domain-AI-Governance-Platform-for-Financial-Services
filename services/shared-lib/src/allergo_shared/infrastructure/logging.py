@@ -10,11 +10,18 @@ import structlog
 
 def configure_logging(service_name: str, log_level: str = "INFO") -> None:
     """Configure structured JSON logging for production and human-readable for local dev."""
+
+    def _add_logger_name(logger: object, method: str, event_dict: dict) -> dict:
+        """Safe drop-in for structlog.stdlib.add_logger_name that works with PrintLogger."""
+        if hasattr(logger, "name"):
+            event_dict["logger"] = logger.name
+        return event_dict
+
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,
             structlog.stdlib.add_log_level,
-            structlog.stdlib.add_logger_name,
+            _add_logger_name,
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,

@@ -1,0 +1,102 @@
+ALLERGO NORDIC AS
+GENERAL LEDGER — FEBRUARY 2026
+Bilagsjournal / Journal of Accounting Entries
+
+Organization:  Allergo Nordic AS  |  Org.nr: 919 345 872
+Posting Period: 2026-02
+Journal Ref:   GL-2026-02
+Currency:      NOK
+Prepared by:   Regnskapsavdeling / Accounting Department
+Approved by:   Controller — Marte Eriksen
+
+═══════════════════════════════════════════════════════════════════════════════
+JOURNAL ENTRIES — FEBRUARY 2026
+
+Date        Bilag  Account  Account Name                    Debit        Credit    Description
+────────────────────────────────────────────────────────────────────────────────────────────────
+2026-02-01  B0201  3000     SaaS Subscription Revenue                 NOK 2 850 000  Feb revenue recognition — MRR growth
+2026-02-01  B0201  1500     Accounts Receivable            NOK 2 850 000              Feb subscription invoices issued
+
+2026-02-01  B0202  3200     Maintenance & Support Revenue              NOK 350 000   Feb support contract billings
+2026-02-01  B0202  1500     Accounts Receivable              NOK  350 000              Support contract AR
+
+2026-02-03  B0203  6300     IT Infrastructure & Cloud      NOK   280 000              Azure invoice Jan 2026 — compute+storage
+2026-02-03  B0203  2713     Input VAT                         NOK  70 000              MVA on Azure invoice
+2026-02-03  B0203  2400     Accounts Payable                             NOK 350 000  Microsoft Azure EA — Jan posting
+
+2026-02-04  B0204  3300     Other Operating Revenue                     NOK  46 667   Feb other revenue — training fees
+2026-02-04  B0204  1500     Accounts Receivable               NOK  46 667             Training revenue AR
+
+2026-02-05  B0205  5000     Salaries & Wages               NOK 1 550 000              Feb salary run — 38 employees
+2026-02-05  B0205  5100     Social Security (AGA 14.1%)      NOK 218 550              AGA on Feb salary
+2026-02-05  B0205  5200     Pension (OTP 5%)                  NOK  77 500             OTP contribution Feb
+2026-02-05  B0205  1900     Bank — Driftskonto DNB                     NOK 1 846 050  Salary disbursement 05.02.2026
+
+2026-02-07  B0206  6000     Office Rent — Oslo HQ            NOK 155 000              Monthly rent Feb — Drammensveien 114
+2026-02-07  B0206  2400     Accounts Payable                             NOK 155 000  Oslo Næringseiendom AS — Feb rent
+
+2026-02-10  B0207  1900     Bank — Driftskonto DNB         NOK 2 200 000              Customer payment batch 1 — Feb
+2026-02-10  B0207  1500     Accounts Receivable                        NOK 2 200 000  Clearing AR Feb receipts
+
+2026-02-12  B0208  6800     Telecom — Telenor                NOK  12 058              Telenor invoice Feb 2026
+2026-02-12  B0208  2713     Input VAT                         NOK   3 015              MVA Telenor Feb
+2026-02-12  B0208  2400     Accounts Payable                              NOK  15 073  Telenor Feb
+
+2026-02-14  B0209  8100     Interest Expense (Kassekreditt)   NOK  14 000             Interest on overdraft facility Feb
+2026-02-14  B0209  1900     Bank — Driftskonto DNB                       NOK  14 000  Bank fee — Kassekreditt rente
+
+2026-02-15  B0210  2400     Accounts Payable               NOK   350 000              Payment to Microsoft Azure — Feb
+2026-02-15  B0210  1900     Bank — Driftskonto DNB                      NOK 350 000  Bank transfer Azure payment
+
+2026-02-18  B0211  7300     External Consulting            NOK   483 000              NordicCloud NCS-2026-0092 (CFO approved)
+2026-02-18  B0211  2713     Input VAT                         NOK 120 750              MVA — NordicCloud Phase 1
+2026-02-18  B0211  2400     Accounts Payable                             NOK 603 750  NordicCloud Solutions — NCS-2026-0092
+
+2026-02-19  B0212  6700     Marketing & Sales                NOK  106 667              Feb marketing — campaigns
+2026-02-19  B0212  2400     Accounts Payable                             NOK  106 667  Marketing agency Feb
+
+2026-02-20  B0213  3100     Professional Services Revenue              NOK  726 667   Feb professional services revenue
+2026-02-20  B0213  1500     Accounts Receivable              NOK  726 667              Feb consulting invoices
+
+2026-02-22  B0214  6600     Travel & Entertainment            NOK  47 333              Feb travel — sales team Europe
+2026-02-22  B0214  2400     Accounts Payable                              NOK  47 333  Travel expenses Feb
+
+2026-02-24  B0215  1900     Bank — Driftskonto DNB         NOK 1 800 000              Customer payment batch 2 — Feb
+2026-02-24  B0215  1500     Accounts Receivable                        NOK 1 800 000  AR clearing batch 2
+
+2026-02-25  B0216  2400     Accounts Payable               NOK   155 000              Payment — Oslo Næringseiendom rent
+2026-02-25  B0216  1900     Bank — Driftskonto DNB                      NOK 155 000  Rent payment Feb 2026
+
+2026-02-26  B0217  6300     IT Infrastructure — Extra        NOK  90 000              Additional compute — new customer onboard
+2026-02-26  B0217  2713     Input VAT                         NOK  22 500              MVA
+2026-02-26  B0217  2400     Accounts Payable                             NOK  112 500  AWS/Azure burst compute — Feb
+
+2026-02-28  B0218  7000     Depreciation — Equipment          NOK  40 000              Monthly depreciation
+2026-02-28  B0218  7100     Depreciation — Intangibles         NOK  28 333             Monthly amortisation
+2026-02-28  B0218  1200     Acc. Depreciation — Equipment                NOK  40 000  Avskrivning februar
+2026-02-28  B0218  1210     Acc. Depreciation — Intangibles               NOK  28 333  Avskrivning immaterielle
+
+2026-02-28  B0219  2710     VAT Payable — Settlement         NOK  735 489              Feb VAT settlement (net MVA)
+2026-02-28  B0219  1900     Bank — Driftskonto DNB                      NOK 735 489  MVA innbetaling — termin 1 2026
+
+═══════════════════════════════════════════════════════════════════════════════
+CLOSING SUMMARY — 28.02.2026
+
+  Account    Account Name                        Dr Balance      Cr Balance
+  ───────────────────────────────────────────────────────────────────────────
+  1900       Bank — Driftskonto DNB              NOK 2 919 691
+  1500       Accounts Receivable                 NOK 1 373 334
+  3000       SaaS Subscription Revenue                           NOK 2 850 000
+  3100       Professional Services Revenue                         NOK 726 667
+  3200       Maintenance & Support Revenue                         NOK 350 000
+  3300       Other Operating Revenue                               NOK  46 667
+  5000       Salaries & Wages                    NOK 1 550 000
+  6000       Office Rent                           NOK 155 000
+  6300       IT Infrastructure                    NOK 370 000
+  6700       Marketing                            NOK 106 667
+  7300       External Consulting                  NOK 483 000
+  2400       Accounts Payable                                     NOK 478 750
+
+  NET OPERATING RESULT (Feb 2026):               NOK 958 000   (profit)
+  Posting Period:  2026-02
+  Journal Ref:     GL-2026-02

@@ -1,0 +1,93 @@
+SOFTWARE LICENSE AND SERVICES AGREEMENT
+
+This Software License and Services Agreement ("Agreement") is entered into as of 1 March 2024
+between:
+
+LICENSOR:
+  Visma Software AS
+  Org.nr: 916 368 432
+  Karenslyst allé 56, 0277 Oslo, Norway
+  ("Visma")
+
+LICENSEE:
+  Allergo Nordic AS
+  Org.nr: 919 345 872
+  Drammensveien 114, 0277 Oslo, Norway
+  ("Customer")
+
+─────────────────────────────────────────────────────────────────────────────
+1. SCOPE OF LICENSE
+
+Visma grants Customer a non-exclusive, non-transferable license to use Visma.net
+ERP and Visma.net Payroll (the "Software") for the duration of this Agreement.
+Licensed users: up to 50 named users.
+Deployment: Cloud (SaaS) hosted in Norway (Azure Norway East).
+
+2. CONTRACT PERIOD AND RENEWAL
+
+Contract Start Date:   2024-03-01
+Contract End Date:     2026-04-15
+Notice Period:         90 days written notice prior to Contract End Date to terminate.
+
+AUTOMATIC RENEWAL: Unless either party provides written notice of termination
+no later than 90 days before the Contract End Date (i.e. by 2026-01-15),
+this Agreement shall automatically renew for a further 12-month period on
+the same terms.
+
+NOTE: The renewal window has now PASSED (deadline was 2026-01-15). The contract
+will automatically renew from 2026-04-15 for 12 months to 2027-04-15 unless
+the Customer formally invokes the 90-day notice clause in writing.
+
+3. CONTRACT VALUE AND PAYMENT
+
+Annual License Fee:       NOK 285 000.00 (excl. VAT)
+Implementation Services:  NOK  95 000.00 (one-time, invoiced separately)
+Total Year-1 Value:       NOK 380 000.00 (excl. VAT)
+Currency: NOK
+Payment Terms: Annual in advance, net 30 days from invoice date.
+
+4. TERMINATION
+
+Either party may terminate this Agreement with 90 days written notice prior
+to any renewal date. Termination for cause (material breach) requires 30 days
+written notice with opportunity to cure.
+
+In the event of termination for convenience by the Customer before the end
+of a contract year, an early termination fee of 50% of the remaining annual
+license fee shall be payable ("Penalty Clause").
+
+5. LIABILITY
+
+Visma's total aggregate liability under this Agreement shall not exceed the
+total fees paid in the 12 months preceding the claim ("Liability Cap").
+Neither party shall be liable for indirect, consequential, or punitive damages.
+
+6. FORCE MAJEURE
+
+Neither party shall be liable for delays or failures caused by circumstances
+beyond their reasonable control, including but not limited to natural disasters,
+acts of government, pandemics, or infrastructure failures ("Force Majeure").
+
+7. INDEMNIFICATION
+
+Each party shall indemnify and hold harmless the other party against third-party
+claims arising from the indemnifying party's gross negligence or wilful misconduct.
+
+8. GOVERNING LAW AND DISPUTE RESOLUTION
+
+This Agreement is governed by Norwegian law.
+Disputes shall first be attempted resolved through mediation. If mediation fails
+within 30 days, disputes shall be submitted to Oslo tingrett for final resolution.
+
+9. DATA PROCESSING
+
+Visma acts as data processor for any personal data processed by the Software.
+A separate Data Processing Agreement (DPA) is attached as Appendix A.
+
+Signed:
+Visma Software AS: ___________________________  Date: 2024-02-28
+Allergo Nordic AS: ___________________________  Date: 2024-02-29
+
+Cost Center:     Finance & ERP
+GL Account:      6400 – IT-programvare og lisenser
+Department:      Finance Operations

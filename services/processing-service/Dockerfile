@@ -23,7 +23,8 @@ COPY services/shared-lib /tmp/shared-lib
 COPY services/processing-service/pyproject.toml services/processing-service/README.md ./
 COPY services/processing-service/src ./src
 RUN pip install --prefix=/install /tmp/shared-lib && \
-    PYTHONPATH=/install/lib/python3.11/site-packages pip install --prefix=/install "."
+    PYTHONPATH=/install/lib/python3.11/site-packages pip install --prefix=/install "." && \
+    pip install --prefix=/install --ignore-installed "packaging>=23.0"
 
 FROM base AS runtime
 COPY --from=builder /install /usr/local

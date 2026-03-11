@@ -1,0 +1,51 @@
+FAKTURA / INVOICE
+
+Leverandør / Vendor:
+  Telenor Norge AS
+  Org.nr: 976 967 631
+  Snarøyveien 30
+  1360 Fornebu, Norway
+  IBAN: NO93 8601 1117 947
+  E-post: faktura@telenor.no
+
+Kjøper / Buyer:
+  Allergo Nordic AS
+  Org.nr: 919 345 872
+  Drammensveien 114
+  0277 Oslo, Norway
+
+─────────────────────────────────────────────────
+FAKTURANUMMER:  TLN-2026-004821
+FAKTURADATO:    2026-01-15
+FORFALLSDATO:   2026-02-14
+BETALINGSREF:   KID 75432198640021
+─────────────────────────────────────────────────
+
+SPESIFIKASJON / LINE ITEMS:
+
+  Beskrivelse                         Antall   Enhetspris     Beløp
+  ─────────────────────────────────────────────────────────────────
+  Bedriftstelefoni – 12 linjer         12       NOK 449.00   NOK  5 388.00
+  Mobilt bredbånd (10 GB/mnd)           5       NOK 299.00   NOK  1 495.00
+  Microsoft 365 Business (lisens)      25       NOK 159.00   NOK  3 975.00
+  Support SLA – Prioritet 2             1     NOK 1 200.00   NOK  1 200.00
+  ─────────────────────────────────────────────────────────────────
+  Netto                                                      NOK 12 058.00
+  MVA (25 %)                                                 NOK  3 014.50
+  ─────────────────────────────────────────────────────────────────
+  TOTALT                                                     NOK 15 072.50
+
+BETALINGSINFORMASJON:
+  Bankkontonummer:  8601 11 17947
+  KID:              75432198640021
+  Betalingsfrist:   14. februar 2026
+  Betalingsbetingelser: Netto 30 dager
+
+Avdeling / Cost Center:  IT & Infrastruktur
+GL-konto:                6800 – Telekommunikasjon
+
+Merk: Betaling etter forfall medfører forsinkelsesrente iht. forsinkelsesrenteloven.
+
+Telenor Norge AS
+Fakturaseksjonen
+faktura@telenor.no

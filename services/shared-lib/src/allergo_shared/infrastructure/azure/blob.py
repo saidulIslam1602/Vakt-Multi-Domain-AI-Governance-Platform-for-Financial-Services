@@ -6,7 +6,7 @@ import datetime
 
 from azure.identity.aio import DefaultAzureCredential
 from azure.storage.blob.aio import BlobServiceClient
-from azure.storage.blob import generate_blob_sas, BlobSasPermissions, UserDelegationKey
+from azure.storage.blob import generate_blob_sas, BlobSasPermissions, UserDelegationKey, ContentSettings
 
 from allergo_shared.domain.exceptions import StorageError
 from allergo_shared.domain.interfaces.storage import BlobStoragePort
@@ -36,7 +36,7 @@ class AzureBlobStorage(BlobStoragePort):
             await blob_client.upload_blob(
                 data,
                 overwrite=True,
-                content_settings={"content_type": content_type},
+                content_settings=ContentSettings(content_type=content_type),
             )
             return blob_name
         except Exception as exc:

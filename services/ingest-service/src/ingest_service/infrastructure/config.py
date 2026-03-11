@@ -24,9 +24,9 @@ class Settings(BaseSettings):
     database_url: str  # asyncpg DSN: postgresql+asyncpg://user:pass@host:5432/db
 
     # Auth (Azure AD / OIDC)
-    auth_jwks_uri: str
-    auth_audience: str
-    auth_issuer: str
+    auth_jwks_uri: str = ""
+    auth_audience: str = ""
+    auth_issuer: str = ""
     auth_enabled: bool = True
 
     # Limits

@@ -1,0 +1,107 @@
+ALLERGO NORDIC AS
+ACCOUNTS PAYABLE LEDGER — Q1 2026
+Leverandørreskontro / Vendor Subledger
+
+Organization:  Allergo Nordic AS  |  Org.nr: 919 345 872
+Period:        Q1 2026 (January–March)
+Ledger Type:   Accounts Payable (Leverandørgjeld)
+Currency:      NOK
+Prepared by:   Accounts Payable Team
+Report Date:   2026-03-11
+
+═══════════════════════════════════════════════════════════════════════════════
+VENDOR LEDGER DETAIL
+
+────────────────────────────────────────────────────────────────────────────────
+VENDOR: Telenor Norge AS  |  Org.nr: 976 967 631  |  GL Account: 6800
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description              Amount       Status
+2026-01-15  TLN-2026-004821   Jan telecom services     NOK  15 073  PAID 2026-02-10
+2026-02-15  TLN-2026-005109   Feb telecom services     NOK  15 073  PAID 2026-03-09
+2026-03-15  TLN-2026-005441   Mar telecom services     NOK  15 320  OPEN — due 2026-04-14
+                              ─────────────────────────────────────────────────
+                              Vendor Total Outstanding:              NOK  15 320
+
+────────────────────────────────────────────────────────────────────────────────
+VENDOR: Microsoft Azure EA  |  (Microsoft Ireland Ops Ltd)  |  GL Account: 6300
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description              Amount       Status
+2026-01-03  AZ-EA-2026-001    Dec 2025 Azure spend     NOK 270 000  PAID 2026-01-15
+2026-02-03  AZ-EA-2026-002    Jan 2026 Azure spend     NOK 350 000  PAID 2026-02-15
+2026-03-03  AZ-EA-2026-003    Feb 2026 Azure spend     NOK 315 000  OPEN — due 2026-04-02
+                              ─────────────────────────────────────────────────
+                              Vendor Total Outstanding:             NOK 315 000
+
+────────────────────────────────────────────────────────────────────────────────
+VENDOR: Oslo Næringseiendom AS  |  Org.nr: 887 432 210  |  GL Account: 6000
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description              Amount       Status
+2026-01-07  ONS-2026-0101     Jan office rent          NOK 174 500  PAID 2026-01-29
+2026-02-07  ONS-2026-0202     Feb office rent          NOK 174 500  PAID 2026-02-25
+2026-03-07  ONS-2026-0311     Mar office rent          NOK 174 500  OPEN — due 2026-04-06
+                              ─────────────────────────────────────────────────
+                              Vendor Total Outstanding:             NOK 174 500
+
+────────────────────────────────────────────────────────────────────────────────
+VENDOR: NordicCloud Solutions AS  |  Org.nr: 923 011 445  |  GL Account: 7300
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description              Amount       Status       Approval
+2026-02-01  NCS-2026-0092     Azure migration Phase 1  NOK 603 750  APPROVED     CFO sign-off 2026-02-17
+                              Paid:                    NOK 603 750  PAID 2026-03-03
+2026-03-01  NCS-2026-0118     Azure migration Phase 2  NOK 498 750  PENDING      Awaiting CFO approval
+                              ─────────────────────────────────────────────────
+                              Vendor Total Outstanding:             NOK 498 750
+                              NOTE: NCS-2026-0118 requires CFO approval (>NOK 100k policy)
+
+────────────────────────────────────────────────────────────────────────────────
+VENDOR: Visma Software AS  |  Org.nr: 916 368 432  |  GL Account: 6400
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description              Amount       Status
+2026-01-16  VSM-2026-0041     Q1 2026 ERP license      NOK  89 063  PAID 2026-02-04
+                              ─────────────────────────────────────────────────
+                              Vendor Total Outstanding:                  NOK 0
+
+────────────────────────────────────────────────────────────────────────────────
+VENDOR: Bergen Renhold & Facility AS  |  Org.nr: 912 874 331  |  GL Account: 6610
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description              Amount       Status
+2025-11-01  BRF-2025-1147     Nov 2025 cleaning        NOK  30 500  *** OVERDUE 100 DAYS ***
+2026-01-01  BRF-2026-0011     Jan 2026 cleaning        NOK  30 500  OPEN — due 2026-01-31 (overdue)
+2026-02-01  BRF-2026-0048     Feb 2026 cleaning        NOK  30 500  OPEN — due 2026-03-03 (overdue)
+2026-03-01  BRF-2026-0081     Mar 2026 cleaning        NOK  30 500  OPEN — due 2026-04-01
+                              ─────────────────────────────────────────────────
+                              Vendor Total Outstanding:             NOK 122 000
+                              OVERDUE AMOUNT (>30 days):            NOK  91 500
+                              ALERT: Escalate to management — 3 invoices unpaid
+
+────────────────────────────────────────────────────────────────────────────────
+VENDOR: Reklame AS  |  Org.nr: 934 122 670  |  GL Account: 6700
+────────────────────────────────────────────────────────────────────────────────
+Date        Invoice No        Description              Amount       Status
+2026-01-22  RKL-2026-0019     Jan digital campaigns    NOK 106 667  PAID 2026-02-18
+2026-02-19  RKL-2026-0041     Feb digital campaigns    NOK 106 667  PAID 2026-03-08
+2026-03-19  RKL-2026-0067     Mar digital campaigns    NOK 120 000  OPEN — due 2026-04-18
+                              ─────────────────────────────────────────────────
+                              Vendor Total Outstanding:             NOK 120 000
+
+═══════════════════════════════════════════════════════════════════════════════
+AGEING SUMMARY — 11.03.2026
+
+  Vendor                       Current     1–30 days   31–60 days   60+ days   Total
+  ─────────────────────────────────────────────────────────────────────────────────────
+  Telenor Norge AS             NOK  15 320          —           —          —    NOK  15 320
+  Microsoft Azure EA           NOK 315 000          —           —          —    NOK 315 000
+  Oslo Næringseiendom AS       NOK 174 500          —           —          —    NOK 174 500
+  NordicCloud Solutions AS           —        NOK 498 750        —          —    NOK 498 750
+  Visma Software AS                  —              —           —          —         NOK 0
+  Bergen Renhold & Facility AS       —              —    NOK 30 500   NOK 91 500  NOK 122 000
+  Reklame AS                   NOK 120 000          —           —          —    NOK 120 000
+  ─────────────────────────────────────────────────────────────────────────────────────
+  TOTAL                        NOK 624 820  NOK 498 750  NOK 30 500   NOK 91 500  NOK 1 245 570
+
+  TOTAL OVERDUE (>30 days):    NOK 122 000
+  REQUIRES CFO APPROVAL:       NOK 498 750  (NordicCloud Phase 2)
+
+Posting Period:  2026-01 to 2026-03
+Ledger Type:     Accounts Payable
+Journal Ref:     AP-LEDGER-Q1-2026

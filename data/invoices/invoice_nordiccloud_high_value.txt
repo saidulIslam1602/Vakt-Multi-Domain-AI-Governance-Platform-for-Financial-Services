@@ -1,0 +1,49 @@
+INVOICE — HIGH VALUE / GODKJENNINGSPLIKTIG
+
+Vendor:
+  NordicCloud Solutions AS
+  Org.nr: 923 011 445
+  Grensen 5, 0159 Oslo, Norway
+  IBAN: NO47 8601 5500 2234
+  invoices@nordiccloud.no
+
+Buyer:
+  Allergo Nordic AS
+  Org.nr: 919 345 872
+  Drammensveien 114, 0277 Oslo
+
+─────────────────────────────────────────────────
+INVOICE NUMBER:   NCS-2026-0092
+INVOICE DATE:     2026-02-01
+DUE DATE:         2026-03-03
+PAYMENT REF:      KID 40219934501122
+─────────────────────────────────────────────────
+
+DESCRIPTION OF SERVICES:
+
+  Item                                         Qty     Unit Price       Amount
+  ────────────────────────────────────────────────────────────────────────────
+  Azure Infrastructure Migration – Phase 1      1    NOK 210 000.00   NOK 210 000.00
+  Data Architecture Consulting (80 hrs)        80      NOK 1 850.00   NOK 148 000.00
+  Security Hardening & Penetration Test         1     NOK 65 000.00   NOK  65 000.00
+  Project Management (40 hrs)                  40      NOK 1 500.00   NOK  60 000.00
+  ────────────────────────────────────────────────────────────────────────────
+  Net Amount                                                           NOK 483 000.00
+  VAT (25 %)                                                           NOK 120 750.00
+  ────────────────────────────────────────────────────────────────────────────
+  TOTAL AMOUNT DUE                                                     NOK 603 750.00
+
+PAYMENT DETAILS:
+  Bank Account:    8601 55 00 2234
+  KID:             40219934501122
+  Payment Terms:   Net 30 days
+  Currency:        NOK
+
+NOTE: This invoice REQUIRES CFO APPROVAL as the total exceeds NOK 100,000.
+Please reference invoice NCS-2026-0092 in all payment correspondence.
+
+Cost Center:     Digital Transformation
+GL Account:      7300 – External Consulting
+
+NordicCloud Solutions AS
+finance@nordiccloud.no  |  +47 22 01 34 50

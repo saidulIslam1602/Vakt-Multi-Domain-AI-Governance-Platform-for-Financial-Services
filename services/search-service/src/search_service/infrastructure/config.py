@@ -21,9 +21,9 @@ class Settings(BaseSettings):
     azure_openai_api_version: str = "2024-02-01"
     azure_openai_embedding_deployment: str = "text-embedding-3-large"
 
-    auth_jwks_uri: str
-    auth_audience: str
-    auth_issuer: str
+    auth_jwks_uri: str = ""
+    auth_audience: str = ""
+    auth_issuer: str = ""
     auth_enabled: bool = True
     cors_origins: list[str] = ["*"]
 

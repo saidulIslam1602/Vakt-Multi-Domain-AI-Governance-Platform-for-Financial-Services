@@ -30,20 +30,28 @@ async def main() -> None:
     logger.info("processing_worker_initializing", version=cfg.service_version)
 
     credential = DefaultAzureCredential()
-    # get_bearer_token_provider requires a sync credential; async DefaultAzureCredential
-    # is used below for the async SDK clients (SearchClient, blob, queue).
-    token_provider = get_bearer_token_provider(
-        SyncDefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
-    )
+
+    # Use API key auth if configured (avoids managed-identity RBAC on regional endpoints),
+    # otherwise fall back to AAD token provider.
+    if cfg.azure_openai_api_key:
+        openai_client = AsyncAzureOpenAI(
+            azure_endpoint=cfg.azure_openai_endpoint,
+            api_version=cfg.azure_openai_api_version,
+            api_key=cfg.azure_openai_api_key,
+        )
+    else:
+        token_provider = get_bearer_token_provider(
+            SyncDefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+        )
+        openai_client = AsyncAzureOpenAI(
+            azure_endpoint=cfg.azure_openai_endpoint,
+            api_version=cfg.azure_openai_api_version,
+            azure_ad_token_provider=token_provider,
+        )
 
     pool = await asyncpg.create_pool(cfg.database_url, min_size=2, max_size=10)
     blob = AzureBlobStorage(cfg.azure_blob_account_url)
     queue = AzureServiceBus(cfg.azure_servicebus_namespace_fqdn)
-    openai_client = AsyncAzureOpenAI(
-        azure_endpoint=cfg.azure_openai_endpoint,
-        api_version=cfg.azure_openai_api_version,
-        azure_ad_token_provider=token_provider,
-    )
     search_client = SearchClient(
         endpoint=cfg.azure_search_endpoint,
         index_name=cfg.azure_search_index_name,

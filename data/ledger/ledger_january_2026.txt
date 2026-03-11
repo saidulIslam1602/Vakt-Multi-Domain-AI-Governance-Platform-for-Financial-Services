@@ -1,0 +1,117 @@
+ALLERGO NORDIC AS
+GENERAL LEDGER — JANUARY 2026
+Bilagsjournal / Journal of Accounting Entries
+
+Organization:  Allergo Nordic AS  |  Org.nr: 919 345 872
+Posting Period: 2026-01
+Journal Ref:   GL-2026-01
+Currency:      NOK
+Prepared by:   Regnskapsavdeling / Accounting Department
+Approved by:   Controller — Marte Eriksen
+
+═══════════════════════════════════════════════════════════════════════════════
+OPENING BALANCES — 01.01.2026
+
+  Account    Account Name                        Debit (Dr)      Credit (Cr)
+  ───────────────────────────────────────────────────────────────────────────
+  1900       Bank — Driftskonto DNB               NOK 3 842 500
+  1920       Bank — Valutakonto EUR                 NOK 214 000
+  1500       Accounts Receivable (Kundefordring)  NOK 2 180 000
+  1400       Inventory / Prepaid Licenses           NOK 285 000
+  1800       Other Current Assets                   NOK  98 000
+  2000       Share Capital                                          NOK 1 000 000
+  2050       Retained Earnings                                      NOK 4 619 500
+  2400       Accounts Payable (Leverandørgjeld)                     NOK 1 000 000
+
+═══════════════════════════════════════════════════════════════════════════════
+JOURNAL ENTRIES — JANUARY 2026
+
+Date        Bilag  Account  Account Name                    Debit        Credit    Description
+────────────────────────────────────────────────────────────────────────────────────────────────
+2026-01-02  B0101  3000     SaaS Subscription Revenue                 NOK 2 805 000  Jan revenue recognition — enterprise
+2026-01-02  B0101  1500     Accounts Receivable            NOK 2 805 000              Invoice batch Jan customers
+
+2026-01-03  B0102  6300     IT Infrastructure & Cloud      NOK   270 000              Azure invoice Dec 2025 — data services
+2026-01-03  B0102  2400     Accounts Payable                             NOK 270 000  Microsoft Azure EA — Dec posting
+
+2026-01-05  B0103  5000     Salaries & Wages               NOK 1 550 000              Jan salary run — 38 employees
+2026-01-05  B0103  5100     Social Security (AGA 14.1%)      NOK 218 550              AGA on Jan salary
+2026-01-05  B0103  5200     Pension (OTP 5%)                 NOK  77 500              OTP contribution Jan
+2026-01-05  B0103  1900     Bank — Driftskonto DNB                     NOK 1 846 050  Salary disbursement 05.01.2026
+
+2026-01-07  B0104  6000     Office Rent — Oslo HQ            NOK 155 000              Monthly rent Jan — Drammensveien 114
+2026-01-07  B0104  2400     Accounts Payable                             NOK 155 000  Oslo Næringseiendom AS — Jan rent
+
+2026-01-10  B0105  1900     Bank — Driftskonto DNB         NOK 1 940 000              Customer payment received — batch
+2026-01-10  B0105  1500     Accounts Receivable                        NOK 1 940 000  Clearing AR — Jan receipts batch 1
+
+2026-01-12  B0106  6800     Telecom — Telenor                NOK  12 058              Telenor invoice TLN-2026-004821 net
+2026-01-12  B0106  2713     Input VAT (Inngående MVA 25%)    NOK   3 015              MVA on Telenor invoice
+2026-01-12  B0106  2400     Accounts Payable                              NOK  15 073  Telenor — TLN-2026-004821 total
+
+2026-01-14  B0107  6610     Facility & Cleaning — Bergen     NOK  24 400              Bergen Renhold BRF-2025-1147 (overdue)
+2026-01-14  B0107  2713     Input VAT                         NOK   6 100              MVA on Bergen Renhold
+2026-01-14  B0107  2400     Accounts Payable                              NOK  30 500  Bergen Renhold & Facility AS
+
+2026-01-15  B0108  2400     Accounts Payable               NOK   270 000              Payment to Microsoft Azure EA
+2026-01-15  B0108  1900     Bank — Driftskonto DNB                      NOK 270 000  Bank transfer 15.01.2026
+
+2026-01-16  B0109  6400     IT Software — Visma ERP          NOK  71 250              Visma.net Q1 license fee (285k/4)
+2026-01-16  B0109  2713     Input VAT                         NOK  17 813              MVA on Visma license
+2026-01-16  B0109  2400     Accounts Payable                              NOK  89 063  Visma Software AS — Q1 2026
+
+2026-01-20  B0110  3100     Professional Services Revenue              NOK  726 667   Jan professional services revenue
+2026-01-20  B0110  1500     Accounts Receivable              NOK  726 667              Jan consulting invoices issued
+
+2026-01-21  B0111  7300     External Consulting — NordicCloud NOK 483 000              NCS-2026-0092 net amount (approval req)
+2026-01-21  B0111  2713     Input VAT                         NOK 120 750              MVA on NordicCloud invoice
+2026-01-21  B0111  2400     Accounts Payable                             NOK 603 750  NordicCloud Solutions — NCS-2026-0092
+
+2026-01-22  B0112  6700     Marketing & Sales                NOK  106 667              Jan marketing spend — digital campaigns
+2026-01-22  B0112  2400     Accounts Payable                             NOK  106 667  Reklame AS — campaign Jan 2026
+
+2026-01-25  B0113  1900     Bank — Driftskonto DNB         NOK  2 100 000              Customer payment received — batch 2
+2026-01-25  B0113  1500     Accounts Receivable                         NOK 2 100 000  Clearing AR — Jan receipts batch 2
+
+2026-01-28  B0114  7000     Depreciation — Equipment          NOK  40 000              Monthly depreciation — hardware assets
+2026-01-28  B0114  7100     Depreciation — Intangibles        NOK  28 333              Monthly amortisation — developed software
+2026-01-28  B0114  1200     Acc. Depreciation — Equipment                NOK  40 000  Avskrivning januar 2026
+2026-01-28  B0114  1210     Acc. Depreciation — Intangibles               NOK  28 333  Avskrivning immaterielle januar 2026
+
+2026-01-29  B0115  2400     Accounts Payable               NOK  155 000              Payment to Oslo Næringseiendom
+2026-01-29  B0115  1900     Bank — Driftskonto DNB                      NOK 155 000  Rent payment Jan 2026
+
+2026-01-30  B0116  5300     Travel & Expense Reimbursements   NOK  47 220              Employee expense claims Jan 2026
+2026-01-30  B0116  1900     Bank — Driftskonto DNB                       NOK  47 220  Utlegg refusjon januar
+
+2026-01-31  B0117  2712     Output VAT (Utgående MVA 25%)              NOK 883 167   MVA on Jan revenue (3000+3100 combined)
+2026-01-31  B0117  1500     Accounts Receivable              NOK  883 167              VAT portion of Jan AR
+
+═══════════════════════════════════════════════════════════════════════════════
+CLOSING SUMMARY — 31.01.2026
+
+  Account    Account Name                        Dr Balance      Cr Balance
+  ───────────────────────────────────────────────────────────────────────────
+  1900       Bank — Driftskonto DNB              NOK 3 624 230
+  1500       Accounts Receivable                 NOK 1 754 834
+  3000       SaaS Subscription Revenue                           NOK 2 805 000
+  3100       Professional Services Revenue                         NOK 726 667
+  5000       Salaries & Wages                    NOK 1 550 000
+  5100       Social Security (AGA)                 NOK 218 550
+  5200       Pension                               NOK  77 500
+  6000       Office Rent                           NOK 155 000
+  6300       IT Infrastructure                    NOK 270 000
+  6400       IT Software (Visma)                   NOK  71 250
+  6610       Facility & Cleaning                   NOK  24 400
+  6700       Marketing                            NOK 106 667
+  6800       Telecom                               NOK  12 058
+  7000       Depreciation — Equipment              NOK  40 000
+  7100       Depreciation — Intangibles             NOK  28 333
+  7300       External Consulting                  NOK 483 000
+  2400       Accounts Payable                                     NOK 603 750
+  2712       Output VAT                                           NOK 883 167
+  2713       Input VAT (recoverable)              NOK 147 678
+
+  NET OPERATING RESULT (Jan 2026):               NOK 890 909   (profit)
+  Posting Period:  2026-01
+  Journal Ref:     GL-2026-01

@@ -21,7 +21,8 @@ class Settings(BaseSettings):
 
     # Azure OpenAI
     azure_openai_endpoint: str
-    azure_openai_api_version: str = "2024-02-01"
+    azure_openai_api_key: str = ""  # If set, use API key auth instead of managed identity
+    azure_openai_api_version: str = "2024-08-01-preview"
     azure_openai_chat_deployment: str = "gpt-4o"
     azure_openai_embedding_deployment: str = "text-embedding-3-large"
 
