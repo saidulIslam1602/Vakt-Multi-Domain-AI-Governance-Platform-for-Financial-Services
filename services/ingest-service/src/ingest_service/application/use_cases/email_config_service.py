@@ -275,7 +275,10 @@ def _imap_connect_test(
         msg_count = int(data[0]) if data and data[0] else 0
         return {
             "success": True,
-            "message": f"Connection successful. Mailbox '{mailbox}' contains {msg_count} message(s).",
+            "message": (
+                f"Connection successful. Mailbox '{mailbox}'"
+                f" contains {msg_count} message(s)."
+            ),
         }
     except imaplib.IMAP4.error as exc:
         return {"success": False, "message": f"IMAP error: {exc}"}

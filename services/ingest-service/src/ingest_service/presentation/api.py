@@ -103,7 +103,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="Allergo Nordic — Ingest Service",
-        description="Document upload API: validates, stores in Azure Blob, publishes to Service Bus.",
+        description=(
+            "Document upload API: validates, stores in Azure Blob,"
+            " publishes to Service Bus."
+        ),
         version=cfg.service_version,
         lifespan=lifespan,
         docs_url="/docs" if cfg.environment != "production" else None,

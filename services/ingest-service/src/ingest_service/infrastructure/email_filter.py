@@ -121,18 +121,16 @@ class EmailFilter:
         subject_lower = subject.lower()
 
         # ── Layer 1: Sender allowlist ──────────────────────────────────────────
-        if self.allowed_senders:
-            if not self._sender_matches_any(addr, self.allowed_senders):
-                return FilterResult.reject(
-                    f"sender '{addr}' not in allowed_senders allowlist"
-                )
+        if self.allowed_senders and not self._sender_matches_any(addr, self.allowed_senders):
+            return FilterResult.reject(
+                f"sender '{addr}' not in allowed_senders allowlist"
+            )
 
         # ── Layer 2: Sender blocklist ──────────────────────────────────────────
-        if self.blocked_senders:
-            if self._sender_matches_any(addr, self.blocked_senders):
-                return FilterResult.reject(
-                    f"sender '{addr}' matched blocked_senders blocklist"
-                )
+        if self.blocked_senders and self._sender_matches_any(addr, self.blocked_senders):
+            return FilterResult.reject(
+                f"sender '{addr}' matched blocked_senders blocklist"
+            )
 
         # ── Layer 3: Subject blocklist ─────────────────────────────────────────
         for kw in self.blocked_subject_keywords:
