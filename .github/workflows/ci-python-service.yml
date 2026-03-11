@@ -70,7 +70,7 @@ jobs:
     if: >
       github.ref == 'refs/heads/main' &&
       github.event_name != 'pull_request' &&
-      secrets.AZURE_CLIENT_ID != ''
+      vars.AZURE_CONFIGURED == 'true'
 
     permissions:
       id-token: write
@@ -139,7 +139,7 @@ jobs:
       inputs.run_migrations == true &&
       github.ref == 'refs/heads/main' &&
       github.event_name != 'pull_request' &&
-      secrets.KEY_VAULT_NAME != ''
+      vars.AZURE_CONFIGURED == 'true'
 
     permissions:
       id-token: write
