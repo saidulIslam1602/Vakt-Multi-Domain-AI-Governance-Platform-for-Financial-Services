@@ -86,7 +86,7 @@ async def create_rule(
                (tenant_id, name, trigger_type, threshold_value, days_before,
                 document_category, channels)
            VALUES ($1,$2,$3,$4,$5,$6,$7)
-           RETURNING id, name, trigger_type, threshold_value, days_before,
+           RETURNING rule_id, name, trigger_type, threshold_value, days_before,
                      document_category, channels, enabled, created_at""",
         str(current_user.tenant_id),
         body.name,
@@ -105,7 +105,7 @@ async def list_rules(
     pool: Annotated[asyncpg.Pool, Depends(get_pool)],
 ) -> list[AlertRuleResponse]:
     rows = await pool.fetch(
-        """SELECT id, name, trigger_type, threshold_value, days_before,
+        """SELECT rule_id, name, trigger_type, threshold_value, days_before,
                   document_category, channels, enabled, created_at
            FROM alert_rules
            WHERE tenant_id = $1
@@ -122,7 +122,7 @@ async def delete_rule(
     pool: Annotated[asyncpg.Pool, Depends(get_pool)],
 ) -> None:
     result = await pool.execute(
-        "DELETE FROM alert_rules WHERE id = $1 AND tenant_id = $2",
+        "DELETE FROM alert_rules WHERE rule_id = $1 AND tenant_id = $2",
         rule_id,
         str(current_user.tenant_id),
     )
@@ -139,8 +139,8 @@ async def toggle_rule(
     row = await pool.fetchrow(
         """UPDATE alert_rules
            SET enabled = NOT enabled
-           WHERE id = $1 AND tenant_id = $2
-           RETURNING id, name, trigger_type, threshold_value, days_before,
+           WHERE rule_id = $1 AND tenant_id = $2
+           RETURNING rule_id, name, trigger_type, threshold_value, days_before,
                      document_category, channels, enabled, created_at""",
         rule_id,
         str(current_user.tenant_id),
@@ -165,7 +165,7 @@ async def list_events(
     if unread_only:
         where += " AND acknowledged = false"
     rows = await pool.fetch(
-        f"""SELECT id, rule_id, document_id, trigger_type, message, metadata,
+        f"""SELECT event_id, rule_id, document_id, trigger_type, message, metadata,
                    acknowledged, created_at
             FROM alert_events
             WHERE {where}
@@ -183,7 +183,7 @@ async def acknowledge_event(
     pool: Annotated[asyncpg.Pool, Depends(get_pool)],
 ) -> dict:
     result = await pool.execute(
-        "UPDATE alert_events SET acknowledged = true WHERE id = $1 AND tenant_id = $2",
+        "UPDATE alert_events SET acknowledged = true WHERE event_id = $1 AND tenant_id = $2",
         event_id,
         str(current_user.tenant_id),
     )
@@ -208,7 +208,7 @@ async def acknowledge_all(
 
 def _map_rule(row: asyncpg.Record) -> AlertRuleResponse:
     return AlertRuleResponse(
-        rule_id=str(row["id"]),
+        rule_id=str(row["rule_id"]),
         name=row["name"],
         trigger_type=row["trigger_type"],
         threshold_value=float(row["threshold_value"]) if row["threshold_value"] is not None else None,
@@ -222,7 +222,7 @@ def _map_rule(row: asyncpg.Record) -> AlertRuleResponse:
 
 def _map_event(row: asyncpg.Record) -> AlertEventResponse:
     return AlertEventResponse(
-        event_id=str(row["id"]),
+        event_id=str(row["event_id"]),
         rule_id=str(row["rule_id"]),
         document_id=str(row["document_id"]) if row["document_id"] else None,
         trigger_type=row["trigger_type"],

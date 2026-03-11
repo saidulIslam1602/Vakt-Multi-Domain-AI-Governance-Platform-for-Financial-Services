@@ -10,7 +10,12 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from allergo_shared.domain.exceptions import AllergoError, ValidationError
+from allergo_shared.domain.exceptions import (
+    AllergoError,
+    QueueError,
+    StorageError,
+    ValidationError,
+)
 from allergo_shared.infrastructure.azure.blob import AzureBlobStorage
 from allergo_shared.infrastructure.azure.service_bus import AzureServiceBus
 from allergo_shared.infrastructure.health import HealthCheck, make_health_router
@@ -66,12 +71,36 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             content={"code": exc.code, "message": exc.message},
         )
 
+    @app.exception_handler(StorageError)
+    async def storage_error_handler(request: Request, exc: StorageError) -> JSONResponse:
+        logger.error("storage_error", message=exc.message)
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"code": exc.code, "message": "Storage service unavailable. Please try again."},
+        )
+
+    @app.exception_handler(QueueError)
+    async def queue_error_handler(request: Request, exc: QueueError) -> JSONResponse:
+        logger.error("queue_error", message=exc.message)
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"code": exc.code, "message": "Message queue unavailable. Please try again."},
+        )
+
     @app.exception_handler(AllergoError)
     async def allergo_error_handler(request: Request, exc: AllergoError) -> JSONResponse:
         logger.warning("allergo_error", code=exc.code, message=exc.message)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"code": exc.code, "message": exc.message},
+        )
+
+    @app.exception_handler(Exception)
+    async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+        logger.error("unhandled_exception", error=str(exc), exc_info=True)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"code": "INTERNAL_ERROR", "message": "An unexpected error occurred."},
         )
 
     async def _db_health() -> bool:

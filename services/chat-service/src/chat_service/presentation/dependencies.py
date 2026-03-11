@@ -2,14 +2,23 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import Request
 
 from allergo_shared.infrastructure.auth import make_auth_dependency, make_noop_auth_dependency
 from chat_service.application.rag import RagUseCase
 
 
-def get_rag_use_case(request: Request) -> RagUseCase:
-    return request.app.state.rag  # type: ignore[no-any-return]
+def get_rag_use_case(request: Request) -> Any:  # RagUseCase | ElasticsearchRagUseCase
+    """Return the RAG use-case stored in app.state during lifespan startup.
+
+    Returns Any to allow both RagUseCase (Azure AI Search) and
+    ElasticsearchRagUseCase (local dev) without a runtime import cycle.
+    Both classes expose the same public interface: answer(), answer_stream(),
+    and _parse_suggestions().
+    """
+    return request.app.state.rag
 
 
 def _build_auth_dependency():  # type: ignore[return]

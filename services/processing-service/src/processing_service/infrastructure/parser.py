@@ -86,6 +86,7 @@ def _parse_xlsx(data: bytes) -> ParseResult:
     import openpyxl  # openpyxl — declared in pyproject.toml
     wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
     parts: list[str] = []
+    sheet_count = len(wb.sheetnames)  # capture BEFORE close()
     for sheet in wb.worksheets:
         rows: list[str] = []
         for row in sheet.iter_rows(values_only=True):
@@ -95,4 +96,4 @@ def _parse_xlsx(data: bytes) -> ParseResult:
         if rows:
             parts.append(f"--- Sheet: {sheet.title} ---\n" + "\n".join(rows))
     wb.close()
-    return ParseResult(text="\n\n".join(parts), page_count=wb.sheetnames.__len__())
+    return ParseResult(text="\n\n".join(parts), page_count=sheet_count)

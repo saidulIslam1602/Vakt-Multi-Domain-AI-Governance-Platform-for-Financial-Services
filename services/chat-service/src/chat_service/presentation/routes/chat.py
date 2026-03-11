@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Annotated, AsyncIterator
+from typing import Annotated, Any, AsyncIterator
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -59,7 +59,7 @@ class ChatResponse(BaseModel):
 async def chat(
     body: ChatRequest,
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
-    rag: Annotated[RagUseCase, Depends(get_rag_use_case)],
+    rag: Annotated[Any, Depends(get_rag_use_case)],
 ) -> ChatResponse | StreamingResponse:
     if body.stream:
         return await _stream_response(body, current_user, rag)
@@ -93,7 +93,7 @@ async def chat(
 async def _stream_response(
     body: ChatRequest,
     current_user: AuthenticatedUser,
-    rag: RagUseCase,
+    rag: Any,
 ) -> StreamingResponse:
     """SSE stream: first emit metadata (citations, tools_used, suggestions),
     then stream answer tokens, then emit [DONE]."""

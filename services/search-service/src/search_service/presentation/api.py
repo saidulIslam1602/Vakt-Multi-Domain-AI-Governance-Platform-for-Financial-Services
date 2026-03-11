@@ -5,10 +5,6 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 
-from azure.identity import DefaultAzureCredential as SyncDefaultAzureCredential
-from azure.identity import get_bearer_token_provider
-from azure.identity.aio import DefaultAzureCredential
-from azure.search.documents.aio import SearchClient
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncAzureOpenAI
@@ -19,6 +15,13 @@ from search_service.application.search import SearchUseCase
 from search_service.infrastructure.config import get_settings
 from search_service.presentation.routes.search import router as search_router
 
+_ELASTICSEARCH_MARKERS = (":9200", "elasticsearch", "localhost:9200", "127.0.0.1:9200")
+
+
+def _is_elasticsearch(endpoint: str) -> bool:
+    lower = endpoint.lower()
+    return any(m in lower for m in _ELASTICSEARCH_MARKERS)
+
 
 def create_app() -> FastAPI:
     cfg = get_settings()
@@ -26,29 +29,54 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
-        credential = DefaultAzureCredential()
-        token_provider = get_bearer_token_provider(
-            SyncDefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
-        )
-        search_client = SearchClient(
-            endpoint=cfg.azure_search_endpoint,
-            index_name=cfg.azure_search_index_name,
-            credential=credential,
-        )
-        openai_client = AsyncAzureOpenAI(
-            azure_endpoint=cfg.azure_openai_endpoint,
-            api_version=cfg.azure_openai_api_version,
-            azure_ad_token_provider=token_provider,
-        )
-        application.state.search_use_case = SearchUseCase(
-            search_client=search_client,
-            openai_client=openai_client,
-            embedding_deployment=cfg.azure_openai_embedding_deployment,
-        )
-        yield
-        await search_client.close()
-        await openai_client.close()
-        await credential.close()
+        # Build OpenAI client (API key or managed identity)
+        if cfg.azure_openai_api_key:
+            openai_client = AsyncAzureOpenAI(
+                azure_endpoint=cfg.azure_openai_endpoint,
+                api_version=cfg.azure_openai_api_version,
+                api_key=cfg.azure_openai_api_key,
+            )
+        else:
+            from azure.identity import DefaultAzureCredential as SyncDefaultAzureCredential
+            from azure.identity import get_bearer_token_provider
+            token_provider = get_bearer_token_provider(
+                SyncDefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+            )
+            openai_client = AsyncAzureOpenAI(
+                azure_endpoint=cfg.azure_openai_endpoint,
+                api_version=cfg.azure_openai_api_version,
+                azure_ad_token_provider=token_provider,
+            )
+
+        if _is_elasticsearch(cfg.azure_search_endpoint):
+            from search_service.application.es_search import ElasticsearchSearchUseCase
+            application.state.search_use_case = ElasticsearchSearchUseCase(
+                endpoint=cfg.azure_search_endpoint,
+                index_name=cfg.azure_search_index_name,
+                openai_client=openai_client,
+                embedding_deployment=cfg.azure_openai_embedding_deployment,
+            )
+            yield
+            await openai_client.close()
+        else:
+            from azure.identity.aio import DefaultAzureCredential
+            from azure.search.documents.aio import SearchClient
+
+            credential = DefaultAzureCredential()
+            search_client = SearchClient(
+                endpoint=cfg.azure_search_endpoint,
+                index_name=cfg.azure_search_index_name,
+                credential=credential,
+            )
+            application.state.search_use_case = SearchUseCase(
+                search_client=search_client,
+                openai_client=openai_client,
+                embedding_deployment=cfg.azure_openai_embedding_deployment,
+            )
+            yield
+            await search_client.close()
+            await openai_client.close()
+            await credential.close()
 
     app = FastAPI(
         title="Allergo Nordic — Search Service",

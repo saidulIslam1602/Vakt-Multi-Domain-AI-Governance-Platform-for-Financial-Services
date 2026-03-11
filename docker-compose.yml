@@ -21,6 +21,28 @@ services:
       timeout: 5s
       retries: 5
 
+  # Runs every startup — all migrations use IF NOT EXISTS so they are idempotent.
+  # Services wait on this container (condition: service_completed_successfully).
+  db-migrate:
+    image: pgvector/pgvector:pg16
+    environment:
+      PGPASSWORD: allergo
+    volumes:
+      - ./services/ingest-service/src/ingest_service/infrastructure/db/migrations:/migrations:ro
+    entrypoint: >
+      sh -c "
+        until pg_isready -h postgres -U allergo; do sleep 1; done &&
+        for f in /migrations/*.sql; do
+          echo \"Applying $$f\" &&
+          psql -h postgres -U allergo -d allergo -f $$f;
+        done &&
+        echo 'All migrations applied.'
+      "
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     environment:
@@ -43,7 +65,7 @@ services:
     volumes:
       - azurite_data:/data
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "10000"]
+      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:10000/devstoreaccount1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,8 +103,8 @@ services:
       AZURE_SERVICEBUS_NAMESPACE_FQDN: rabbitmq:5672
       CORS_ORIGINS: '["http://localhost:3000"]'
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       azurite:
         condition: service_healthy
       rabbitmq:
@@ -101,12 +123,13 @@ services:
       AZURE_SERVICEBUS_NAMESPACE_FQDN: rabbitmq:5672
       AZURE_SEARCH_ENDPOINT: http://elasticsearch:9200
       AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
-      AZURE_OPENAI_API_VERSION: "2024-02-01"
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_API_VERSION: "2024-08-01-preview"
       AZURE_OPENAI_CHAT_DEPLOYMENT: gpt-4o
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       elasticsearch:
         condition: service_healthy
       rabbitmq:
@@ -127,8 +150,8 @@ services:
       AZURE_STORAGE_ACCOUNT_URL: http://azurite:10000/devstoreaccount1
       CORS_ORIGINS: '["http://localhost:3000"]'
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       azurite:
         condition: service_healthy
     restart: unless-stopped
@@ -145,7 +168,8 @@ services:
       AUTH_ENABLED: "false"
       AZURE_SEARCH_ENDPOINT: http://elasticsearch:9200
       AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
-      AZURE_OPENAI_API_VERSION: "2024-02-01"
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_API_VERSION: "2024-08-01-preview"
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
       CORS_ORIGINS: '["http://localhost:3000"]'
     depends_on:
@@ -166,13 +190,14 @@ services:
       DATABASE_URL: postgresql://allergo:allergo@postgres:5432/allergo
       AZURE_SEARCH_ENDPOINT: http://elasticsearch:9200
       AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
-      AZURE_OPENAI_API_VERSION: "2024-02-01"
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_API_VERSION: "2024-08-01-preview"
       AZURE_OPENAI_CHAT_DEPLOYMENT: gpt-4o
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
       CORS_ORIGINS: '["http://localhost:3000"]'
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
       elasticsearch:
         condition: service_healthy
     restart: unless-stopped

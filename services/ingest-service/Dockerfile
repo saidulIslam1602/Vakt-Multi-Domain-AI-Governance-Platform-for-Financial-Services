@@ -15,7 +15,7 @@ COPY services/shared-lib /tmp/shared-lib
 COPY services/ingest-service/pyproject.toml services/ingest-service/README.md ./
 COPY services/ingest-service/src ./src
 RUN pip install --prefix=/install /tmp/shared-lib && \
-    PYTHONPATH=/install/lib/python3.11/site-packages pip install --prefix=/install ".[dev]"
+    PYTHONPATH=/install/lib/python3.11/site-packages pip install --prefix=/install "."
 
 FROM base AS runtime
 COPY --from=builder /install /usr/local

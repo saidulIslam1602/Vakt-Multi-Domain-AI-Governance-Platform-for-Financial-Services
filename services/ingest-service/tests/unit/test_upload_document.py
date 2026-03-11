@@ -93,3 +93,66 @@ async def test_upload_publishes_correct_event(use_case, mock_queue):
     assert message["event_type"] == "document.uploaded"
     assert message["tenant_id"] == "tenant-abc"
     assert message["filename"] == "report.pdf"
+
+
+@pytest.mark.asyncio()
+async def test_upload_valid_docx(use_case, mock_storage):
+    docx_bytes = b"PK\x03\x04" + b"\x00" * 100  # minimal ZIP magic bytes
+    document = await use_case.execute(
+        filename="report.docx",
+        data=docx_bytes,
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        tenant_id="tenant-1",
+    )
+    assert document.status == DocumentStatus.UPLOADED
+    assert document.filename == "report.docx"
+
+
+@pytest.mark.asyncio()
+async def test_upload_valid_xlsx(use_case, mock_storage):
+    xlsx_bytes = b"PK\x03\x04" + b"\x00" * 100  # ZIP magic bytes (xlsx is a zip)
+    document = await use_case.execute(
+        filename="ledger.xlsx",
+        data=xlsx_bytes,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        tenant_id="tenant-1",
+    )
+    assert document.status == DocumentStatus.UPLOADED
+    assert document.filename == "ledger.xlsx"
+
+
+@pytest.mark.asyncio()
+async def test_upload_valid_txt(use_case, mock_storage):
+    document = await use_case.execute(
+        filename="notes.txt",
+        data=b"plain text content",
+        content_type="text/plain",
+        tenant_id="tenant-1",
+    )
+    assert document.status == DocumentStatus.UPLOADED
+
+
+@pytest.mark.asyncio()
+async def test_upload_stores_tenant_id_in_document(use_case):
+    document = await use_case.execute(
+        filename="invoice.pdf",
+        data=b"%PDF invoice",
+        content_type="application/pdf",
+        tenant_id="my-tenant-99",
+    )
+    assert str(document.tenant_id) == "my-tenant-99"
+
+
+@pytest.mark.asyncio()
+async def test_upload_storage_path_contains_tenant(use_case, mock_storage):
+    """Blob path must be scoped to the tenant so documents are isolated."""
+    await use_case.execute(
+        filename="invoice.pdf",
+        data=b"%PDF",
+        content_type="application/pdf",
+        tenant_id="tenant-xyz",
+    )
+    call_args = mock_storage.upload.call_args
+    # Second positional arg or 'blob_name' kwarg should contain the tenant
+    blob_name = call_args[1].get("blob_name") or call_args[0][1]
+    assert "tenant-xyz" in blob_name, f"Expected tenant in blob_name, got: {blob_name}"

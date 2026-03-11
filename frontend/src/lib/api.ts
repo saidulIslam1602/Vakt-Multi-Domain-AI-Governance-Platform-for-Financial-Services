@@ -212,10 +212,16 @@ function createClient(baseURL: string): AxiosInstance {
 // Base URLs map to Next.js rewrites in next.config.ts.
 // Each client base URL already includes the service path prefix,
 // so route paths below should NOT repeat it.
-const ingestClient = createClient("/api/ingest/documents");
-const documentClient = createClient("/api/documents/documents");
-const searchClient = createClient("/api/search/search");
-const chatClient = createClient("/api/chat/chat");
+const ingestClient    = createClient("/api/ingest/documents");
+const documentClient  = createClient("/api/documents/documents");
+const reviewClient    = createClient("/api/documents/review");
+const searchClient    = createClient("/api/search/search");
+const chatClient      = createClient("/api/chat/chat");
+const webhookClient   = createClient("/api/documents/webhooks");
+const alertsClient    = createClient("/api/documents/alerts");
+const tagsClient      = createClient("/api/documents/documents");
+const statsClient     = createClient("/api/documents/stats");
+const savedClient     = createClient("/api/chat/chat/saved");
 
 export const documentsApi = {
   upload: async (file: File): Promise<{ document_id: string }> => {
@@ -279,7 +285,7 @@ export const documentsApi = {
     limit?: number;
     offset?: number;
   } = {}): Promise<ReviewItem[]> => {
-    const res = await documentClient.get<ReviewItem[]>("/review/queue", {
+    const res = await reviewClient.get<ReviewItem[]>("/queue", {
       params,
     });
     return res.data;
@@ -290,16 +296,14 @@ export const documentsApi = {
     decision: "approved" | "rejected",
     reason?: string
   ): Promise<void> => {
-    await documentClient.patch(`/review/queue/${id}`, { decision, reason });
+    await reviewClient.patch(`/queue/${id}`, { decision, reason });
   },
 
   getDashboardStats: async (): Promise<DashboardStats> => {
-    const res = await documentClient.get<DashboardStats>("/stats");
+    const res = await statsClient.get<DashboardStats>("/");
     return res.data;
   },
 };
-
-const webhookClient = createClient("/api/documents/webhooks");
 
 export const webhooksApi = {
   list: async (): Promise<WebhookConfig[]> => {
@@ -432,11 +436,6 @@ export interface SavedQuery {
 }
 
 // ─── Extended API clients ──────────────────────────────────────────────────────
-
-const alertsClient = createClient("/api/documents/alerts");
-const tagsClient   = createClient("/api/documents/documents");
-const statsClient  = createClient("/api/documents/stats");
-const savedClient  = createClient("/api/chat/chat/saved");
 
 export const tagsApi = {
   get: async (documentId: string): Promise<TagsResponse> => {

@@ -89,7 +89,7 @@ class DocumentStatusUpdater:
         try:
             async with self._pool.acquire() as conn:
                 rules = await conn.fetch(
-                    """SELECT id, trigger_type, threshold_value, days_before, document_category
+                    """SELECT rule_id, trigger_type, threshold_value, days_before, document_category
                        FROM alert_rules
                        WHERE tenant_id = $1 AND enabled = true""",
                     tenant_id,
@@ -105,7 +105,7 @@ class DocumentStatusUpdater:
                                (tenant_id, rule_id, document_id, trigger_type, message, metadata)
                                VALUES ($1, $2, $3, $4, $5, $6)""",
                             tenant_id,
-                            rule["id"],
+                            rule["rule_id"],
                             document_id,
                             rule["trigger_type"],
                             message,
@@ -120,7 +120,7 @@ class DocumentStatusUpdater:
                         )
                         logger.info(
                             "alert_fired",
-                            rule_id=str(rule["id"]),
+                            rule_id=str(rule["rule_id"]),
                             trigger_type=rule["trigger_type"],
                             document_id=document_id,
                         )

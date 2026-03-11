@@ -26,6 +26,7 @@ dependencies = [
     "structlog>=24.1",
     "asyncpg>=0.29",
     "tenacity>=8.3",
+    "aio-pika>=9.4",
     "allergo-shared>=0.1",
 ]
 

@@ -19,6 +19,7 @@ dependencies = [
     "azure-search-documents>=11.6",
     "opentelemetry-api>=1.24",
     "structlog>=24.1",
+    "aio-pika>=9.4",
 ]
 
 [project.optional-dependencies]

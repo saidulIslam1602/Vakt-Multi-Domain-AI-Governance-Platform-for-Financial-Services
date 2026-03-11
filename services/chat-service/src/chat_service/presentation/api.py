@@ -6,10 +6,6 @@ from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 
 import asyncpg
-from azure.identity import DefaultAzureCredential as SyncDefaultAzureCredential
-from azure.identity import get_bearer_token_provider
-from azure.identity.aio import DefaultAzureCredential
-from azure.search.documents.aio import SearchClient
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncAzureOpenAI
@@ -22,6 +18,13 @@ from chat_service.infrastructure.db_reader import FinancialDbReader
 from chat_service.presentation.routes.chat import router as chat_router
 from chat_service.presentation.routes.saved_queries import router as saved_queries_router
 
+_ELASTICSEARCH_MARKERS = (":9200", "elasticsearch", "localhost:9200", "127.0.0.1:9200")
+
+
+def _is_elasticsearch(endpoint: str) -> bool:
+    lower = endpoint.lower()
+    return any(m in lower for m in _ELASTICSEARCH_MARKERS)
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
@@ -33,7 +36,8 @@ class Settings(BaseSettings):
     azure_search_endpoint: str
     azure_search_index_name: str = "documents"
     azure_openai_endpoint: str
-    azure_openai_api_version: str = "2024-02-01"
+    azure_openai_api_version: str = "2024-08-01-preview"
+    azure_openai_api_key: str = ""
     azure_openai_chat_deployment: str = "gpt-4o"
     azure_openai_embedding_deployment: str = "text-embedding-3-large"
     auth_jwks_uri: str = ""
@@ -51,34 +55,65 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
         pool = await asyncpg.create_pool(cfg.database_url, min_size=2, max_size=8)
-        credential = DefaultAzureCredential()
-        token_provider = get_bearer_token_provider(
-            SyncDefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
-        )
-        search_client = SearchClient(
-            endpoint=cfg.azure_search_endpoint,
-            index_name=cfg.azure_search_index_name,
-            credential=credential,
-        )
-        openai_client = AsyncAzureOpenAI(
-            azure_endpoint=cfg.azure_openai_endpoint,
-            api_version=cfg.azure_openai_api_version,
-            azure_ad_token_provider=token_provider,
-        )
         db_reader = FinancialDbReader(pool)
-        application.state.rag = RagUseCase(
-            search_client=search_client,
-            openai_client=openai_client,
-            db_reader=db_reader,
-            embedding_deployment=cfg.azure_openai_embedding_deployment,
-            chat_deployment=cfg.azure_openai_chat_deployment,
-            top_k=cfg.rag_top_k,
-        )
-        yield
-        await pool.close()
-        await search_client.close()
-        await openai_client.close()
-        await credential.close()
+        # Store pool so saved_queries route can access it
+        application.state.pool = pool
+
+        # Build OpenAI client — prefer API key (works locally without managed identity)
+        if cfg.azure_openai_api_key:
+            openai_client = AsyncAzureOpenAI(
+                azure_endpoint=cfg.azure_openai_endpoint,
+                api_version=cfg.azure_openai_api_version,
+                api_key=cfg.azure_openai_api_key,
+            )
+        else:
+            from azure.identity import DefaultAzureCredential as SyncCred
+            from azure.identity import get_bearer_token_provider
+            token_provider = get_bearer_token_provider(
+                SyncCred(), "https://cognitiveservices.azure.com/.default"
+            )
+            openai_client = AsyncAzureOpenAI(
+                azure_endpoint=cfg.azure_openai_endpoint,
+                api_version=cfg.azure_openai_api_version,
+                azure_ad_token_provider=token_provider,
+            )
+
+        if _is_elasticsearch(cfg.azure_search_endpoint):
+            from chat_service.application.es_rag import ElasticsearchRagUseCase
+            application.state.rag = ElasticsearchRagUseCase(
+                es_endpoint=cfg.azure_search_endpoint,
+                index_name=cfg.azure_search_index_name,
+                openai_client=openai_client,
+                db_reader=db_reader,
+                embedding_deployment=cfg.azure_openai_embedding_deployment,
+                chat_deployment=cfg.azure_openai_chat_deployment,
+                top_k=cfg.rag_top_k,
+            )
+            yield
+            await pool.close()
+            await openai_client.close()
+        else:
+            from azure.identity.aio import DefaultAzureCredential
+            from azure.search.documents.aio import SearchClient
+            credential = DefaultAzureCredential()
+            search_client = SearchClient(
+                endpoint=cfg.azure_search_endpoint,
+                index_name=cfg.azure_search_index_name,
+                credential=credential,
+            )
+            application.state.rag = RagUseCase(
+                search_client=search_client,
+                openai_client=openai_client,
+                db_reader=db_reader,
+                embedding_deployment=cfg.azure_openai_embedding_deployment,
+                chat_deployment=cfg.azure_openai_chat_deployment,
+                top_k=cfg.rag_top_k,
+            )
+            yield
+            await pool.close()
+            await search_client.close()
+            await openai_client.close()
+            await credential.close()
 
     app = FastAPI(
         title="Allergo Nordic — CFO Chat Service",

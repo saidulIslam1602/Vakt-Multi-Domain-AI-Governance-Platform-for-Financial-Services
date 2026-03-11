@@ -44,9 +44,10 @@ async def get_download_url(
 
     blob_path: str = row["blob_path"]
     # blob_path format: "{tenant_id}/{document_id}/{filename}"
-    parts = blob_path.split("/", 1)
-    container = parts[0] if len(parts) == 2 else "documents"
-    blob_name = parts[1] if len(parts) == 2 else blob_path
+    # The container is always "raw-documents" — we must NOT split blob_path
+    # to derive the container, as that would misuse the tenant_id as a container name.
+    container = "raw-documents"
+    blob_name = blob_path
 
     sas_url = await blob.generate_sas_url(
         container=container,

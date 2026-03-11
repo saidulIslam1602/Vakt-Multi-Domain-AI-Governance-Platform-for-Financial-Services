@@ -160,7 +160,7 @@ async def delete_webhook(
 
 def _sign_payload(secret: str, payload: bytes) -> str:
     """Return HMAC-SHA256 hex signature (same format as GitHub webhooks)."""
-    return "sha256=" + hmac.new(key=secret.encode(), msg=payload, digestmod=hashlib.sha256).hexdigest()
+    return "sha256=" + hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
 
 
 async def dispatch_webhook_event(
