@@ -13,13 +13,13 @@
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "main" {
-  name                        = "${local.prefix}-kv"
-  location                    = local.location
-  resource_group_name         = azurerm_resource_group.main.name
-  tenant_id                   = data.azurerm_client_config.current.tenant_id
-  sku_name                    = "standard"
-  soft_delete_retention_days  = 90
-  purge_protection_enabled    = true   # prevents accidental / malicious permanent deletion
+  name                       = "${local.prefix}-kv"
+  location                   = local.location
+  resource_group_name        = azurerm_resource_group.main.name
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  sku_name                   = "standard"
+  soft_delete_retention_days = 90
+  purge_protection_enabled   = true # prevents accidental / malicious permanent deletion
 
   # Disable public network access — only Azure services and the pipeline OIDC
   # identity can reach the vault.
