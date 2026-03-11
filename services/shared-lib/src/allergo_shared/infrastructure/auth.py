@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Annotated
+from collections.abc import Awaitable, Callable
+from typing import Annotated, Any
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -25,7 +25,7 @@ def make_auth_dependency(
     jwks_uri: str,
     audience: str,
     issuer: str,
-) -> Callable[..., AuthenticatedUser]:
+) -> Callable[..., Awaitable[AuthenticatedUser]]:
     """Factory returning a FastAPI dependency for JWT validation via JWKS."""
 
     jwks_client = jwt.PyJWKClient(jwks_uri)
@@ -36,7 +36,7 @@ def make_auth_dependency(
         token = credentials.credentials
         try:
             signing_key = jwks_client.get_signing_key_from_jwt(token)
-            payload = jwt.decode(
+            payload: dict[str, Any] = jwt.decode(
                 token,
                 signing_key.key,
                 algorithms=["RS256"],
@@ -62,7 +62,7 @@ def make_auth_dependency(
     return _auth
 
 
-def make_noop_auth_dependency() -> Callable[..., AuthenticatedUser]:
+def make_noop_auth_dependency() -> Callable[..., Awaitable[AuthenticatedUser]]:
     """Auth dependency that always succeeds — for local development only."""
 
     async def _auth() -> AuthenticatedUser:

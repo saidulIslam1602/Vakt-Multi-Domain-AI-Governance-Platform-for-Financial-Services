@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections.abc import MutableMapping
+from typing import Any
 
 import structlog
 
@@ -11,7 +13,9 @@ import structlog
 def configure_logging(service_name: str, log_level: str = "INFO") -> None:
     """Configure structured JSON logging for production and human-readable for local dev."""
 
-    def _add_logger_name(logger: object, method: str, event_dict: dict) -> dict:
+    def _add_logger_name(
+        logger: Any, method: str, event_dict: MutableMapping[str, Any]
+    ) -> MutableMapping[str, Any]:
         """Safe drop-in for structlog.stdlib.add_logger_name that works with PrintLogger."""
         if hasattr(logger, "name"):
             event_dict["logger"] = logger.name
@@ -38,5 +42,5 @@ def configure_logging(service_name: str, log_level: str = "INFO") -> None:
     structlog.contextvars.bind_contextvars(service=service_name)
 
 
-def get_logger(name: str) -> structlog.BoundLogger:
+def get_logger(name: str) -> Any:
     return structlog.get_logger(name)

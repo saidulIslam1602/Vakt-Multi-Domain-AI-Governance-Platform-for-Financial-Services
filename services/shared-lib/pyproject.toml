@@ -41,8 +41,6 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "ANN", "S", "B", "A", "C4", "PT"]
 ignore = [
-    "ANN101",  # missing type annotation for self
-    "ANN102",  # missing type annotation for cls
     "ANN401",  # Any is intentional in queue abstractions and low-level adapters
     "S110",    # try-except-pass is intentional for idempotent container creation
 ]

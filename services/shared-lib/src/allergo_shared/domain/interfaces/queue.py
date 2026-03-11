@@ -28,6 +28,9 @@ class MessageQueuePort(ABC):
     ) -> AsyncIterator[QueueMessage]:
         """Return an async iterator that yields messages from the queue."""
 
+    async def close(self) -> None:  # noqa: B027
+        """Release connection resources. Override in concrete adapters."""
+
 
 class QueueMessage(ABC):
     """Represents a received message from the queue."""

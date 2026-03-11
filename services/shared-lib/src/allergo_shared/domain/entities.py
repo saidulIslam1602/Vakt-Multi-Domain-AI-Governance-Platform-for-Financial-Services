@@ -110,11 +110,11 @@ class ExtractionResult(BaseModel):
     """EBITDA figure with currency if present"""
     net_profit: str | None = None
     """Net profit / net income with currency"""
-    report_line_items: list[dict] = Field(default_factory=list)
+    report_line_items: list[dict[str, Any]] = Field(default_factory=list)
     """Structured P&L or balance-sheet line items: [{account, amount, period}]"""
 
     # ── General Ledger / journal entry fields ─────────────────────────────────
-    ledger_entries: list[dict] = Field(default_factory=list)
+    ledger_entries: list[dict[str, Any]] = Field(default_factory=list)
     """Journal entries: [{date, account_code, account_name, debit, credit, description}]"""
     posting_period: str | None = None
     """Accounting period for journal entries, e.g. '2025-02'"""

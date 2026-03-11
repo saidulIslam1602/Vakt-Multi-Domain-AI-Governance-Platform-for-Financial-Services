@@ -64,15 +64,15 @@ class RabbitMQAdapter(MessageQueuePort):
 
     def __init__(self, amqp_url: str) -> None:
         self._amqp_url = amqp_url
-        self._connection = None
-        self._channel = None
+        self._connection: Any = None
+        self._channel: Any = None
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
-    async def _get_channel(self) -> Any:  # type: ignore[return]
+    async def _get_channel(self) -> Any:
         """Lazily create an aio-pika connection + channel."""
         try:
-            import aio_pika  # type: ignore[import]
+            import aio_pika
         except ImportError as exc:
             raise QueueError(
                 "aio-pika is required for RabbitMQ support. "
@@ -85,8 +85,8 @@ class RabbitMQAdapter(MessageQueuePort):
             self._channel = await self._connection.channel()
         return self._channel
 
-    async def _declare_exchange(self, channel: Any, name: str) -> Any:  # type: ignore[return]
-        import aio_pika  # type: ignore[import]
+    async def _declare_exchange(self, channel: Any, name: str) -> Any:
+        import aio_pika
         return await channel.declare_exchange(
             name,
             aio_pika.ExchangeType.FANOUT,
@@ -103,7 +103,7 @@ class RabbitMQAdapter(MessageQueuePort):
         session_id: str | None = None,
     ) -> None:
         try:
-            import aio_pika  # type: ignore[import]
+            import aio_pika
             channel = await self._get_channel()
             exchange = await self._declare_exchange(channel, topic_or_queue)
             body = json.dumps(message, default=str).encode()
@@ -198,7 +198,7 @@ class _RabbitMQMessage(QueueMessage):
     async def dead_letter(self, reason: str = "") -> None:
         # Publish to a dead-letter exchange then ack original
         try:
-            import aio_pika  # type: ignore[import]
+            import aio_pika
             dl_exchange = await self._channel.declare_exchange(
                 f"{self._topic}.dead-letter",
                 aio_pika.ExchangeType.FANOUT,
