@@ -334,7 +334,7 @@ class ElasticsearchRagUseCase:
                 rec = _rec(r)
                 rec["as_of"] = today_str
                 try:
-                    due = _date.fromisoformat(str(r.get("due_date", "")))
+                    due = _date.fromisoformat(str(getattr(r, "due_date", "") or ""))
                     rec["days_overdue"] = (today - due).days
                 except Exception:
                     pass
@@ -348,7 +348,7 @@ class ElasticsearchRagUseCase:
                 rec = _rec(r)
                 rec["as_of"] = today_str
                 try:
-                    due = _date.fromisoformat(str(r.get("due_date", "")))
+                    due = _date.fromisoformat(str(getattr(r, "due_date", "") or ""))
                     rec["days_until_due"] = (due - today).days
                 except Exception:
                     pass
@@ -362,7 +362,7 @@ class ElasticsearchRagUseCase:
                 rec = _rec(r)
                 rec["as_of"] = today_str
                 try:
-                    exp = _date.fromisoformat(str(r.get("contract_end_date", "")))
+                    exp = _date.fromisoformat(str(getattr(r, "contract_end_date", "") or ""))
                     rec["days_until_expiry"] = (exp - today).days
                 except Exception:
                     pass

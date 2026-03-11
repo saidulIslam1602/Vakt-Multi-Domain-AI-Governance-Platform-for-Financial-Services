@@ -208,7 +208,7 @@ class EmailPoller:
             conn.select(self._mailbox)
 
             # Search for UNSEEN messages only
-            status, uid_list = conn.uid("search", None, "UNSEEN")  # type: ignore[call-overload]
+            status, uid_list = conn.uid("SEARCH", "UNSEEN")  # type: ignore[call-overload]
             if status != "OK" or not uid_list or not uid_list[0]:
                 conn.logout()
                 return results
