@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import io
-import struct
 
 import pytest
 
 from allergo_shared.domain.enums import DocumentType
 from allergo_shared.domain.exceptions import ValidationError
 from processing_service.infrastructure.parser import (
-    ParseResult,
     _parse_text,
     _parse_xlsx,
     parse_document,

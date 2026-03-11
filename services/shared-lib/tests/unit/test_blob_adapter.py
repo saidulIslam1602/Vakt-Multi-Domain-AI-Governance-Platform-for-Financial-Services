@@ -7,11 +7,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from allergo_shared.infrastructure.azure.blob import (
+    AzureBlobStorage,
     _build_azurite_connection_string,
     _is_azurite,
-    AzureBlobStorage,
 )
-
 
 # ── _is_azurite ────────────────────────────────────────────────────────────────
 

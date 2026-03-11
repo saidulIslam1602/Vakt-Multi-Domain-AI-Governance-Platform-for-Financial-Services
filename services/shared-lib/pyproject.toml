@@ -37,12 +37,21 @@ packages = ["src/allergo_shared"]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "ANN", "S", "B", "A", "C4", "PT"]
 ignore = [
     "ANN101",  # missing type annotation for self
     "ANN102",  # missing type annotation for cls
     "ANN401",  # Any is intentional in queue abstractions and low-level adapters
     "S110",    # try-except-pass is intentional for idempotent container creation
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",   # assert is standard pytest syntax
+    "ANN",    # type annotations not required in tests
+    "E501",   # long lines acceptable in test assertions / fixtures
 ]
 
 [tool.mypy]

@@ -6,13 +6,10 @@ RabbitMQ broker (no aio-pika network calls are made).
 
 from __future__ import annotations
 
-import pytest
-
 from allergo_shared.infrastructure.azure.rabbitmq import (
     _build_amqp_url,
     _is_amqp_url,
 )
-
 
 # ── _is_amqp_url ──────────────────────────────────────────────────────────────
 
@@ -85,9 +82,10 @@ class TestAzureServiceBusDelegation:
 
     def test_azure_service_bus_delegates_to_rabbitmq_adapter(self):
         """AzureServiceBus.__init__ should create a RabbitMQAdapter for local endpoints."""
-        from allergo_shared.infrastructure.azure.service_bus import AzureServiceBus
-        from allergo_shared.infrastructure.azure.rabbitmq import RabbitMQAdapter
         from unittest.mock import patch
+
+        from allergo_shared.infrastructure.azure.rabbitmq import RabbitMQAdapter
+        from allergo_shared.infrastructure.azure.service_bus import AzureServiceBus
 
         with patch.object(RabbitMQAdapter, "__init__", return_value=None):
             bus = AzureServiceBus("rabbitmq:5672")
