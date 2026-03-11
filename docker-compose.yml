@@ -11,7 +11,7 @@ services:
       POSTGRES_USER: allergo
       POSTGRES_PASSWORD: allergo
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./services/ingest-service/src/ingest_service/infrastructure/db/migrations:/docker-entrypoint-initdb.d
@@ -20,28 +20,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # Runs every startup — all migrations use IF NOT EXISTS so they are idempotent.
-  # Services wait on this container (condition: service_completed_successfully).
-  db-migrate:
-    image: pgvector/pgvector:pg16
-    environment:
-      PGPASSWORD: allergo
-    volumes:
-      - ./services/ingest-service/src/ingest_service/infrastructure/db/migrations:/migrations:ro
-    entrypoint: >
-      sh -c "
-        until pg_isready -h postgres -U allergo; do sleep 1; done &&
-        for f in /migrations/*.sql; do
-          echo \"Applying $$f\" &&
-          psql -h postgres -U allergo -d allergo -f $$f;
-        done &&
-        echo 'All migrations applied.'
-      "
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: "no"
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
@@ -58,14 +36,16 @@ services:
       retries: 5
 
   azurite:
-    image: mcr.microsoft.com/azure-storage/azurite
-    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0
+    image: mcr.microsoft.com/azure-storage/azurite:3.33.0
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --skipApiVersionCheck --loose
+    environment:
+      AZURITE_ACCOUNTS: "devstoreaccount1:Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tfd8e9jmJAbWE56NfzFiZy7YlQ=="
     ports:
       - "10000:10000"
     volumes:
       - azurite_data:/data
     healthcheck:
-      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:10000/devstoreaccount1"]
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 10000"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -103,8 +83,8 @@ services:
       AZURE_SERVICEBUS_NAMESPACE_FQDN: rabbitmq:5672
       CORS_ORIGINS: '["http://localhost:3000"]'
     depends_on:
-      db-migrate:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
       azurite:
         condition: service_healthy
       rabbitmq:
@@ -128,8 +108,8 @@ services:
       AZURE_OPENAI_CHAT_DEPLOYMENT: gpt-4o
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
     depends_on:
-      db-migrate:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
       elasticsearch:
         condition: service_healthy
       rabbitmq:
@@ -150,8 +130,8 @@ services:
       AZURE_STORAGE_ACCOUNT_URL: http://azurite:10000/devstoreaccount1
       CORS_ORIGINS: '["http://localhost:3000"]'
     depends_on:
-      db-migrate:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
       azurite:
         condition: service_healthy
     restart: unless-stopped
@@ -196,8 +176,8 @@ services:
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
       CORS_ORIGINS: '["http://localhost:3000"]'
     depends_on:
-      db-migrate:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
       elasticsearch:
         condition: service_healthy
     restart: unless-stopped
@@ -209,7 +189,7 @@ services:
       context: frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       INGEST_SERVICE_URL: http://ingest-service:8000
       DOCUMENT_SERVICE_URL: http://document-service:8000

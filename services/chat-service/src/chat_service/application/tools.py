@@ -119,8 +119,8 @@ TOOLS: list[dict] = [
                     },
                     "days_ahead": {
                         "type": "integer",
-                        "description": "Lookahead window in days (for due_soon_invoices and expiring_contracts). Default 30.",
-                        "default": 30,
+                        "description": "Lookahead window in days (for due_soon_invoices and expiring_contracts). Default 90. Use 90 unless the user explicitly specifies a shorter window.",
+                        "default": 90,
                     },
                     "date_from": {
                         "type": "string",

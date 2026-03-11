@@ -12,6 +12,7 @@ remain unchanged.
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
 
 import aiohttp
@@ -23,7 +24,8 @@ from chat_service.application.rag import (
     ChatMessage,
     Citation,
     MAX_TOOL_ROUNDS,
-    _SYSTEM_PROMPT,
+    _build_system_prompt,
+    _INTENT_MAP,
     _rec,
 )
 from chat_service.application.tools import TOOLS
@@ -109,7 +111,14 @@ class ElasticsearchRagUseCase:
                     tool_call, tenant_id, document_ids
                 )
                 citations.extend(new_cits)
-                tools_used.append(tool_call.function.name)
+                if tool_call.function.name == "query_financial_database":
+                    try:
+                        qt = json.loads(tool_call.function.arguments).get("query_type", tool_call.function.name)
+                        tools_used.append(qt)
+                    except Exception:
+                        tools_used.append(tool_call.function.name)
+                else:
+                    tools_used.append(tool_call.function.name)
                 messages.append(
                     {
                         "role": "tool",
@@ -156,7 +165,7 @@ class ElasticsearchRagUseCase:
                 tools=TOOLS,  # type: ignore[arg-type]
                 tool_choice="auto",
                 temperature=0.1,
-                max_tokens=128,
+                max_tokens=1024,  # Enough for tool selection + arguments; 128 was too small
             )
             msg = response.choices[0].message
             if not msg.tool_calls:
@@ -165,7 +174,14 @@ class ElasticsearchRagUseCase:
             for tc in msg.tool_calls:
                 result, new_cits = await self._execute_tool(tc, tenant_id, document_ids)
                 citations.extend(new_cits)
-                tools_used.append(tc.function.name)
+                if tc.function.name == "query_financial_database":
+                    try:
+                        qt = json.loads(tc.function.arguments).get("query_type", tc.function.name)
+                        tools_used.append(qt)
+                    except Exception:
+                        tools_used.append(tc.function.name)
+                else:
+                    tools_used.append(tc.function.name)
                 messages.append(
                     {
                         "role": "tool",
@@ -192,6 +208,8 @@ class ElasticsearchRagUseCase:
 
         async def _token_gen() -> AsyncIterator[str]:
             async for chunk in stream:  # type: ignore[union-attr]
+                if not chunk.choices:  # Azure OpenAI sends empty choices on the final chunk
+                    continue
                 delta = chunk.choices[0].delta.content or ""
                 if delta:
                     yield delta
@@ -305,42 +323,75 @@ class ElasticsearchRagUseCase:
 
     async def _tool_db(self, args: dict[str, Any], tenant_id: str) -> dict[str, Any]:
         """Dispatch to the appropriate FinancialDbReader method (identical to RagUseCase)."""
+        from datetime import date as _date
         q = args.get("query_type", "")
+        today = _date.today()
+        today_str = today.isoformat()
 
         if q == "overdue_invoices":
             records = await self._db.get_overdue_invoices(tenant_id)
-            return {"query": q, "count": len(records), "records": [_rec(r) for r in records]}
+            annotated = []
+            for r in records:
+                rec = _rec(r)
+                rec["as_of"] = today_str
+                try:
+                    due = _date.fromisoformat(str(r.get("due_date", "")))
+                    rec["days_overdue"] = (today - due).days
+                except Exception:
+                    pass
+                annotated.append(rec)
+            return {"query": q, "as_of": today_str, "count": len(annotated), "records": annotated}
         if q == "due_soon_invoices":
-            days = int(args.get("days_ahead", 30))
+            days = int(args.get("days_ahead", 90))
             records = await self._db.get_due_soon_invoices(tenant_id, days)
-            return {"query": q, "days_ahead": days, "count": len(records), "records": [_rec(r) for r in records]}
+            annotated = []
+            for r in records:
+                rec = _rec(r)
+                rec["as_of"] = today_str
+                try:
+                    due = _date.fromisoformat(str(r.get("due_date", "")))
+                    rec["days_until_due"] = (due - today).days
+                except Exception:
+                    pass
+                annotated.append(rec)
+            return {"query": q, "as_of": today_str, "days_ahead": days, "count": len(annotated), "records": annotated}
         if q == "expiring_contracts":
             days = int(args.get("days_ahead", 90))
             records = await self._db.get_expiring_contracts(tenant_id, days)
-            return {"query": q, "days_ahead": days, "count": len(records), "records": [_rec(r) for r in records]}
+            annotated = []
+            for r in records:
+                rec = _rec(r)
+                rec["as_of"] = today_str
+                try:
+                    exp = _date.fromisoformat(str(r.get("contract_end_date", "")))
+                    rec["days_until_expiry"] = (exp - today).days
+                except Exception:
+                    pass
+                annotated.append(rec)
+            return {"query": q, "as_of": today_str, "days_ahead": days, "count": len(annotated), "records": annotated}
         if q == "pending_approvals":
             records = await self._db.list_pending_approvals(tenant_id)
-            return {"query": q, "count": len(records), "records": [_rec(r) for r in records]}
+            return {"query": q, "as_of": today_str, "count": len(records), "records": [_rec(r) for r in records]}
         if q == "count_by_category":
             rows = await self._db.count_by_category(
                 tenant_id, date_from=args.get("date_from"), date_to=args.get("date_to")
             )
-            return {"query": q, "categories": rows}
+            return {"query": q, "as_of": today_str, "categories": rows}
         if q == "list_by_vendor":
             vendor = args.get("vendor_name", "")
             if not vendor:
                 return {"error": "vendor_name is required for list_by_vendor"}
             records = await self._db.list_by_vendor(tenant_id, vendor, args.get("document_category"))
-            return {"query": q, "vendor": vendor, "count": len(records), "records": [_rec(r) for r in records]}
+            return {"query": q, "as_of": today_str, "vendor": vendor, "count": len(records), "records": [_rec(r) for r in records]}
         if q == "get_document_summary":
             doc_id = args.get("document_id", "")
             if not doc_id:
                 return {"error": "document_id is required for get_document_summary"}
             summary = await self._db.get_document_summary(tenant_id, doc_id)
-            return {"query": q, "document": summary}
+            return {"query": q, "as_of": today_str, "document": summary}
         if q == "dashboard_snapshot":
             snap = await self._db.get_dashboard_snapshot(tenant_id)
-            return {"query": q, "snapshot": snap}
+            return {"query": q, "as_of": today_str, "snapshot": snap}
         if q == "aggregate_by_location":
             rows = await self._db.aggregate_by_location(
                 tenant_id,
@@ -348,7 +399,7 @@ class ElasticsearchRagUseCase:
                 date_from=args.get("date_from"),
                 date_to=args.get("date_to"),
             )
-            return {"query": q, "count": len(rows), "locations": rows}
+            return {"query": q, "as_of": today_str, "count": len(rows), "locations": rows}
         if q == "spend_by_period":
             rows = await self._db.spend_by_period(
                 tenant_id,
@@ -357,7 +408,7 @@ class ElasticsearchRagUseCase:
                 date_from=args.get("date_from"),
                 date_to=args.get("date_to"),
             )
-            return {"query": q, "period_unit": args.get("period_unit", "month"), "periods": rows}
+            return {"query": q, "as_of": today_str, "period_unit": args.get("period_unit", "month"), "periods": rows}
         if q == "spend_by_cost_center":
             rows = await self._db.spend_by_cost_center(
                 tenant_id,
@@ -365,14 +416,14 @@ class ElasticsearchRagUseCase:
                 date_from=args.get("date_from"),
                 date_to=args.get("date_to"),
             )
-            return {"query": q, "count": len(rows), "cost_centers": rows}
+            return {"query": q, "as_of": today_str, "count": len(rows), "cost_centers": rows}
         if q == "legal_obligations":
             rows = await self._db.get_legal_obligations(
                 tenant_id,
                 include_risk_only=bool(args.get("include_risk_only", False)),
                 location=args.get("location"),
             )
-            return {"query": q, "count": len(rows), "contracts": rows}
+            return {"query": q, "as_of": today_str, "count": len(rows), "contracts": rows}
         if q == "ledger_by_account":
             rows = await self._db.ledger_by_account(
                 tenant_id,
@@ -380,7 +431,7 @@ class ElasticsearchRagUseCase:
                 posting_period=args.get("posting_period"),
                 location=args.get("location"),
             )
-            return {"query": q, "count": len(rows), "ledger_documents": rows}
+            return {"query": q, "as_of": today_str, "count": len(rows), "ledger_documents": rows}
 
         return {"error": f"Unknown query_type: {q}"}
 
@@ -390,7 +441,7 @@ class ElasticsearchRagUseCase:
     def _build_messages(
         question: str, history: list[ChatMessage] | None
     ) -> list[dict[str, str]]:
-        msgs: list[dict[str, str]] = [{"role": "system", "content": _SYSTEM_PROMPT}]
+        msgs: list[dict[str, str]] = [{"role": "system", "content": _build_system_prompt()}]
         for h in (history or [])[-10:]:
             msgs.append({"role": h.role, "content": h.content})
         msgs.append({"role": "user", "content": question})
@@ -423,8 +474,9 @@ def _detect_intent(tools_used: list[str]) -> str:
     if not tools_used:
         return "general"
     for tool in tools_used:
-        if tool == "query_financial_database":
-            return "financial_data"
+        intent = _INTENT_MAP.get(tool)
+        if intent:
+            return intent
         if tool == "search_document_content":
             return "content_search"
     return "general"

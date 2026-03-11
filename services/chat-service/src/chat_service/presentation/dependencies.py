@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import Request
 
 from allergo_shared.infrastructure.auth import make_auth_dependency, make_noop_auth_dependency
+from chat_service.application.rag import RagUseCase
 
 
 def get_rag_use_case(request: Request) -> Any:  # RagUseCase | ElasticsearchRagUseCase

@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from allergo_shared.infrastructure.auth import AuthenticatedUser
-from chat_service.application.rag import AgentResponse, ChatMessage
+from chat_service.application.rag import AgentResponse, ChatMessage, RagUseCase
 from chat_service.presentation.dependencies import get_current_user, get_rag_use_case
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -55,6 +55,7 @@ class ChatResponse(BaseModel):
         "before composing a grounded answer. Returns citations, follow-up suggestions, "
         "and the list of tools used. Pass stream=true for Server-Sent Events."
     ),
+    response_model=None,
 )
 async def chat(
     body: ChatRequest,

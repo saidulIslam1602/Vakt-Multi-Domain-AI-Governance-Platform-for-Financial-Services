@@ -56,7 +56,16 @@ class FinancialDbReader:
     # ── Overdue / due-soon invoices ───────────────────────────────────────────
 
     async def get_overdue_invoices(self, tenant_id: str) -> list[FinancialRecord]:
-        """Return invoices whose due_date has passed and are not yet approved."""
+        """Return ALL invoices whose due_date has passed, regardless of review_status.
+
+        NOTE: review_status reflects the CFO *approval workflow* state, NOT payment state.
+          - 'approved'     → CFO reviewed and approved the invoice for payment
+          - 'rejected'     → CFO rejected/disputed the invoice
+          - 'not_required' → below the approval threshold (auto-passed)
+          - 'pending_review' → awaiting CFO action
+        An invoice can be overdue regardless of any of these states — do NOT filter by
+        review_status here. The document status field tracks processing state, not payment.
+        """
         today = date.today().isoformat()
         rows = await self._pool.fetch(
             """SELECT id, filename,
@@ -72,7 +81,6 @@ class FinancialDbReader:
                  AND extraction->>'document_category' = 'invoice'
                  AND extraction->>'due_date' IS NOT NULL
                  AND extraction->>'due_date' < $2
-                 AND review_status != 'approved'
                ORDER BY extraction->>'due_date' ASC
                LIMIT 50""",
             tenant_id, today,
@@ -141,10 +149,11 @@ class FinancialDbReader:
         date_filter = ""
         if date_from:
             params.append(date_from)
-            date_filter += f" AND uploaded_at >= ${len(params)}"
+            # Filter on invoice_date (extracted from document), not file upload time
+            date_filter += f" AND extraction->>'invoice_date' >= ${len(params)}"
         if date_to:
             params.append(date_to)
-            date_filter += f" AND uploaded_at <= ${len(params)}"
+            date_filter += f" AND extraction->>'invoice_date' <= ${len(params)}"
 
         rows = await self._pool.fetch(
             f"""SELECT
@@ -251,7 +260,6 @@ class FinancialDbReader:
                  COUNT(*) FILTER (
                      WHERE extraction->>'document_category' = 'invoice'
                        AND extraction->>'due_date' < $2
-                       AND review_status != 'approved'
                  ) AS overdue_invoices,
                  COUNT(*) FILTER (
                      WHERE extraction->>'document_category' = 'contract'
@@ -358,6 +366,14 @@ class FinancialDbReader:
                     {period_expr}                               AS period,
                     COUNT(*)                                    AS document_count,
                     COUNT(DISTINCT extraction->>'vendor_name')  AS vendor_count,
+                    SUM(
+                        CASE
+                            WHEN extraction->>'total_amount' IS NOT NULL
+                                 AND regexp_replace(extraction->>'total_amount', '[^0-9.]', '', 'g') <> ''
+                            THEN regexp_replace(extraction->>'total_amount', '[^0-9.]', '', 'g')::numeric
+                            ELSE 0
+                        END
+                    )                                           AS total_amount_nok,
                     jsonb_agg(
                         jsonb_build_object(
                             'document_id', id::text,
