@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import date
 from typing import Any, AsyncIterator
 
 from azure.search.documents.aio import SearchClient
@@ -171,9 +170,6 @@ def _build_system_prompt() -> str:
         last_q_year = year
     last_quarter_start = date(last_q_year, last_q_start_month, 1)
     last_quarter_end = quarter_start - timedelta(days=1)
-
-    # Last day of last month
-    last_month_last_day = calendar.monthrange(last_month_end.year, last_month_end.month)[1]
 
     return _SYSTEM_PROMPT_TEMPLATE.format(
         today=today.isoformat(),
