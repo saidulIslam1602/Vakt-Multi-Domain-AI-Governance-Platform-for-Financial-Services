@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import io
 import zipfile
-from datetime import date, timezone
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status

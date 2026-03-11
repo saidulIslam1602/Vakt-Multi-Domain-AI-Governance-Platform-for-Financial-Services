@@ -5,8 +5,11 @@ from __future__ import annotations
 import datetime
 
 from azure.identity.aio import DefaultAzureCredential
+from azure.storage.blob import (
+    ContentSettings,
+    UserDelegationKey,
+)
 from azure.storage.blob.aio import BlobServiceClient
-from azure.storage.blob import generate_blob_sas, BlobSasPermissions, UserDelegationKey, ContentSettings
 
 from allergo_shared.domain.exceptions import StorageError
 from allergo_shared.domain.interfaces.storage import BlobStoragePort
@@ -88,8 +91,8 @@ class AzureBlobStorage(BlobStoragePort):
             # Ensure container exists (idempotent — safe to call repeatedly)
             try:
                 await container_client.create_container()
-            except Exception:
-                pass  # Container already exists
+            except Exception:  # noqa: BLE001
+                pass  # Container already exists — ResourceExistsError is expected
             blob_client = container_client.get_blob_client(blob_name)
             await blob_client.upload_blob(
                 data,
@@ -139,7 +142,7 @@ class AzureBlobStorage(BlobStoragePort):
 
             if self._is_local:
                 # Azurite: use account-key based SAS
-                from azure.storage.blob import generate_blob_sas, BlobSasPermissions
+                from azure.storage.blob import BlobSasPermissions, generate_blob_sas
                 token = generate_blob_sas(
                     account_name=_AZURITE_ACCOUNT_NAME,
                     container_name=container,

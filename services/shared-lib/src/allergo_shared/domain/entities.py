@@ -100,7 +100,8 @@ class ExtractionResult(BaseModel):
     report_period: str | None = None
     """Reporting period, e.g. 'Q3 2025', 'FY2025', '2025-01-01 to 2025-03-31'"""
     report_type: str | None = None
-    """Type of report: 'balance_sheet', 'income_statement', 'cash_flow', 'budget', 'forecast', 'other'"""
+    """Type of report: 'balance_sheet', 'income_statement', 'cash_flow', 'budget', 'forecast',
+    'other'"""
     total_revenue: str | None = None
     """Total revenue / top-line figure with currency"""
     total_expenses: str | None = None

@@ -25,7 +25,7 @@ class MessageQueuePort(ABC):
         self,
         topic_or_queue: str,
         subscription: str | None = None,
-    ) -> AsyncIterator["QueueMessage"]:
+    ) -> AsyncIterator[QueueMessage]:
         """Return an async iterator that yields messages from the queue."""
 
 

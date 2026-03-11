@@ -38,7 +38,12 @@ packages = ["src/allergo_shared"]
 target-version = "py311"
 line-length = 100
 select = ["E", "F", "I", "N", "UP", "ANN", "S", "B", "A", "C4", "PT"]
-ignore = ["ANN101", "ANN102"]
+ignore = [
+    "ANN101",  # missing type annotation for self
+    "ANN102",  # missing type annotation for cls
+    "ANN401",  # Any is intentional in queue abstractions and low-level adapters
+    "S110",    # try-except-pass is intentional for idempotent container creation
+]
 
 [tool.mypy]
 python_version = "3.11"

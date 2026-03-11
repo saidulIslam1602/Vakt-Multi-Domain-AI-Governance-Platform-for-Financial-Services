@@ -69,7 +69,7 @@ class RabbitMQAdapter(MessageQueuePort):
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
-    async def _get_channel(self):  # type: ignore[return]
+    async def _get_channel(self) -> Any:  # type: ignore[return]
         """Lazily create an aio-pika connection + channel."""
         try:
             import aio_pika  # type: ignore[import]
@@ -85,7 +85,7 @@ class RabbitMQAdapter(MessageQueuePort):
             self._channel = await self._connection.channel()
         return self._channel
 
-    async def _declare_exchange(self, channel, name: str):  # type: ignore[return]
+    async def _declare_exchange(self, channel: Any, name: str) -> Any:  # type: ignore[return]
         import aio_pika  # type: ignore[import]
         return await channel.declare_exchange(
             name,
@@ -127,16 +127,15 @@ class RabbitMQAdapter(MessageQueuePort):
         self,
         topic_or_queue: str,
         subscription: str | None = None,
-    ) -> AsyncIterator["QueueMessage"]:
+    ) -> AsyncIterator[QueueMessage]:
         return self._message_generator(topic_or_queue, subscription)
 
     async def _message_generator(
         self,
         topic_or_queue: str,
         subscription: str | None,
-    ) -> AsyncIterator["QueueMessage"]:
+    ) -> AsyncIterator[QueueMessage]:
         try:
-            import aio_pika  # type: ignore[import]
             channel = await self._get_channel()
             await channel.set_qos(prefetch_count=1)
             exchange = await self._declare_exchange(channel, topic_or_queue)

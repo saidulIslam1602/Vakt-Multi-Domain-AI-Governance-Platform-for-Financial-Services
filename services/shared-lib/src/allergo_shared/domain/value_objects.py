@@ -16,7 +16,7 @@ class DocumentId(BaseModel):
     model_config = {"frozen": True}
 
     @classmethod
-    def generate(cls) -> "DocumentId":
+    def generate(cls) -> DocumentId:
         return cls(value=str(uuid.uuid4()))
 
     def __str__(self) -> str:

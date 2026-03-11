@@ -143,7 +143,6 @@ Response format:
 
 def _build_system_prompt() -> str:
     """Build the system prompt with today's date injected at call time."""
-    import calendar
     from datetime import date, timedelta
 
     today = date.today()

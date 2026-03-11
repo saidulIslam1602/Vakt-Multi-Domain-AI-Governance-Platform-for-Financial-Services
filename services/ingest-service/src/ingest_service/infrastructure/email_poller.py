@@ -302,7 +302,6 @@ class EmailPoller:
             if part.get_content_maintype() == "multipart":
                 continue
             # Only process parts that are attachments or inline files
-            disposition = part.get_content_disposition()
             filename = part.get_filename()
             if not filename:
                 continue

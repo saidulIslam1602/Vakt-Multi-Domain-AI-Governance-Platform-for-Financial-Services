@@ -43,10 +43,14 @@ def make_auth_dependency(
                 audience=audience,
                 issuer=issuer,
             )
-        except jwt.ExpiredSignatureError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired.")
+        except jwt.ExpiredSignatureError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired."
+            ) from exc
         except jwt.InvalidTokenError as exc:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
+            ) from exc
 
         tenant_id = payload.get("tenant_id") or payload.get("tid") or "default"
         return AuthenticatedUser(

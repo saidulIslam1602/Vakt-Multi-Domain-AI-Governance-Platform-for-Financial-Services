@@ -66,6 +66,8 @@ jobs:
             -var="environment=${{ vars.ENVIRONMENT || 'dev' }}" \
             -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD || 'placeholder' }}" \
             -var="nextauth_secret=${{ secrets.NEXTAUTH_SECRET || 'placeholder' }}" \
+            -var="smtp_password=${{ secrets.SMTP_PASSWORD || 'placeholder' }}" \
+            -var="imap_password=${{ secrets.IMAP_PASSWORD || 'placeholder' }}" \
             -no-color -out=tfplan
         continue-on-error: true
         env:
@@ -125,6 +127,8 @@ jobs:
             -var="environment=${{ vars.ENVIRONMENT || 'dev' }}" \
             -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
             -var="nextauth_secret=${{ secrets.NEXTAUTH_SECRET }}" \
+            -var="smtp_password=${{ secrets.SMTP_PASSWORD }}" \
+            -var="imap_password=${{ secrets.IMAP_PASSWORD }}" \
             -auto-approve
         env:
           ARM_USE_OIDC: "true"
