@@ -21,6 +21,11 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  FileText,
+  Building2,
+  CreditCard,
+  ScrollText,
+  Tag,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -59,87 +64,210 @@ function ReviewBadge({ status }: { status: string | undefined }) {
   );
 }
 
-// ── CFO Finance fields panel ───────────────────────────────────────────────
+// ── Field row ──────────────────────────────────────────────────────────────
 
-function CfoFinancePanel({ ext }: { ext: Partial<ExtractionResult> }) {
-  const [expanded, setExpanded] = useState(true);
-  const fields: { label: string; key: keyof ExtractionResult }[] = [
-    { label: "Category", key: "document_category" },
-    { label: "Invoice #", key: "invoice_number" },
-    { label: "Invoice Date", key: "invoice_date" },
-    { label: "Due Date", key: "due_date" },
-    { label: "Total Amount", key: "total_amount" },
-    { label: "Net Amount", key: "net_amount" },
-    { label: "VAT Amount", key: "vat_amount" },
-    { label: "VAT Rate", key: "vat_rate" },
-    { label: "Currency", key: "currency" },
-    { label: "Vendor", key: "vendor_name" },
-    { label: "Vendor Org #", key: "vendor_org_number" },
-    { label: "Vendor IBAN", key: "vendor_iban" },
-    { label: "Buyer", key: "buyer_name" },
-    { label: "Payment Terms", key: "payment_terms" },
-    { label: "Bank Account", key: "bank_account" },
-    { label: "Reference / KID", key: "reference_number" },
-    { label: "Contract Value", key: "contract_value" },
-    { label: "Contract Start", key: "contract_start_date" },
-    { label: "Contract End", key: "contract_end_date" },
-    { label: "Renewal Clause", key: "renewal_clause" },
-    { label: "Cost Center", key: "cost_center" },
-    { label: "GL Account", key: "gl_account" },
-  ];
+function FieldRow({ label, value, highlight }: { label: string; value: string | undefined | null; highlight?: boolean }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-baseline justify-between py-2 border-b border-slate-50 last:border-0">
+      <span className="text-xs text-slate-400 font-medium w-36 shrink-0">{label}</span>
+      <span className={`text-sm text-right ml-4 ${highlight ? "font-bold text-slate-900" : "text-slate-700"}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
 
-  const populated = fields.filter((f) => {
-    const v = ext[f.key];
-    return v !== undefined && v !== null && v !== "";
-  });
+// ── Section card ──────────────────────────────────────────────────────────
 
-  if (populated.length === 0) return null;
+function SectionCard({
+  icon: Icon,
+  title,
+  children,
+  defaultOpen = true,
+}: {
+  icon: typeof FileText;
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const hasContent = !!children;
+  if (!hasContent) return null;
+  return (
+    <div className="rounded-xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      <button
+        className="flex items-center justify-between w-full px-5 py-3.5 bg-slate-50 hover:bg-slate-100 transition-colors"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <div className="flex items-center gap-2.5">
+          <Icon className="h-4 w-4 text-slate-400" />
+          <span className="text-sm font-semibold text-slate-700">{title}</span>
+        </div>
+        {open
+          ? <ChevronUp className="h-4 w-4 text-slate-400" />
+          : <ChevronDown className="h-4 w-4 text-slate-400" />}
+      </button>
+      {open && <div className="px-5 py-3">{children}</div>}
+    </div>
+  );
+}
+
+// ── CFO Finance panel (redesigned) ────────────────────────────────────────
+
+function CfoFinancePanel({
+  ext,
+  onChange,
+}: {
+  ext: Partial<ExtractionResult>;
+  onChange: (key: keyof ExtractionResult, value: string) => void;
+}) {
+  const hasInvoice = ext.invoice_number || ext.invoice_date || ext.due_date
+    || ext.total_amount || ext.net_amount || ext.vat_amount || ext.vat_rate || ext.currency;
+  const hasVendor = ext.vendor_name || ext.vendor_org_number || ext.vendor_address
+    || ext.vendor_iban || ext.buyer_name;
+  const hasPayment = ext.payment_terms || ext.bank_account || ext.reference_number;
+  const hasContract = ext.contract_value || ext.contract_start_date
+    || ext.contract_end_date || ext.renewal_clause;
+  const hasGL = ext.cost_center || ext.gl_account;
+
+  if (!hasInvoice && !hasVendor && !hasPayment && !hasContract && !hasGL) return null;
 
   return (
-    <div className="card p-6">
-      <button
-        className="flex items-center justify-between w-full mb-4"
-        onClick={() => setExpanded((e) => !e)}
-      >
-        <h2 className="text-slate-800">Financial Details</h2>
-        {expanded ? (
-          <ChevronUp className="h-4 w-4 text-slate-400" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-slate-400" />
-        )}
-      </button>
-      {expanded && (
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-3">
-          {populated.map((f) => {
-            const val = ext[f.key];
-            const displayVal =
-              typeof val === "boolean"
-                ? val
-                  ? "Yes"
-                  : "No"
-                : String(val ?? "");
-            return (
-              <div key={f.key} className="flex flex-col">
-                <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">
-                  {f.label}
-                </dt>
-                <dd className="text-sm font-medium text-slate-800 mt-0.5">
-                  {displayVal}
-                </dd>
-              </div>
-            );
-          })}
-          {ext.approval_required && (
-            <div className="col-span-2 mt-1">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full border border-amber-200">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                Approval required (high-value or unusual terms)
-              </span>
+    <div className="space-y-3">
+      {/* Approval banner */}
+      {ext.approval_required && (
+        <div className="flex items-center gap-2.5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+          <p className="text-sm font-semibold text-amber-800">
+            Approval required — high-value or unusual terms
+          </p>
+        </div>
+      )}
+
+      {/* Invoice / Amounts */}
+      {hasInvoice && (
+        <SectionCard icon={FileText} title="Invoice & Amounts">
+          {/* Key amounts highlighted at top */}
+          {(ext.total_amount || ext.net_amount) && (
+            <div className="flex gap-4 mb-4 pt-1">
+              {ext.total_amount && (
+                <div className="flex-1 rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-0.5">Total Amount</p>
+                  <p className="text-xl font-bold text-slate-900">{ext.total_amount}</p>
+                  {ext.currency && <p className="text-xs text-slate-400 mt-0.5">{ext.currency}</p>}
+                </div>
+              )}
+              {ext.vat_amount && (
+                <div className="flex-1 rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-0.5">VAT ({ext.vat_rate ?? ""})</p>
+                  <p className="text-xl font-bold text-slate-900">{ext.vat_amount}</p>
+                </div>
+              )}
+              {ext.net_amount && (
+                <div className="flex-1 rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
+                  <p className="text-xs text-slate-400 mb-0.5">Net Amount</p>
+                  <p className="text-xl font-bold text-slate-900">{ext.net_amount}</p>
+                </div>
+              )}
             </div>
           )}
-        </dl>
+          <FieldRow label="Invoice #" value={ext.invoice_number} />
+          <FieldRow label="Invoice Date" value={ext.invoice_date} />
+          <FieldRow
+            label="Due Date"
+            value={ext.due_date}
+            highlight={!!ext.due_date && new Date(ext.due_date) < new Date()}
+          />
+          <FieldRow label="Document Category" value={ext.document_category} />
+        </SectionCard>
+      )}
+
+      {/* Vendor / Parties */}
+      {hasVendor && (
+        <SectionCard icon={Building2} title="Vendor & Parties">
+          <FieldRow label="Vendor" value={ext.vendor_name} highlight />
+          <FieldRow label="Org Number" value={ext.vendor_org_number} />
+          <FieldRow label="Address" value={ext.vendor_address} />
+          <FieldRow label="IBAN" value={ext.vendor_iban} />
+          <FieldRow label="Buyer" value={ext.buyer_name} />
+        </SectionCard>
+      )}
+
+      {/* Payment */}
+      {hasPayment && (
+        <SectionCard icon={CreditCard} title="Payment Details">
+          <FieldRow label="Payment Terms" value={ext.payment_terms} />
+          <FieldRow label="Bank Account" value={ext.bank_account} />
+          <FieldRow label="Reference / KID" value={ext.reference_number} />
+        </SectionCard>
+      )}
+
+      {/* Contract */}
+      {hasContract && (
+        <SectionCard icon={ScrollText} title="Contract">
+          <FieldRow label="Contract Value" value={ext.contract_value} highlight />
+          <FieldRow label="Start Date" value={ext.contract_start_date} />
+          <FieldRow label="End Date" value={ext.contract_end_date} />
+          <FieldRow label="Renewal Clause" value={ext.renewal_clause} />
+        </SectionCard>
+      )}
+
+      {/* GL / Cost center */}
+      {hasGL && (
+        <SectionCard icon={Tag} title="Accounting">
+          <FieldRow label="Cost Center" value={ext.cost_center} />
+          <FieldRow label="GL Account" value={ext.gl_account} />
+        </SectionCard>
       )}
     </div>
+  );
+}
+
+// ── Raw extraction accordion ───────────────────────────────────────────────
+
+function RawExtractionPanel({
+  ext,
+  onChange,
+}: {
+  ext: Partial<ExtractionResult>;
+  onSetDirty?: () => void;
+  onChange: (key: keyof ExtractionResult, value: string | string[]) => void;
+}) {
+  return (
+    <SectionCard icon={History} title="Raw Extraction Data" defaultOpen={false}>
+      <p className="text-xs text-slate-400 mb-4">
+        Raw arrays extracted by the AI — edit chips to correct mistakes before saving.
+      </p>
+      <div className="space-y-5">
+        <ExtractionField
+          label="Summary"
+          value={ext.summary ?? ""}
+          multiline
+          onChange={(v) => onChange("summary", v)}
+        />
+        <ExtractionListField
+          label="Parties"
+          values={ext.parties ?? []}
+          onChange={(v) => onChange("parties", v)}
+        />
+        <ExtractionListField
+          label="Dates"
+          values={ext.dates ?? []}
+          onChange={(v) => onChange("dates", v)}
+        />
+        <ExtractionListField
+          label="Amounts"
+          values={ext.amounts ?? []}
+          onChange={(v) => onChange("amounts", v)}
+        />
+        <ExtractionListField
+          label="Key Terms"
+          values={ext.key_terms ?? []}
+          onChange={(v) => onChange("key_terms", v)}
+        />
+      </div>
+    </SectionCard>
   );
 }
 
@@ -338,39 +466,25 @@ export default function DocumentDetailPage() {
         )}
 
         {/* CFO Financial Details */}
-        {ext && <CfoFinancePanel ext={ext} />}
-
-        {/* Core extraction metadata */}
         {ext && (
-          <div className="card p-6 space-y-6">
-            <h2>Extracted Metadata</h2>
-            <ExtractionField
-              label="Summary"
-              value={ext.summary ?? ""}
-              multiline
-              onChange={(v) => { setExtraction((p) => ({ ...p, summary: v })); setDirty(true); }}
-            />
-            <ExtractionListField
-              label="Parties"
-              values={ext.parties ?? []}
-              onChange={(v) => { setExtraction((p) => ({ ...p, parties: v })); setDirty(true); }}
-            />
-            <ExtractionListField
-              label="Dates"
-              values={ext.dates ?? []}
-              onChange={(v) => { setExtraction((p) => ({ ...p, dates: v })); setDirty(true); }}
-            />
-            <ExtractionListField
-              label="Amounts"
-              values={ext.amounts ?? []}
-              onChange={(v) => { setExtraction((p) => ({ ...p, amounts: v })); setDirty(true); }}
-            />
-            <ExtractionListField
-              label="Key Terms"
-              values={ext.key_terms ?? []}
-              onChange={(v) => { setExtraction((p) => ({ ...p, key_terms: v })); setDirty(true); }}
-            />
-          </div>
+          <CfoFinancePanel
+            ext={ext}
+            onChange={(key, value) => {
+              setExtraction((p) => ({ ...p, [key]: value }));
+              setDirty(true);
+            }}
+          />
+        )}
+
+        {/* Raw extraction data — collapsed by default */}
+        {ext && (
+          <RawExtractionPanel
+            ext={ext}
+            onChange={(key, value) => {
+              setExtraction((p) => ({ ...p, [key]: value }));
+              setDirty(true);
+            }}
+          />
         )}
 
         {/* Audit history */}
