@@ -68,7 +68,17 @@ jobs:
         working-directory: frontend
         run: |
           IMAGE=${{ vars.ACR_NAME }}.azurecr.io/frontend:${{ github.sha }}
-          docker build --no-cache -t "$IMAGE" .
+
+          # Pass Azure service URLs as build args so next.config.js rewrites
+          # are baked with the correct HTTPS FQDNs at docker build time.
+          # Without these, Next.js falls back to the docker-compose hostnames
+          # (http://ingest-service:8000) which are unreachable on Azure.
+          docker build --no-cache \
+            --build-arg INGEST_SERVICE_URL=https://ingest-service.orangetree-41094962.norwayeast.azurecontainerapps.io \
+            --build-arg DOCUMENT_SERVICE_URL=https://document-service.orangetree-41094962.norwayeast.azurecontainerapps.io \
+            --build-arg SEARCH_SERVICE_URL=https://search-service.orangetree-41094962.norwayeast.azurecontainerapps.io \
+            --build-arg CHAT_SERVICE_URL=https://chat-service.orangetree-41094962.norwayeast.azurecontainerapps.io \
+            -t "$IMAGE" .
           docker push "$IMAGE"
           docker tag "$IMAGE" ${{ vars.ACR_NAME }}.azurecr.io/frontend:latest
           docker push ${{ vars.ACR_NAME }}.azurecr.io/frontend:latest

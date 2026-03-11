@@ -10,6 +10,20 @@ RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 FROM base AS builder
 ENV NODE_ENV=production
+
+# Service URL build args — injected by CI for Azure deployments.
+# Fallback values match docker-compose internal hostnames for local dev.
+ARG INGEST_SERVICE_URL=http://ingest-service:8000
+ARG DOCUMENT_SERVICE_URL=http://document-service:8000
+ARG SEARCH_SERVICE_URL=http://search-service:8000
+ARG CHAT_SERVICE_URL=http://chat-service:8000
+
+# Expose them as env vars so next.config.js can read process.env during build
+ENV INGEST_SERVICE_URL=$INGEST_SERVICE_URL
+ENV DOCUMENT_SERVICE_URL=$DOCUMENT_SERVICE_URL
+ENV SEARCH_SERVICE_URL=$SEARCH_SERVICE_URL
+ENV CHAT_SERVICE_URL=$CHAT_SERVICE_URL
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
