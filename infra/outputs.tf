@@ -25,3 +25,8 @@ output "acr_login_server" {
 output "postgres_fqdn" {
   value = azurerm_postgresql_flexible_server.main.fqdn
 }
+
+output "key_vault_name" {
+  description = "Name of the Azure Key Vault — set as GitHub repo variable KEY_VAULT_NAME."
+  value       = azurerm_key_vault.main.name
+}

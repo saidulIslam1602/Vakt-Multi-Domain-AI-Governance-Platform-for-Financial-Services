@@ -23,6 +23,8 @@ on:
         required: false
       AZURE_SUBSCRIPTION_ID:
         required: false
+      KEY_VAULT_NAME:
+        required: false
 
 jobs:
   lint-and-test:
@@ -152,10 +154,16 @@ jobs:
       # Fetch DATABASE_URL from Key Vault — never stored as a repo secret
       - name: Fetch DATABASE_URL from Key Vault
         run: |
+          KV_NAME="${{ secrets.KEY_VAULT_NAME }}"
+          if [[ -z "$KV_NAME" ]]; then
+            echo "::error::KEY_VAULT_NAME secret is not set. Add it as a GitHub repository secret."
+            exit 1
+          fi
           DB_URL=$(az keyvault secret show \
-            --vault-name ${{ vars.KEY_VAULT_NAME }} \
+            --vault-name "$KV_NAME" \
             --name database-url \
-            --query value -o tsv)
+            --query value \
+            --output tsv)
           echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
 
       - name: Run SQL migrations (psql)
