@@ -39,6 +39,19 @@ class Settings(BaseSettings):
     max_extraction_retries: int = 3
     worker_concurrency: int = 4
 
+    # ── Contract renewal scheduler ────────────────────────────────────────────
+    scheduler_enabled: bool = True
+    scheduler_hour_utc: int = 8   # Run daily at 08:00 UTC
+
+    # ── Email / SMTP (for alert notifications) ────────────────────────────────
+    smtp_host: str = "localhost"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_address: str = "noreply@allergo.no"
+    smtp_to_address: str = ""          # Recipient — set to CFO / team email address
+    smtp_use_tls: bool = True
+
 
 _settings: Settings | None = None
 

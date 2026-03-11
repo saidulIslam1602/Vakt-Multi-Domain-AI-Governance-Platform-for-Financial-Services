@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 
 import asyncpg
+from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import]
 from azure.identity import DefaultAzureCredential as SyncDefaultAzureCredential
 from azure.identity import get_bearer_token_provider
 from azure.identity.aio import DefaultAzureCredential
@@ -12,6 +13,7 @@ from azure.identity.aio import DefaultAzureCredential
 from allergo_shared.infrastructure.azure.blob import AzureBlobStorage
 from allergo_shared.infrastructure.azure.service_bus import AzureServiceBus
 from allergo_shared.infrastructure.logging import configure_logging, get_logger
+from processing_service.application.contract_renewal_scanner import ContractRenewalScanner
 from processing_service.application.worker import ProcessingWorker
 from processing_service.infrastructure.config import get_settings
 from processing_service.infrastructure.db_updater import DocumentStatusUpdater
@@ -111,9 +113,30 @@ async def main() -> None:
         settings=cfg,
     )
 
+    # ── Contract renewal scanner (APScheduler) ────────────────────────────────
+    scheduler: AsyncIOScheduler | None = None
+    if cfg.scheduler_enabled:
+        scanner = ContractRenewalScanner(pool=pool, settings=cfg)
+        scheduler = AsyncIOScheduler(timezone="UTC")
+        scheduler.add_job(
+            scanner.run_scan,
+            trigger="cron",
+            hour=cfg.scheduler_hour_utc,
+            minute=0,
+            id="contract_renewal_scan",
+            replace_existing=True,
+        )
+        scheduler.start()
+        logger.info(
+            "contract_renewal_scheduler_started",
+            schedule=f"daily at {cfg.scheduler_hour_utc:02d}:00 UTC",
+        )
+
     try:
         await worker.run()
     finally:
+        if scheduler is not None:
+            scheduler.shutdown(wait=False)
         await pool.close()
         await blob.close()
         await queue.close()

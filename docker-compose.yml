@@ -107,6 +107,17 @@ services:
       AZURE_OPENAI_API_VERSION: "2024-08-01-preview"
       AZURE_OPENAI_CHAT_DEPLOYMENT: gpt-4o
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
+      # ── Contract renewal scheduler ──────────────────────────────────────────
+      SCHEDULER_ENABLED: "true"
+      SCHEDULER_HOUR_UTC: "8"
+      # ── Email / SMTP (set these to enable email notifications) ──────────────
+      # SMTP_HOST: smtp.example.com
+      # SMTP_PORT: "587"
+      # SMTP_USERNAME: alerts@allergo.no
+      # SMTP_PASSWORD: ""
+      # SMTP_FROM_ADDRESS: noreply@allergo.no
+      # SMTP_TO_ADDRESS: cfo@allergo.no
+      # SMTP_USE_TLS: "true"
     depends_on:
       postgres:
         condition: service_healthy
