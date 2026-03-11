@@ -165,12 +165,40 @@ jobs:
             --output tsv)
           echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
 
+      - name: Ensure pgcrypto is allow-listed on Azure Flexible Server
+        run: |
+          # Install psql client
+          sudo apt-get install -y postgresql-client
+
+          # Attempt to create the extension.  On Azure Flexible Server,
+          # this will fail with "not allow-listed" unless PGCRYPTO was added
+          # to azure.extensions via Terraform (see infra/postgresql.tf).
+          # We check here so the failure message is clear and actionable.
+          result=$(psql "$DATABASE_URL" -tAc \
+            "SELECT COUNT(*) FROM pg_extension WHERE extname = 'pgcrypto'" 2>&1)
+
+          if echo "$result" | grep -q "^1$"; then
+            echo "✅ pgcrypto extension already installed."
+          else
+            echo "⚙ pgcrypto not yet installed — attempting CREATE EXTENSION..."
+            if psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;" 2>&1; then
+              echo "✅ pgcrypto installed successfully."
+            else
+              echo ""
+              echo "❌ FAILED: pgcrypto is not allow-listed on Azure Flexible Server."
+              echo ""
+              echo "Fix: add PGCRYPTO to azure.extensions in infra/postgresql.tf and run:"
+              echo "  cd infra && terraform apply"
+              echo ""
+              echo "The infra/postgresql.tf already contains the fix in this commit."
+              echo "Apply it and re-run this workflow."
+              exit 1
+            fi
+          fi
+
       - name: Run SQL migrations (psql)
         run: |
           MIGRATIONS_DIR=services/ingest-service/src/ingest_service/infrastructure/db/migrations
-
-          # Install psql client
-          sudo apt-get install -y postgresql-client
 
           for f in $(ls $MIGRATIONS_DIR/*.sql | sort); do
             echo "▶ Applying $f ..."

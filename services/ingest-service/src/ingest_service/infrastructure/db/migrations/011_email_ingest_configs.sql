@@ -39,8 +39,25 @@
 --   created_at      — when the config was first saved
 --   updated_at      — last modification time
 
--- Enable pgcrypto for password encryption
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- ── pgcrypto extension ────────────────────────────────────────────────────────
+-- On Azure Database for PostgreSQL Flexible Server, pgcrypto must first be
+-- allow-listed in the server's azure.extensions parameter (see postgresql.tf).
+-- On vanilla PostgreSQL (local dev / CI) it ships bundled and just needs loading.
+--
+-- We attempt the CREATE here; if it fails because it has not been allow-listed
+-- yet (Azure restriction), the migration aborts with a clear message telling the
+-- operator to run `terraform apply` first to update azure.extensions.
+DO $$
+BEGIN
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;
+EXCEPTION WHEN OTHERS THEN
+    RAISE EXCEPTION
+        'Cannot create pgcrypto extension: %'
+        '\nFix: ensure PGCRYPTO is in azure.extensions on the Flexible Server.'
+        '\nRun: terraform apply (infra/postgresql.tf already includes PGCRYPTO).'
+        '\nOriginal error: %', SQLERRM, SQLERRM;
+END;
+$$;
 
 CREATE TABLE IF NOT EXISTS email_ingest_configs (
     id                   UUID        PRIMARY KEY DEFAULT gen_random_uuid(),

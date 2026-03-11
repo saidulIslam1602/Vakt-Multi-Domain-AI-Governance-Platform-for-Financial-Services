@@ -25,7 +25,7 @@ resource "azurerm_postgresql_flexible_server_database" "allergo" {
 resource "azurerm_postgresql_flexible_server_configuration" "pgvector" {
   name      = "azure.extensions"
   server_id = azurerm_postgresql_flexible_server.main.id
-  value     = "VECTOR,UUID-OSSP,PG_TRGM"
+  value     = "VECTOR,UUID-OSSP,PG_TRGM,PGCRYPTO"
 }
 
 # Firewall: allow Azure services
