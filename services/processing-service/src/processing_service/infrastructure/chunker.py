@@ -6,6 +6,11 @@ import tiktoken
 
 from allergo_shared.domain.entities import DocumentChunk
 
+# Load the encoding once at module import time — tiktoken caches internally,
+# but avoid the repeated lookup overhead inside the hot path.
+_DEFAULT_ENCODING_NAME = "cl100k_base"
+_DEFAULT_ENC = tiktoken.get_encoding(_DEFAULT_ENCODING_NAME)
+
 
 def chunk_text(
     text: str,
@@ -13,11 +18,11 @@ def chunk_text(
     tenant_id: str,
     chunk_size: int = 512,
     overlap: int = 64,
-    encoding_name: str = "cl100k_base",
+    encoding_name: str = _DEFAULT_ENCODING_NAME,
     filename: str = "",
 ) -> list[DocumentChunk]:
     """Split text into overlapping chunks of at most `chunk_size` tokens."""
-    enc = tiktoken.get_encoding(encoding_name)
+    enc = _DEFAULT_ENC if encoding_name == _DEFAULT_ENCODING_NAME else tiktoken.get_encoding(encoding_name)
     tokens = enc.encode(text)
 
     if not tokens:

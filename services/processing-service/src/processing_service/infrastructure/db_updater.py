@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 import asyncpg
 
@@ -31,7 +31,7 @@ class DocumentStatusUpdater:
                 """UPDATE documents
                    SET status = 'parsed', raw_text_path = $3, page_count = $4, updated_at = $5
                    WHERE id = $1 AND tenant_id = $2""",
-                document_id, tenant_id, raw_text_path, page_count, datetime.utcnow(),
+                document_id, tenant_id, raw_text_path, page_count, datetime.now(timezone.utc),
             )
 
     async def mark_extracting(self, document_id: str, tenant_id: str) -> None:
@@ -60,7 +60,7 @@ class DocumentStatusUpdater:
                 extraction.model_dump_json(),
                 needs_review,
                 review_status,
-                datetime.utcnow(),
+                datetime.now(timezone.utc),
             )
 
     async def mark_indexing(self, document_id: str, tenant_id: str) -> None:
@@ -75,7 +75,7 @@ class DocumentStatusUpdater:
                 """UPDATE documents
                    SET status = 'failed', error_message = $3, updated_at = $4
                    WHERE id = $1 AND tenant_id = $2""",
-                document_id, tenant_id, error, datetime.utcnow(),
+                document_id, tenant_id, error, datetime.now(timezone.utc),
             )
 
     async def evaluate_alerts(
@@ -133,7 +133,7 @@ class DocumentStatusUpdater:
                 """UPDATE documents
                    SET status = $3, updated_at = $4
                    WHERE id = $1 AND tenant_id = $2""",
-                document_id, tenant_id, status, datetime.utcnow(),
+                document_id, tenant_id, status, datetime.now(timezone.utc),
             )
 
 

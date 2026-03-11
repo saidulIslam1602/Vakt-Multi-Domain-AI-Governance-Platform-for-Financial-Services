@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import mimetypes
-from datetime import datetime
+from datetime import datetime, timezone
 
 from allergo_shared.domain.entities import Document
 from allergo_shared.domain.enums import DocumentStatus, DocumentType, JobEventType
@@ -66,7 +66,7 @@ class UploadDocumentUseCase:
 
         document_id = DocumentId.generate()
         blob_name = f"{tenant_id}/{document_id}/{filename}"
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
 
         document = Document(
             id=document_id,

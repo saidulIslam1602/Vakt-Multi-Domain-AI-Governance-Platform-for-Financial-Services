@@ -343,11 +343,14 @@ class EmailPoller:
         """Mark an email as \\Seen in the mailbox (runs in thread executor)."""
         loop = asyncio.get_running_loop()
         try:
-            await loop.run_in_executor(None, self._imap_mark_seen, uid)
+            await loop.run_in_executor(None, self._imap_mark_seen_batch, [uid])
         except Exception:
             logger.warning("email_mark_seen_failed", uid=uid)
 
-    def _imap_mark_seen(self, uid: str) -> None:
+    def _imap_mark_seen_batch(self, uids: list[str]) -> None:
+        """Mark a batch of UIDs as \\Seen in a single IMAP session."""
+        if not uids:
+            return
         if self._use_ssl:
             ctx = ssl.create_default_context()
             conn = imaplib.IMAP4_SSL(self._host, self._port, ssl_context=ctx)
@@ -355,5 +358,9 @@ class EmailPoller:
             conn = imaplib.IMAP4(self._host, self._port)  # type: ignore[assignment]
         conn.login(self._username, self._password)
         conn.select(self._mailbox)
-        conn.uid("store", uid, "+FLAGS", "\\Seen")  # type: ignore[call-overload]
+        uid_set = ",".join(uids)
+        conn.uid("store", uid_set, "+FLAGS", "\\Seen")  # type: ignore[call-overload]
         conn.logout()
+
+    def _imap_mark_seen(self, uid: str) -> None:
+        self._imap_mark_seen_batch([uid])

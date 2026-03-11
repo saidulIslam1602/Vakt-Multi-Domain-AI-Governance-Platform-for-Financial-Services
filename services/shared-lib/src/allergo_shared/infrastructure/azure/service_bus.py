@@ -124,7 +124,15 @@ class _AzureServiceBusImpl(MessageQueuePort):
 
             async with receiver:
                 async for msg in receiver:
-                    body = json.loads(str(msg))
+                    # msg.body can be bytes, str, or an iterable of byte frames
+                    raw_body = msg.body
+                    if isinstance(raw_body, (bytes, bytearray)):
+                        body_str = raw_body.decode("utf-8")
+                    elif hasattr(raw_body, "__iter__") and not isinstance(raw_body, str):
+                        body_str = b"".join(raw_body).decode("utf-8")
+                    else:
+                        body_str = str(raw_body)
+                    body = json.loads(body_str)
                     yield _AzureQueueMessage(
                         body=body,
                         message_id=str(msg.message_id),

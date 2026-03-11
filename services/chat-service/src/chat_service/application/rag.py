@@ -185,9 +185,10 @@ def _build_system_prompt() -> str:
     )
 
 
-# Keep _SYSTEM_PROMPT as an alias used by es_rag.py — it imports this symbol directly.
-# es_rag.py will call _build_system_prompt() via _build_messages() override below.
-_SYSTEM_PROMPT = _build_system_prompt()  # fallback static reference; actual use is dynamic
+# _SYSTEM_PROMPT is intentionally NOT pre-computed at import time.
+# es_rag.py imports this name; both files call _build_system_prompt() at request time
+# so the injected date is always correct (no stale date after midnight).
+_SYSTEM_PROMPT: str = ""  # placeholder — real value built per-request in _build_messages()
 
 
 _INTENT_MAP = {

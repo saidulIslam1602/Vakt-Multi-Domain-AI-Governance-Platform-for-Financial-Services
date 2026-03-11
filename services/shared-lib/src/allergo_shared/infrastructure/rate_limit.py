@@ -28,7 +28,7 @@ from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from fastapi import Request, Response
+from fastapi import HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
@@ -132,6 +132,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._enabled = enabled
         capacity = requests_per_minute * burst_multiplier
+        self._capacity = capacity  # stored for header reporting without accessing private attr
         rate_per_second = requests_per_minute / 60.0
         self._store = _InMemoryBucketStore(capacity, rate_per_second)
         self._extractor = tenant_id_extractor or _default_tenant_extractor
@@ -159,7 +160,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 },
                 headers={
                     "Retry-After": str(retry_after),
-                    "X-RateLimit-Limit": str(int(self._store._capacity)),
+                    "X-RateLimit-Limit": str(int(self._capacity)),
                     "X-RateLimit-Remaining": "0",
                 },
             )
@@ -228,9 +229,9 @@ def make_rate_limit_dependency(
         allowed = await bucket.consume()
         if not allowed:
             retry_after = bucket.retry_after_seconds
-            raise JSONResponse(  # type: ignore[misc]
+            raise HTTPException(
                 status_code=429,
-                content={
+                detail={
                     "detail": "Rate limit exceeded.",
                     "retry_after_seconds": retry_after,
                 },

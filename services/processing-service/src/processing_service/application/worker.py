@@ -45,6 +45,7 @@ class ProcessingWorker:
         self._db_updater = db_updater
         self._settings = settings
         self._executor = ThreadPoolExecutor(max_workers=settings.worker_concurrency)
+        self._active_tasks: set[asyncio.Task] = set()
 
     async def run(self) -> None:
         logger.info("processing_worker_started")
@@ -53,7 +54,9 @@ class ProcessingWorker:
             self._settings.servicebus_topic_document_events,
             self._settings.servicebus_subscription_processing,
         ):
-            asyncio.create_task(self._handle_message(message))
+            task = asyncio.create_task(self._handle_message(message))
+            self._active_tasks.add(task)
+            task.add_done_callback(self._active_tasks.discard)
 
     async def _handle_message(self, message: QueueMessage) -> None:
         event = message.body

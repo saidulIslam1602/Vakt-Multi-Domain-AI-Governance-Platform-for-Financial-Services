@@ -15,18 +15,17 @@ from allergo_shared.domain.exceptions import StorageError
 from allergo_shared.domain.interfaces.storage import BlobStoragePort
 
 # Azurite (local emulator) well-known connection string
-_AZURITE_CONNECTION_STRING = (
-    "DefaultEndpointsProtocol=http;"
-    "AccountName=devstoreaccount1;"
-    "AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tfd8"
-    "e9jmJAbWE56NfzFiZy7YlQ==;"
-    "BlobEndpoint=http://{host}:10000/devstoreaccount1;"
-)
-
 _AZURITE_ACCOUNT_NAME = "devstoreaccount1"
+# This is the public, well-known Azurite development key — NOT a real secret.
 _AZURITE_ACCOUNT_KEY = (
     "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tfd8"
     "e9jmJAbWE56NfzFiZy7YlQ=="
+)
+_AZURITE_CONNECTION_STRING = (
+    "DefaultEndpointsProtocol=http;"
+    f"AccountName={_AZURITE_ACCOUNT_NAME};"
+    f"AccountKey={_AZURITE_ACCOUNT_KEY};"
+    "BlobEndpoint=http://{{host}}:10000/devstoreaccount1;"
 )
 
 
@@ -137,7 +136,7 @@ class AzureBlobStorage(BlobStoragePort):
         For production: uses a user delegation key from Managed Identity.
         """
         try:
-            now = datetime.datetime.utcnow()
+            now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             expiry = now + datetime.timedelta(hours=expiry_hours)
 
             if self._is_local:

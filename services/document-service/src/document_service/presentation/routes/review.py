@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Literal
 
 import asyncpg
@@ -108,7 +108,7 @@ async def submit_review_decision(
         str(current_user.tenant_id),
         body.decision,
         current_user.sub,
-        datetime.utcnow(),
+        datetime.now(timezone.utc),
     )
     # asyncpg returns "UPDATE N" string; check the row count
     if result == "UPDATE 0":

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import mimetypes
 import zipfile
 from datetime import date
 from typing import Annotated
@@ -104,22 +105,6 @@ async def list_documents(
     )
 
 
-@router.get(
-    "/{document_id}",
-    response_model=DocumentResponse,
-    summary="Get a document by ID",
-)
-async def get_document(
-    document_id: str,
-    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
-    repository: Annotated[PostgresDocumentRepository, Depends(get_repository)],
-) -> DocumentResponse:
-    doc = await repository.get_by_id(document_id, str(current_user.tenant_id))
-    if doc is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
-    return _map_doc(doc)
-
-
 @router.post(
     "/bulk",
     response_model=BulkUploadResponse,
@@ -153,7 +138,6 @@ async def bulk_upload(
             try:
                 file_bytes = zf.read(member.filename)
                 # Guess content type from extension
-                import mimetypes
                 content_type, _ = mimetypes.guess_type(filename)
                 document = await use_case.execute(
                     filename=filename,
@@ -247,3 +231,21 @@ async def email_ingest_status(
         ingested_today=int(row["ingested_today"] or 0),
         errors_today=int(row["errors_today"] or 0),
     )
+
+
+# ── NOTE: /{document_id} MUST be declared AFTER all static paths like
+# /bulk, /email-status so FastAPI matches specifics before the wildcard param.
+@router.get(
+    "/{document_id}",
+    response_model=DocumentResponse,
+    summary="Get a document by ID",
+)
+async def get_document(
+    document_id: str,
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    repository: Annotated[PostgresDocumentRepository, Depends(get_repository)],
+) -> DocumentResponse:
+    doc = await repository.get_by_id(document_id, str(current_user.tenant_id))
+    if doc is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
+    return _map_doc(doc)

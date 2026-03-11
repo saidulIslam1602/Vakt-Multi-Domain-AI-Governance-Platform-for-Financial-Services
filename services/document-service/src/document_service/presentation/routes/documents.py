@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 
 import asyncpg
@@ -199,7 +199,7 @@ async def update_extraction(
     await pool.execute(
         "UPDATE documents SET extraction = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4",
         json.dumps(existing),
-        datetime.utcnow(),
+        datetime.now(timezone.utc),
         document_id,
         tenant_id,
     )

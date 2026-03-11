@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -144,35 +144,35 @@ class Document(BaseModel):
 
     def mark_parsing(self) -> None:
         self.status = DocumentStatus.PARSING
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_parsed(self, raw_text_path: str, page_count: int | None = None) -> None:
         self.status = DocumentStatus.PARSED
         self.raw_text_path = raw_text_path
         self.page_count = page_count
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_extracting(self) -> None:
         self.status = DocumentStatus.EXTRACTING
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_extracted(self, extraction: ExtractionResult) -> None:
         self.status = DocumentStatus.EXTRACTED
         self.extraction = extraction
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_indexing(self) -> None:
         self.status = DocumentStatus.INDEXING
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_ready(self) -> None:
         self.status = DocumentStatus.READY
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_failed(self, error: str) -> None:
         self.status = DocumentStatus.FAILED
         self.error_message = error
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
 
 class DocumentChunk(BaseModel):

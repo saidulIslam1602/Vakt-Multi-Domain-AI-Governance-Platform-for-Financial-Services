@@ -28,7 +28,7 @@ def make_auth_dependency(
 ) -> Callable[..., Awaitable[AuthenticatedUser]]:
     """Factory returning a FastAPI dependency for JWT validation via JWKS."""
 
-    jwks_client = jwt.PyJWKClient(jwks_uri)
+    jwks_client = jwt.PyJWKClient(jwks_uri, cache_keys=True, lifespan=3600)
 
     async def _auth(
         credentials: Annotated[HTTPAuthorizationCredentials, Depends(_bearer)],
@@ -49,7 +49,8 @@ def make_auth_dependency(
             ) from exc
         except jwt.InvalidTokenError as exc:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials.",
             ) from exc
 
         tenant_id = payload.get("tenant_id") or payload.get("tid") or "default"
