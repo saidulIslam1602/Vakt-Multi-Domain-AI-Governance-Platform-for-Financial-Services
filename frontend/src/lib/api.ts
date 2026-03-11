@@ -214,32 +214,33 @@ function createClient(baseURL: string): AxiosInstance {
   return client;
 }
 
-// Base URLs map to Next.js rewrites in next.config.ts.
-// Each client base URL already includes the service path prefix,
-// so route paths below should NOT repeat it.
-const ingestClient    = createClient("/api/ingest/documents");
-const documentClient  = createClient("/api/documents/documents");
-const reviewClient    = createClient("/api/documents/review");
-const searchClient    = createClient("/api/search/search");
-const chatClient      = createClient("/api/chat/chat");
-const webhookClient   = createClient("/api/documents/webhooks");
-const alertsClient    = createClient("/api/documents/alerts");
-const tagsClient      = createClient("/api/documents/documents");
-const statsClient     = createClient("/api/documents/stats");
-const savedClient     = createClient("/api/chat/chat/saved");
+// Base URLs point to Next.js Route Handler proxies in src/app/api/*/[...path]/route.ts
+// Those handlers read the *_SERVICE_URL env vars at request time (runtime-safe).
+// Paths below must NOT have a trailing slash — Next.js normalises them away and
+// axios would trigger a 308 redirect on every call otherwise.
+const ingestClient    = createClient("/api/ingest");
+const documentClient  = createClient("/api/documents");
+const reviewClient    = createClient("/api/documents");
+const searchClient    = createClient("/api/search");
+const chatClient      = createClient("/api/chat");
+const webhookClient   = createClient("/api/documents");
+const alertsClient    = createClient("/api/documents");
+const tagsClient      = createClient("/api/documents");
+const statsClient     = createClient("/api/documents");
+const savedClient     = createClient("/api/chat");
 
 export const documentsApi = {
   upload: async (file: File): Promise<{ document_id: string }> => {
     const form = new FormData();
     form.append("file", file);
-    const res = await ingestClient.post<{ document_id: string }>("/", form);
+    const res = await ingestClient.post<{ document_id: string }>("/documents", form);
     return res.data;
   },
 
   bulkUpload: async (zipFile: File): Promise<BulkUploadResponse> => {
     const form = new FormData();
     form.append("file", zipFile);
-    const res = await ingestClient.post<BulkUploadResponse>("/bulk", form);
+    const res = await ingestClient.post<BulkUploadResponse>("/documents/bulk", form);
     return res.data;
   },
 
@@ -248,12 +249,12 @@ export const documentsApi = {
     offset?: number;
     status?: DocumentStatus;
   } = {}): Promise<DocumentListResponse> => {
-    const res = await documentClient.get<DocumentListResponse>("/", { params });
+    const res = await documentClient.get<DocumentListResponse>("/documents", { params });
     return res.data;
   },
 
   get: async (id: string): Promise<DocumentDetail> => {
-    const res = await documentClient.get<DocumentDetail>(`/${id}`);
+    const res = await documentClient.get<DocumentDetail>(`/documents/${id}`);
     return res.data;
   },
 
@@ -261,12 +262,12 @@ export const documentsApi = {
     id: string,
     patch: Partial<ExtractionResult>
   ): Promise<DocumentDetail> => {
-    const res = await documentClient.patch<DocumentDetail>(`/${id}/extraction`, patch);
+    const res = await documentClient.patch<DocumentDetail>(`/documents/${id}/extraction`, patch);
     return res.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await documentClient.delete(`/${id}`);
+    await documentClient.delete(`/documents/${id}`);
   },
 
   getDownloadUrl: async (
@@ -274,14 +275,14 @@ export const documentsApi = {
     expiryHours = 1
   ): Promise<DownloadUrlResponse> => {
     const res = await documentClient.get<DownloadUrlResponse>(
-      `/${id}/download-url`,
+      `/documents/${id}/download-url`,
       { params: { expiry_hours: expiryHours } }
     );
     return res.data;
   },
 
   getHistory: async (id: string): Promise<HistoryEntry[]> => {
-    const res = await documentClient.get<HistoryEntry[]>(`/${id}/history`);
+    const res = await documentClient.get<HistoryEntry[]>(`/documents/${id}/history`);
     return res.data;
   },
 
@@ -290,7 +291,7 @@ export const documentsApi = {
     limit?: number;
     offset?: number;
   } = {}): Promise<ReviewItem[]> => {
-    const res = await reviewClient.get<ReviewItem[]>("/queue", {
+    const res = await reviewClient.get<ReviewItem[]>("/review/queue", {
       params,
     });
     return res.data;
@@ -301,18 +302,18 @@ export const documentsApi = {
     decision: "approved" | "rejected",
     reason?: string
   ): Promise<void> => {
-    await reviewClient.patch(`/queue/${id}`, { decision, reason });
+    await reviewClient.patch(`/review/queue/${id}`, { decision, reason });
   },
 
   getDashboardStats: async (): Promise<DashboardStats> => {
-    const res = await statsClient.get<DashboardStats>("/");
+    const res = await statsClient.get<DashboardStats>("/stats");
     return res.data;
   },
 };
 
 export const webhooksApi = {
   list: async (): Promise<WebhookConfig[]> => {
-    const res = await webhookClient.get<WebhookConfig[]>("/");
+    const res = await webhookClient.get<WebhookConfig[]>("/webhooks");
     return res.data;
   },
 
@@ -321,7 +322,7 @@ export const webhooksApi = {
     url: string;
     events: string[];
   }): Promise<WebhookConfig> => {
-    const res = await webhookClient.post<WebhookConfig>("/", data);
+    const res = await webhookClient.post<WebhookConfig>("/webhooks", data);
     return res.data;
   },
 
@@ -329,18 +330,18 @@ export const webhooksApi = {
     id: string,
     patch: { enabled?: boolean; events?: string[] }
   ): Promise<WebhookConfig> => {
-    const res = await webhookClient.patch<WebhookConfig>(`/${id}`, patch);
+    const res = await webhookClient.patch<WebhookConfig>(`/webhooks/${id}`, patch);
     return res.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await webhookClient.delete(`/${id}`);
+    await webhookClient.delete(`/webhooks/${id}`);
   },
 };
 
 export const searchApi = {
   search: async (query: string, documentIds?: string[]): Promise<SearchResult> => {
-    const res = await searchClient.post<SearchResult>("/", {
+    const res = await searchClient.post<SearchResult>("/search", {
       query,
       top: 10,
       document_ids: documentIds,
@@ -444,63 +445,63 @@ export interface SavedQuery {
 
 export const tagsApi = {
   get: async (documentId: string): Promise<TagsResponse> => {
-    const res = await tagsClient.get<TagsResponse>(`/${documentId}/tags`);
+    const res = await tagsClient.get<TagsResponse>(`/documents/${documentId}/tags`);
     return res.data;
   },
   set: async (documentId: string, tags: string[]): Promise<TagsResponse> => {
-    const res = await tagsClient.put<TagsResponse>(`/${documentId}/tags`, { tags });
+    const res = await tagsClient.put<TagsResponse>(`/documents/${documentId}/tags`, { tags });
     return res.data;
   },
 };
 
 export const alertsApi = {
   getRules: async (): Promise<AlertRuleResponse[]> => {
-    const res = await alertsClient.get<AlertRuleResponse[]>("/rules");
+    const res = await alertsClient.get<AlertRuleResponse[]>("/alerts/rules");
     return res.data;
   },
   createRule: async (data: AlertRuleCreate): Promise<AlertRuleResponse> => {
-    const res = await alertsClient.post<AlertRuleResponse>("/rules", data);
+    const res = await alertsClient.post<AlertRuleResponse>("/alerts/rules", data);
     return res.data;
   },
   deleteRule: async (ruleId: string): Promise<void> => {
-    await alertsClient.delete(`/rules/${ruleId}`);
+    await alertsClient.delete(`/alerts/rules/${ruleId}`);
   },
   toggleRule: async (ruleId: string): Promise<AlertRuleResponse> => {
-    const res = await alertsClient.patch<AlertRuleResponse>(`/rules/${ruleId}/toggle`);
+    const res = await alertsClient.patch<AlertRuleResponse>(`/alerts/rules/${ruleId}/toggle`);
     return res.data;
   },
   getEvents: async (unreadOnly = false): Promise<AlertEventResponse[]> => {
-    const res = await alertsClient.get<AlertEventResponse[]>("/events", {
+    const res = await alertsClient.get<AlertEventResponse[]>("/alerts/events", {
       params: { unread_only: unreadOnly },
     });
     return res.data;
   },
   acknowledgeEvent: async (eventId: string): Promise<void> => {
-    await alertsClient.patch(`/events/${eventId}/acknowledge`);
+    await alertsClient.patch(`/alerts/events/${eventId}/acknowledge`);
   },
   acknowledgeAll: async (): Promise<void> => {
-    await alertsClient.post("/events/acknowledge-all");
+    await alertsClient.post("/alerts/events/acknowledge-all");
   },
 };
 
 export const analyticsApi = {
   get: async (params: { months?: number; expiry_days?: number } = {}): Promise<AnalyticsResponse> => {
-    const res = await statsClient.get<AnalyticsResponse>("/analytics", { params });
+    const res = await statsClient.get<AnalyticsResponse>("/stats/analytics", { params });
     return res.data;
   },
 };
 
 export const savedQueriesApi = {
   list: async (): Promise<SavedQuery[]> => {
-    const res = await savedClient.get<SavedQuery[]>("/");
+    const res = await savedClient.get<SavedQuery[]>("/chat/saved");
     return res.data;
   },
   save: async (name: string, question: string): Promise<SavedQuery> => {
-    const res = await savedClient.post<SavedQuery>("/", { name, question });
+    const res = await savedClient.post<SavedQuery>("/chat/saved", { name, question });
     return res.data;
   },
   delete: async (queryId: string): Promise<void> => {
-    await savedClient.delete(`/${queryId}`);
+    await savedClient.delete(`/chat/saved/${queryId}`);
   },
 };
 
@@ -535,11 +536,11 @@ export interface EmailIngestStatus {
   errors_today: number;
 }
 
-const emailIngestClient = createClient("/api/ingest/documents");
+const emailIngestClient = createClient("/api/ingest");
 
 export const emailIngestApi = {
   getStatus: async (): Promise<EmailIngestStatus> => {
-    const res = await emailIngestClient.get<EmailIngestStatus>("/email-status");
+    const res = await emailIngestClient.get<EmailIngestStatus>("/documents/email-status");
     return res.data;
   },
 };
@@ -614,41 +615,41 @@ export interface EmailPollerStatusEntry {
   task_running: boolean;
 }
 
-const emailConfigClient = createClient("/api/ingest/email-config");
+const emailConfigClient = createClient("/api/ingest");
 
 export const emailConfigApi = {
   /** Fetch the current tenant's email ingestion config. */
   get: async (): Promise<EmailIngestConfig> => {
-    const res = await emailConfigClient.get<EmailIngestConfig>("");
+    const res = await emailConfigClient.get<EmailIngestConfig>("/email-config");
     return res.data;
   },
 
   /** Register a new IMAP inbox. Returns 201 on success. */
   create: async (payload: EmailConfigCreatePayload): Promise<EmailIngestConfig> => {
-    const res = await emailConfigClient.post<EmailIngestConfig>("", payload);
+    const res = await emailConfigClient.post<EmailIngestConfig>("/email-config", payload);
     return res.data;
   },
 
   /** Sparse update — only include fields you want to change. */
   update: async (patch: EmailConfigPatchPayload): Promise<EmailIngestConfig> => {
-    const res = await emailConfigClient.patch<EmailIngestConfig>("", patch);
+    const res = await emailConfigClient.patch<EmailIngestConfig>("/email-config", patch);
     return res.data;
   },
 
   /** Remove config and stop the running poller. */
   delete: async (): Promise<void> => {
-    await emailConfigClient.delete("");
+    await emailConfigClient.delete("/email-config");
   },
 
   /** Test IMAP credentials without persisting anything. */
   testConnection: async (payload: EmailConfigTestPayload): Promise<EmailConfigTestResult> => {
-    const res = await emailConfigClient.post<EmailConfigTestResult>("/test", payload);
+    const res = await emailConfigClient.post<EmailConfigTestResult>("/email-config/test", payload);
     return res.data;
   },
 
   /** Get live poller status for the current tenant. */
   getPollerStatus: async (): Promise<EmailPollerStatusEntry> => {
-    const res = await emailConfigClient.get<EmailPollerStatusEntry>("/status");
+    const res = await emailConfigClient.get<EmailPollerStatusEntry>("/email-config/status");
     return res.data;
   },
 };
@@ -659,7 +660,7 @@ export const chatApi = {
     history: ChatMessage[],
     documentIds?: string[]
   ): Promise<ChatResponse> => {
-    const res = await chatClient.post<ChatResponse>("/", {
+    const res = await chatClient.post<ChatResponse>("/chat", {
       question,
       history,
       document_ids: documentIds,
@@ -676,7 +677,7 @@ export const chatApi = {
   ): Promise<ReadableStream<Uint8Array>> => {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    const resp = await fetch("/api/chat/chat/", {
+    const resp = await fetch("/api/chat/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
