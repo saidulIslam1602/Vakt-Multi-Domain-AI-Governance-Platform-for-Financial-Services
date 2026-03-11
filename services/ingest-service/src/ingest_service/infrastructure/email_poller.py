@@ -48,6 +48,7 @@ from typing import TYPE_CHECKING
 import asyncpg
 
 from allergo_shared.infrastructure.logging import get_logger
+from ingest_service.infrastructure.email_filter import EmailFilter
 
 if TYPE_CHECKING:
     from ingest_service.application.use_cases.ingest_email_attachments import (
@@ -110,6 +111,7 @@ class EmailPoller:
         tenant_id: str,
         pool: asyncpg.Pool,
         use_case: "IngestEmailAttachmentsUseCase",
+        email_filter: EmailFilter | None = None,
     ) -> None:
         self._host = imap_host
         self._port = imap_port
@@ -121,6 +123,7 @@ class EmailPoller:
         self._tenant_id = tenant_id
         self._pool = pool
         self._use_case = use_case
+        self._filter = email_filter or EmailFilter()   # default: no restrictions
         self._task: asyncio.Task | None = None
         self._stop_event = asyncio.Event()
 
@@ -244,6 +247,20 @@ class EmailPoller:
             subject=subject,
         )
 
+        # ── Layer 1-4: email-level filter ─────────────────────────────────────
+        email_result = self._filter.check_email(sender=sender, subject=subject)
+        if not email_result.accepted:
+            logger.info(
+                "email_skipped_by_filter",
+                message_id=message_id,
+                sender=sender,
+                subject=subject,
+                reason=email_result.reason,
+            )
+            # Mark SEEN so we don't re-evaluate this email on the next poll
+            await self._mark_seen(uid)
+            return
+
         attachments = self._extract_attachments(msg)
         if not attachments:
             logger.info(
@@ -306,6 +323,18 @@ class EmailPoller:
 
             payload = part.get_payload(decode=True)
             if not isinstance(payload, bytes) or not payload:
+                continue
+
+            # ── Layer 5-6: attachment size filter ─────────────────────────────
+            size_result = self._filter.check_attachment(
+                filename=filename, size_bytes=len(payload)
+            )
+            if not size_result.accepted:
+                logger.info(
+                    "email_attachment_skipped_by_filter",
+                    filename=filename,
+                    reason=size_result.reason,
+                )
                 continue
 
             results.append((filename, ct, payload))

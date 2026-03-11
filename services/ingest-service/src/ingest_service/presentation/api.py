@@ -47,6 +47,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 UploadDocumentUseCase,
             )
             from ingest_service.infrastructure.db.repository import PostgresDocumentRepository
+            from ingest_service.infrastructure.email_filter import EmailFilter
             from ingest_service.infrastructure.email_poller import EmailPoller
 
             repo = PostgresDocumentRepository(pool)
@@ -64,6 +65,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 tenant_id=cfg.imap_tenant_id,
                 pool=pool,
                 use_case=ingest_uc,
+                email_filter=EmailFilter.from_settings(cfg),
             )
             email_poller.start()
 

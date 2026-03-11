@@ -46,6 +46,36 @@ class Settings(BaseSettings):
     imap_use_ssl: bool = True
     imap_tenant_id: str = "default"     # Allergo tenant that owns ingested docs
 
+    # ── Email ingestion filters ────────────────────────────────────────────────
+    # IMAP_ALLOWED_SENDERS — comma-separated list of trusted sender addresses or
+    #   domains.  If non-empty, emails from any other sender are silently skipped.
+    #   Examples:
+    #     "vendor@acme.com"                         → exact address match
+    #     "@acme.com"                               → entire domain
+    #     "vendor@acme.com,@partner.no"             → mix of both
+    #   Leave empty ("") to accept mail from any sender.
+    imap_allowed_senders: str = ""
+
+    # IMAP_REQUIRED_SUBJECT_KEYWORDS — comma-separated words / phrases.
+    #   ALL listed keywords must appear in the subject (case-insensitive).
+    #   Leave empty to skip subject filtering.
+    #   Example: "invoice,2026"  → subject must contain both "invoice" AND "2026"
+    imap_required_subject_keywords: str = ""
+
+    # IMAP_BLOCKED_SUBJECT_KEYWORDS — comma-separated words / phrases.
+    #   If ANY of these appear in the subject the whole email is skipped.
+    #   Example: "newsletter,unsubscribe,auto-reply"
+    imap_blocked_subject_keywords: str = ""
+
+    # IMAP_BLOCKED_SENDERS — comma-separated addresses / domains to always skip,
+    #   evaluated after the allowlist (acts as a deny-override).
+    #   Example: "noreply@salesforce.com,@marketing.acme.com"
+    imap_blocked_senders: str = ""
+
+    # Per-attachment size limits (bytes).  Defaults: 1 KB min, 50 MB max.
+    imap_min_attachment_bytes: int = 1_024            # 1 KB
+    imap_max_attachment_bytes: int = 50 * 1_024 * 1_024  # 50 MB
+
 
 _settings: Settings | None = None
 

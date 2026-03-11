@@ -92,6 +92,18 @@ services:
       # IMAP_POLL_INTERVAL_SEC: "300"
       # IMAP_USE_SSL: "true"
       # IMAP_TENANT_ID: default
+      # ── Email ingestion filters ───────────────────────────────────────────────
+      # Accept mail ONLY from these addresses / @domains (empty = any sender):
+      # IMAP_ALLOWED_SENDERS: "@acme.com,vendor@partner.no"
+      # Always skip these senders even if allowlist is empty:
+      # IMAP_BLOCKED_SENDERS: "noreply@salesforce.com,@marketing.acme.com"
+      # Skip emails whose subject contains any of these words:
+      # IMAP_BLOCKED_SUBJECT_KEYWORDS: "newsletter,unsubscribe,auto-reply,out of office"
+      # Only ingest emails whose subject contains ALL of these words:
+      # IMAP_REQUIRED_SUBJECT_KEYWORDS: "invoice"
+      # Per-attachment size limits (bytes):
+      # IMAP_MIN_ATTACHMENT_BYTES: "1024"
+      # IMAP_MAX_ATTACHMENT_BYTES: "52428800"
     depends_on:
       postgres:
         condition: service_healthy
