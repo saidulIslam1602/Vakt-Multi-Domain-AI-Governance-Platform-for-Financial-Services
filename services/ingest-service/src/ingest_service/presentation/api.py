@@ -44,7 +44,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         from ingest_service.infrastructure.email_poller_manager import EmailPollerManager
 
-        email_repo = PostgresEmailConfigRepository(pool, encryption_key=cfg.db_encryption_key)
+        email_repo = PostgresEmailConfigRepository(pool, enc_key=cfg.db_encryption_key)
         manager = EmailPollerManager(
             repository=email_repo,
             pool=pool,

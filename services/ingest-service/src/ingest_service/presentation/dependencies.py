@@ -51,7 +51,7 @@ def get_email_config_service(
     from ingest_service.infrastructure.email_poller_manager import EmailPollerManager
 
     cfg = get_settings()
-    repo = PostgresEmailConfigRepository(pool, encryption_key=cfg.db_encryption_key)
+    repo = PostgresEmailConfigRepository(pool, enc_key=cfg.db_encryption_key)
     manager: EmailPollerManager = request.app.state.email_poller_manager
     return EmailConfigService(repository=repo, poller_manager=manager)
 
