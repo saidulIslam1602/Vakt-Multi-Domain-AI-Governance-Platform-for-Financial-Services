@@ -16,7 +16,6 @@ a real mailbox.
 from __future__ import annotations
 
 import asyncpg
-
 from allergo_shared.domain.exceptions import ValidationError
 from allergo_shared.infrastructure.logging import get_logger
 

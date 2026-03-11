@@ -12,16 +12,16 @@ from allergo_shared.domain.exceptions import (
 from allergo_shared.domain.value_objects import DocumentId, TenantId
 
 __all__ = [
+    "AllergoError",
     "Document",
     "DocumentChunk",
-    "ExtractionResult",
+    "DocumentId",
+    "DocumentNotFoundError",
     "DocumentStatus",
     "DocumentType",
-    "AllergoError",
-    "DocumentNotFoundError",
     "ExtractionError",
+    "ExtractionResult",
     "StorageError",
-    "ValidationError",
-    "DocumentId",
     "TenantId",
+    "ValidationError",
 ]

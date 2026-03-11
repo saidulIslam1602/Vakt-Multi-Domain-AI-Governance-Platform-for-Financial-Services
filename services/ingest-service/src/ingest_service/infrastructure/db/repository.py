@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import asyncpg
-
 from allergo_shared.domain.entities import Document
 from allergo_shared.domain.enums import DocumentStatus, DocumentType
 from allergo_shared.domain.value_objects import DocumentId, TenantId
+
 from ingest_service.domain.interfaces.document_repository import DocumentRepository
 
 _INSERT_SQL = """

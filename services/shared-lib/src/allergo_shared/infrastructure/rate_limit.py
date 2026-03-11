@@ -54,7 +54,7 @@ class _TokenBucket:
     ``capacity``.
     """
 
-    __slots__ = ("_capacity", "_tokens", "_rate", "_last_refill", "_lock")
+    __slots__ = ("_capacity", "_last_refill", "_lock", "_rate", "_tokens")
 
     def __init__(self, capacity: float, rate_per_second: float) -> None:
         self._capacity = capacity

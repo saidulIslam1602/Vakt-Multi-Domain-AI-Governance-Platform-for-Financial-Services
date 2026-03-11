@@ -76,6 +76,12 @@ class Settings(BaseSettings):
     imap_min_attachment_bytes: int = 1_024            # 1 KB
     imap_max_attachment_bytes: int = 50 * 1_024 * 1_024  # 50 MB
 
+    # ── Database-level encryption (pgcrypto AES) ──────────────────────────────
+    # Used to encrypt / decrypt IMAP passwords stored in email_ingest_configs.
+    # MUST be set in production.  Generate with:
+    #   python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+    db_encryption_key: str = ""
+
 
 _settings: Settings | None = None
 

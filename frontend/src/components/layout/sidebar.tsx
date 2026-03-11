@@ -12,6 +12,7 @@ import {
   Link2,
   BarChart2,
   Bell,
+  Mail,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -43,6 +44,7 @@ const nav = [
     items: [
       { href: "/alerts", label: "Alerts", icon: Bell },
       { href: "/webhooks", label: "Webhooks", icon: Link2 },
+      { href: "/settings/email", label: "Email Ingestion", icon: Mail },
     ],
   },
 ];

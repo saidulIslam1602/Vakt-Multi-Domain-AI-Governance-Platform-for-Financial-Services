@@ -46,8 +46,8 @@ from email.message import EmailMessage
 from typing import TYPE_CHECKING
 
 import asyncpg
-
 from allergo_shared.infrastructure.logging import get_logger
+
 from ingest_service.infrastructure.email_filter import EmailFilter
 
 if TYPE_CHECKING:
@@ -110,7 +110,7 @@ class EmailPoller:
         use_ssl: bool,
         tenant_id: str,
         pool: asyncpg.Pool,
-        use_case: "IngestEmailAttachmentsUseCase",
+        use_case: IngestEmailAttachmentsUseCase,
         email_filter: EmailFilter | None = None,
     ) -> None:
         self._host = imap_host
@@ -147,7 +147,7 @@ class EmailPoller:
         if self._task is not None:
             try:
                 await asyncio.wait_for(self._task, timeout=10.0)
-            except (asyncio.TimeoutError, asyncio.CancelledError):
+            except (TimeoutError, asyncio.CancelledError):
                 self._task.cancel()
         logger.info("email_poller_stopped")
 
@@ -168,7 +168,7 @@ class EmailPoller:
                 )
                 # stop_event fired during sleep — exit loop
                 break
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Normal: interval elapsed, continue polling
                 pass
 

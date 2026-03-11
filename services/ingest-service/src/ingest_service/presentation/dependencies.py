@@ -5,11 +5,10 @@ from __future__ import annotations
 from typing import Annotated
 
 import asyncpg
-from fastapi import Depends, Request
-
 from allergo_shared.infrastructure.auth import make_auth_dependency, make_noop_auth_dependency
 from allergo_shared.infrastructure.azure.blob import AzureBlobStorage
 from allergo_shared.infrastructure.azure.service_bus import AzureServiceBus
+from fastapi import Depends, Request
 
 from ingest_service.application.use_cases.upload_document import UploadDocumentUseCase
 from ingest_service.infrastructure.config import get_settings
@@ -38,6 +37,23 @@ def get_upload_use_case(
     repository: Annotated[PostgresDocumentRepository, Depends(get_repository)],
 ) -> UploadDocumentUseCase:
     return UploadDocumentUseCase(storage=blob, queue=queue, repository=repository)
+
+
+def get_email_config_service(
+    request: Request,
+    pool: Annotated[asyncpg.Pool, Depends(_get_pool)],
+):  # type: ignore[return]
+    """Return an EmailConfigService wired to the DB pool and the live manager."""
+    from ingest_service.application.use_cases.email_config_service import EmailConfigService
+    from ingest_service.infrastructure.db.email_config_repository import (
+        PostgresEmailConfigRepository,
+    )
+    from ingest_service.infrastructure.email_poller_manager import EmailPollerManager
+
+    cfg = get_settings()
+    repo = PostgresEmailConfigRepository(pool, encryption_key=cfg.db_encryption_key)
+    manager: EmailPollerManager = request.app.state.email_poller_manager
+    return EmailConfigService(repository=repo, poller_manager=manager)
 
 
 def _build_auth_dependency():  # type: ignore[return]

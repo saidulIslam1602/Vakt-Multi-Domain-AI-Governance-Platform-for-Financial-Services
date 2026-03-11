@@ -544,6 +544,115 @@ export const emailIngestApi = {
   },
 };
 
+// ─── Email ingestion configuration API ────────────────────────────────────────
+
+export type EmailPollerStatus = "idle" | "running" | "error" | "disabled";
+
+export interface EmailIngestConfig {
+  id: string;
+  tenant_id: string;
+  imap_host: string;
+  imap_port: number;
+  imap_username: string;
+  /** Always returned as "••••••••" from the API — never the real password. */
+  imap_password: string;
+  imap_mailbox: string;
+  use_ssl: boolean;
+  poll_interval_sec: number;
+  enabled: boolean;
+  status: EmailPollerStatus;
+  status_message: string | null;
+  last_polled_at: string | null;
+  allowed_senders: string;
+  blocked_senders: string;
+  required_subject_kw: string;
+  blocked_subject_kw: string;
+  min_attachment_bytes: number;
+  max_attachment_bytes: number;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface EmailConfigCreatePayload {
+  imap_host: string;
+  imap_port?: number;
+  imap_username: string;
+  imap_password: string;
+  imap_mailbox?: string;
+  use_ssl?: boolean;
+  poll_interval_sec?: number;
+  enabled?: boolean;
+  allowed_senders?: string;
+  blocked_senders?: string;
+  required_subject_kw?: string;
+  blocked_subject_kw?: string;
+  min_attachment_bytes?: number;
+  max_attachment_bytes?: number;
+}
+
+export type EmailConfigPatchPayload = Partial<EmailConfigCreatePayload>;
+
+export interface EmailConfigTestPayload {
+  imap_host: string;
+  imap_port?: number;
+  imap_username: string;
+  imap_password: string;
+  imap_mailbox?: string;
+  use_ssl?: boolean;
+}
+
+export interface EmailConfigTestResult {
+  success: boolean;
+  message: string;
+}
+
+export interface EmailPollerStatusEntry {
+  tenant_id: string;
+  host: string;
+  mailbox: string;
+  interval_sec: number;
+  task_running: boolean;
+}
+
+const emailConfigClient = createClient("/api/ingest/email-config");
+
+export const emailConfigApi = {
+  /** Fetch the current tenant's email ingestion config. */
+  get: async (): Promise<EmailIngestConfig> => {
+    const res = await emailConfigClient.get<EmailIngestConfig>("");
+    return res.data;
+  },
+
+  /** Register a new IMAP inbox. Returns 201 on success. */
+  create: async (payload: EmailConfigCreatePayload): Promise<EmailIngestConfig> => {
+    const res = await emailConfigClient.post<EmailIngestConfig>("", payload);
+    return res.data;
+  },
+
+  /** Sparse update — only include fields you want to change. */
+  update: async (patch: EmailConfigPatchPayload): Promise<EmailIngestConfig> => {
+    const res = await emailConfigClient.patch<EmailIngestConfig>("", patch);
+    return res.data;
+  },
+
+  /** Remove config and stop the running poller. */
+  delete: async (): Promise<void> => {
+    await emailConfigClient.delete("");
+  },
+
+  /** Test IMAP credentials without persisting anything. */
+  testConnection: async (payload: EmailConfigTestPayload): Promise<EmailConfigTestResult> => {
+    const res = await emailConfigClient.post<EmailConfigTestResult>("/test", payload);
+    return res.data;
+  },
+
+  /** Get live poller status for the current tenant. */
+  getPollerStatus: async (): Promise<EmailPollerStatusEntry> => {
+    const res = await emailConfigClient.get<EmailPollerStatusEntry>("/status");
+    return res.data;
+  },
+};
+
 export const chatApi = {
   ask: async (
     question: string,

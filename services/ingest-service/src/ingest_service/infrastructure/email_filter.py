@@ -19,8 +19,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from email.utils import parseaddr
+from typing import TYPE_CHECKING
 
 from allergo_shared.infrastructure.logging import get_logger
+
+if TYPE_CHECKING:
+    from allergo_shared.domain.email_config import EmailIngestConfig
 
 logger = get_logger(__name__)
 
@@ -33,11 +37,11 @@ class FilterResult:
     reason: str  # human-readable explanation shown in logs / audit
 
     @classmethod
-    def ok(cls, reason: str = "accepted") -> "FilterResult":
+    def ok(cls, reason: str = "accepted") -> FilterResult:
         return cls(accepted=True, reason=reason)
 
     @classmethod
-    def reject(cls, reason: str) -> "FilterResult":
+    def reject(cls, reason: str) -> FilterResult:
         return cls(accepted=False, reason=reason)
 
 
@@ -82,7 +86,7 @@ class EmailFilter:
     # ── Factory ───────────────────────────────────────────────────────────────
 
     @classmethod
-    def from_settings(cls, settings) -> "EmailFilter":  # type: ignore[no-untyped-def]
+    def from_settings(cls, settings) -> EmailFilter:  # type: ignore[no-untyped-def]
         """Build an ``EmailFilter`` directly from a ``Settings`` instance."""
         return cls(
             allowed_senders=_parse_csv(settings.imap_allowed_senders),
@@ -91,6 +95,18 @@ class EmailFilter:
             required_subject_keywords=_parse_csv(settings.imap_required_subject_keywords),
             min_attachment_bytes=settings.imap_min_attachment_bytes,
             max_attachment_bytes=settings.imap_max_attachment_bytes,
+        )
+
+    @classmethod
+    def from_config(cls, config: EmailIngestConfig) -> EmailFilter:
+        """Build an ``EmailFilter`` from a per-tenant ``EmailIngestConfig`` entity."""
+        return cls(
+            allowed_senders=_parse_csv(config.allowed_senders or ""),
+            blocked_senders=_parse_csv(config.blocked_senders or ""),
+            blocked_subject_keywords=_parse_csv(config.blocked_subject_kw or ""),
+            required_subject_keywords=_parse_csv(config.required_subject_kw or ""),
+            min_attachment_bytes=config.min_attachment_bytes,
+            max_attachment_bytes=config.max_attachment_bytes,
         )
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -168,8 +184,7 @@ class EmailFilter:
                 # Domain match — addr must end with @domain.tld
                 if addr.endswith(pattern):
                     return True
-            else:
-                # Exact address match
-                if addr == pattern:
-                    return True
+            # Exact address match
+            elif addr == pattern:
+                return True
         return False

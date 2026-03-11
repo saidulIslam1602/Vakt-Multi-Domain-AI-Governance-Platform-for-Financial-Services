@@ -8,11 +8,10 @@ import zipfile
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
-from pydantic import BaseModel
-
 from allergo_shared.domain.exceptions import ValidationError
 from allergo_shared.infrastructure.auth import AuthenticatedUser
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
+from pydantic import BaseModel
 
 from ingest_service.application.use_cases.upload_document import UploadDocumentUseCase
 from ingest_service.infrastructure.config import get_settings

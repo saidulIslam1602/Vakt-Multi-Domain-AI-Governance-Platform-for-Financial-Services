@@ -2,24 +2,23 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 import asyncpg
-from fastapi import FastAPI, Request, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-
-from allergo_shared.infrastructure.rate_limit import RateLimitMiddleware
-
 from allergo_shared.domain.exceptions import AllergoError, ValidationError
 from allergo_shared.infrastructure.azure.blob import AzureBlobStorage
 from allergo_shared.infrastructure.azure.service_bus import AzureServiceBus
 from allergo_shared.infrastructure.health import HealthCheck, make_health_router
 from allergo_shared.infrastructure.logging import configure_logging, get_logger
+from allergo_shared.infrastructure.rate_limit import RateLimitMiddleware
+from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from ingest_service.infrastructure.config import Settings, get_settings
 from ingest_service.presentation.routes.documents import router as documents_router
+from ingest_service.presentation.routes.email_config import router as email_config_router
 
 logger = get_logger(__name__)
 
@@ -39,9 +38,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         application.state.blob = blob
         application.state.queue = queue
 
-        # ── Email ingestion poller (optional) ─────────────────────────────────
-        email_poller = None
-        if cfg.email_ingest_enabled:
+        # ── Email ingestion poller manager (multi-tenant) ─────────────────────
+        from ingest_service.infrastructure.db.email_config_repository import (
+            PostgresEmailConfigRepository,
+        )
+        from ingest_service.infrastructure.email_poller_manager import EmailPollerManager
+
+        email_repo = PostgresEmailConfigRepository(pool, encryption_key=cfg.db_encryption_key)
+        manager = EmailPollerManager(
+            repository=email_repo,
+            pool=pool,
+            blob=blob,
+            queue=queue,
+        )
+        application.state.email_poller_manager = manager
+        await manager.start()
+
+        # ── Legacy single-tenant poller (kept for backwards compat if needed) ──
+        # Superseded by EmailPollerManager.  Can be removed once all tenants
+        # have migrated to the self-service email config API.
+        if cfg.email_ingest_enabled and cfg.imap_host:
             from ingest_service.application.use_cases.ingest_email_attachments import (
                 IngestEmailAttachmentsUseCase,
             )
@@ -52,11 +68,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             from ingest_service.infrastructure.email_filter import EmailFilter
             from ingest_service.infrastructure.email_poller import EmailPoller
 
-            repo = PostgresDocumentRepository(pool)
-            upload_uc = UploadDocumentUseCase(storage=blob, queue=queue, repository=repo)
+            legacy_repo = PostgresDocumentRepository(pool)
+            upload_uc = UploadDocumentUseCase(storage=blob, queue=queue, repository=legacy_repo)
             ingest_uc = IngestEmailAttachmentsUseCase(upload_use_case=upload_uc)
 
-            email_poller = EmailPoller(
+            legacy_poller = EmailPoller(
                 imap_host=cfg.imap_host,
                 imap_port=cfg.imap_port,
                 imap_username=cfg.imap_username,
@@ -69,13 +85,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 use_case=ingest_uc,
                 email_filter=EmailFilter.from_settings(cfg),
             )
-            email_poller.start()
+            legacy_poller.start()
+            application.state.legacy_email_poller = legacy_poller
+        else:
+            application.state.legacy_email_poller = None
 
         yield
 
         # ── Shutdown ──────────────────────────────────────────────────────────
-        if email_poller is not None:
-            await email_poller.stop()
+        await manager.stop()
+        if application.state.legacy_email_poller is not None:
+            await application.state.legacy_email_poller.stop()
         await pool.close()
         await blob.close()
         await queue.close()
@@ -131,6 +151,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         make_health_router(cfg.service_name, cfg.service_version, [HealthCheck("db", _db_health)])
     )
     app.include_router(documents_router, prefix="/api/v1")
+    app.include_router(email_config_router, prefix="/api/v1")
 
     return app
 
