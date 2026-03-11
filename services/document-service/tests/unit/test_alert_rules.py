@@ -17,8 +17,10 @@ def _load_alerts_source() -> str:
         pathlib.Path("/app/src/document_service/presentation/routes/alerts.py"),
         # When installed as a package inside the image
         pathlib.Path("/usr/local/lib/python3.11/site-packages/document_service/presentation/routes/alerts.py"),
-        # Relative to this test file on the host
-        pathlib.Path(__file__).parents[3] / "src" / "document_service" / "presentation" / "routes" / "alerts.py",
+        # Relative to this test file on the host:
+        # __file__ = services/document-service/tests/unit/test_alert_rules.py
+        # parents[2] = services/document-service
+        pathlib.Path(__file__).parents[2] / "src" / "document_service" / "presentation" / "routes" / "alerts.py",
     ]
     for p in candidates:
         if p.exists():
