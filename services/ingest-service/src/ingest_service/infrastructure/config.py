@@ -35,6 +35,17 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = ["*"]
 
+    # ── Email ingestion (IMAP poller) ─────────────────────────────────────────
+    email_ingest_enabled: bool = False
+    imap_host: str = ""
+    imap_port: int = 993
+    imap_username: str = ""
+    imap_password: str = ""
+    imap_mailbox: str = "INBOX"
+    imap_poll_interval_sec: int = 300    # poll every 5 minutes
+    imap_use_ssl: bool = True
+    imap_tenant_id: str = "default"     # Allergo tenant that owns ingested docs
+
 
 _settings: Settings | None = None
 

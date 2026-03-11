@@ -36,7 +36,42 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         application.state.pool = pool
         application.state.blob = blob
         application.state.queue = queue
+
+        # ── Email ingestion poller (optional) ─────────────────────────────────
+        email_poller = None
+        if cfg.email_ingest_enabled:
+            from ingest_service.application.use_cases.ingest_email_attachments import (
+                IngestEmailAttachmentsUseCase,
+            )
+            from ingest_service.application.use_cases.upload_document import (
+                UploadDocumentUseCase,
+            )
+            from ingest_service.infrastructure.db.repository import PostgresDocumentRepository
+            from ingest_service.infrastructure.email_poller import EmailPoller
+
+            repo = PostgresDocumentRepository(pool)
+            upload_uc = UploadDocumentUseCase(storage=blob, queue=queue, repository=repo)
+            ingest_uc = IngestEmailAttachmentsUseCase(upload_use_case=upload_uc)
+
+            email_poller = EmailPoller(
+                imap_host=cfg.imap_host,
+                imap_port=cfg.imap_port,
+                imap_username=cfg.imap_username,
+                imap_password=cfg.imap_password,
+                imap_mailbox=cfg.imap_mailbox,
+                poll_interval_sec=cfg.imap_poll_interval_sec,
+                use_ssl=cfg.imap_use_ssl,
+                tenant_id=cfg.imap_tenant_id,
+                pool=pool,
+                use_case=ingest_uc,
+            )
+            email_poller.start()
+
         yield
+
+        # ── Shutdown ──────────────────────────────────────────────────────────
+        if email_poller is not None:
+            await email_poller.stop()
         await pool.close()
         await blob.close()
         await queue.close()

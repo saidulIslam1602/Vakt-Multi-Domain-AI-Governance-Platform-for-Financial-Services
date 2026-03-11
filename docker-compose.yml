@@ -82,6 +82,16 @@ services:
       AZURE_BLOB_ACCOUNT_URL: http://azurite:10000/devstoreaccount1
       AZURE_SERVICEBUS_NAMESPACE_FQDN: rabbitmq:5672
       CORS_ORIGINS: '["http://localhost:3000"]'
+      # ── Email ingestion (IMAP poller) ────────────────────────────────────────
+      EMAIL_INGEST_ENABLED: "false"
+      # IMAP_HOST: imap.gmail.com
+      # IMAP_PORT: "993"
+      # IMAP_USERNAME: documents@allergo.no
+      # IMAP_PASSWORD: ""
+      # IMAP_MAILBOX: INBOX
+      # IMAP_POLL_INTERVAL_SEC: "300"
+      # IMAP_USE_SSL: "true"
+      # IMAP_TENANT_ID: default
     depends_on:
       postgres:
         condition: service_healthy
