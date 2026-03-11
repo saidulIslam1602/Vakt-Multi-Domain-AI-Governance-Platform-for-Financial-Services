@@ -26,6 +26,6 @@ USER allergo
 EXPOSE 3000
 ENV PORT=3000 HOSTNAME=0.0.0.0
 
-HEALTHCHECK --interval=15s --timeout=5s CMD wget -qO- http://localhost:3000/ || exit 1
+HEALTHCHECK --interval=15s --timeout=5s CMD wget -qO- --server-response http://localhost:3000/ 2>&1 | grep -qE "^  HTTP/[0-9.]+ [23]" || exit 1
 
 CMD ["node", "server.js"]
