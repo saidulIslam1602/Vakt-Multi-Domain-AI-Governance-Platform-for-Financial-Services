@@ -6,7 +6,6 @@ from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 
 import asyncpg
-from azure.identity.aio import DefaultAzureCredential
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -32,16 +31,12 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
         pool = await asyncpg.create_pool(cfg.database_url, min_size=2, max_size=10)
-        credential = DefaultAzureCredential()
-        blob = AzureBlobStorage(
-            account_url=cfg.azure_storage_account_url,
-            credential=credential,
-        )
+        blob = AzureBlobStorage(account_url=cfg.azure_storage_account_url)
         application.state.pool = pool
         application.state.blob = blob
         yield
         await pool.close()
-        await credential.close()
+        await blob.close()
 
     app = FastAPI(
         title="Allergo Nordic — Document Service",

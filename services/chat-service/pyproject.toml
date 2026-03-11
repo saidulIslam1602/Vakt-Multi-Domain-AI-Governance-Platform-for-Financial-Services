@@ -13,6 +13,7 @@ dependencies = [
     "pydantic>=2.6",
     "pydantic-settings>=2.2",
     "azure-identity>=1.15",
+    "aiohttp>=3.9",
     "azure-search-documents>=11.6",
     "openai>=1.23",
     "asyncpg>=0.29",
