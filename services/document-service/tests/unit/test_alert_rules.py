@@ -6,21 +6,33 @@ column names (matching the DB schema) instead of the incorrect 'id'.
 
 from __future__ import annotations
 
-import re
+import importlib.util
 import pathlib
+import re
 
 
 def _load_alerts_source() -> str:
-    """Read the raw source of alerts.py — works both on host and in Docker."""
+    """Read the raw source of alerts.py — works on host, CI, and in Docker."""
+    # 1. importlib — works when the package is pip-installed (e.g. in CI)
+    try:
+        spec = importlib.util.find_spec("document_service.presentation.routes.alerts")
+        if spec and spec.origin:
+            return pathlib.Path(spec.origin).read_text()
+    except (ModuleNotFoundError, ValueError):
+        pass
+
+    # 2. Filesystem fallback candidates
+    _here = pathlib.Path(__file__).resolve()
     candidates = [
-        # When run via `docker run -v .../document-service:/app`
+        # Docker: mounted at /app
         pathlib.Path("/app/src/document_service/presentation/routes/alerts.py"),
-        # When installed as a package inside the image
-        pathlib.Path("/usr/local/lib/python3.11/site-packages/document_service/presentation/routes/alerts.py"),
-        # Relative to this test file on the host:
-        # __file__ = services/document-service/tests/unit/test_alert_rules.py
-        # parents[2] = services/document-service
-        pathlib.Path(__file__).parents[2] / "src" / "document_service" / "presentation" / "routes" / "alerts.py",
+        # Relative: __file__ parents[2] = services/document-service
+        _here.parents[2] / "src" / "document_service" / "presentation" / "routes" / "alerts.py",
+        # site-packages — any Python version under /usr/local/lib
+        *[
+            p / "document_service" / "presentation" / "routes" / "alerts.py"
+            for p in pathlib.Path("/usr/local/lib").glob("python3.*/site-packages")
+        ],
     ]
     for p in candidates:
         if p.exists():
@@ -29,21 +41,32 @@ def _load_alerts_source() -> str:
 
 
 def _load_db_updater_source() -> str:
-    """Read the raw source of db_updater.py — works both on host and in Docker."""
+    """Read the raw source of db_updater.py — works on host, CI, and in Docker."""
+    # 1. importlib — works when the package is pip-installed (e.g. in CI)
+    try:
+        spec = importlib.util.find_spec("processing_service.infrastructure.db_updater")
+        if spec and spec.origin:
+            return pathlib.Path(spec.origin).read_text()
+    except (ModuleNotFoundError, ValueError):
+        pass
+
+    # 2. Filesystem fallback candidates
+    _here = pathlib.Path(__file__).resolve()
     candidates = [
-        # Docker: document-service at /app, processing-service at /processing-service
+        # Docker
         pathlib.Path("/processing-service/src/processing_service/infrastructure/db_updater.py"),
-        # Installed package inside image
-        pathlib.Path("/usr/local/lib/python3.11/site-packages/processing_service/infrastructure/db_updater.py"),
-        # Host: from document-service tests up to workspace root, then into processing-service
-        pathlib.Path(__file__).parents[3] / "processing-service" / "src" / "processing_service" / "infrastructure" / "db_updater.py",
+        # Relative: __file__ parents[3] = services/, then into processing-service
+        _here.parents[3] / "processing-service" / "src" / "processing_service" / "infrastructure" / "db_updater.py",
+        # site-packages — any Python version
+        *[
+            p / "processing_service" / "infrastructure" / "db_updater.py"
+            for p in pathlib.Path("/usr/local/lib").glob("python3.*/site-packages")
+        ],
     ]
     for p in candidates:
-        resolved = p.resolve()
-        if resolved.exists():
-            return resolved.read_text()
+        if p.exists():
+            return p.read_text()
     raise FileNotFoundError(f"db_updater.py not found. Tried: {[str(p) for p in candidates]}")
-
 
 # ── alerts.py column names ────────────────────────────────────────────────────
 
