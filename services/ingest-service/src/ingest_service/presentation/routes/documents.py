@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import io
+import zipfile
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
@@ -17,6 +19,8 @@ from ingest_service.presentation.dependencies import (
     get_upload_use_case,
 )
 from ingest_service.presentation.schemas import (
+    BulkUploadItem,
+    BulkUploadResponse,
     DocumentListResponse,
     DocumentResponse,
     UploadResponse,
@@ -111,3 +115,71 @@ async def get_document(
     if doc is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
     return _map_doc(doc)
+
+
+@router.post(
+    "/bulk",
+    response_model=BulkUploadResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Upload a ZIP file containing multiple documents",
+)
+async def bulk_upload(
+    file: Annotated[UploadFile, File(description="ZIP archive of documents (PDF, DOCX, XLSX, TXT, images)")],
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    use_case: Annotated[UploadDocumentUseCase, Depends(get_upload_use_case)],
+) -> BulkUploadResponse:
+    """Extract all files from a ZIP archive and enqueue each for processing.
+
+    Files with unsupported extensions are skipped gracefully — the rest are
+    queued normally. Returns a per-file status report.
+    """
+    data = await file.read()
+    if not zipfile.is_zipfile(io.BytesIO(data)):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Uploaded file is not a valid ZIP archive.",
+        )
+
+    results: list[BulkUploadItem] = []
+    with zipfile.ZipFile(io.BytesIO(data)) as zf:
+        members = [m for m in zf.infolist() if not m.filename.endswith("/")]  # skip dirs
+        for member in members:
+            filename = member.filename.split("/")[-1]  # strip path prefix
+            if not filename:
+                continue
+            try:
+                file_bytes = zf.read(member.filename)
+                # Guess content type from extension
+                import mimetypes
+                content_type, _ = mimetypes.guess_type(filename)
+                document = await use_case.execute(
+                    filename=filename,
+                    data=file_bytes,
+                    content_type=content_type,
+                    tenant_id=str(current_user.tenant_id),
+                )
+                results.append(BulkUploadItem(
+                    filename=filename,
+                    document_id=str(document.id),
+                    status="queued",
+                ))
+            except ValidationError as exc:
+                results.append(BulkUploadItem(
+                    filename=filename,
+                    status="skipped",
+                    error=exc.message,
+                ))
+            except Exception as exc:
+                results.append(BulkUploadItem(
+                    filename=filename,
+                    status="error",
+                    error=str(exc),
+                ))
+
+    return BulkUploadResponse(
+        total_files=len(results),
+        queued=sum(1 for r in results if r.status == "queued"),
+        skipped=sum(1 for r in results if r.status == "skipped"),
+        errors=sum(1 for r in results if r.status == "error"),
+        results=results,
+    )

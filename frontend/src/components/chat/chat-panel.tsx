@@ -41,6 +41,9 @@ interface ChatPanelProps {
   documentIds?: string[];
   /** When true, shows the quick-ask bar and a larger input */
   fullPage?: boolean;
+  /** Optional: pre-fill and auto-send a question (e.g. from saved queries) */
+  externalQuestion?: string;
+  onExternalConsumed?: () => void;
 }
 
 // ── Intent badge ─────────────────────────────────────────────────────────────
@@ -268,7 +271,7 @@ function QuickAskBar({ onSelect }: { onSelect: (_q: string) => void }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function ChatPanel({ documentIds, fullPage = false }: ChatPanelProps) {
+export function ChatPanel({ documentIds, fullPage = false, externalQuestion, onExternalConsumed }: ChatPanelProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -322,6 +325,15 @@ export function ChatPanel({ documentIds, fullPage = false }: ChatPanelProps) {
     },
     [input, isLoading, messages, documentIds]
   );
+
+  // Fire external question once when provided
+  useEffect(() => {
+    if (externalQuestion && !isLoading) {
+      send(externalQuestion);
+      onExternalConsumed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalQuestion]);
 
   const handleSuggestion = useCallback(
     (q: string) => {

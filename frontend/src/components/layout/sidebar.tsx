@@ -10,6 +10,8 @@ import {
   LayoutDashboard,
   Clock,
   Link2,
+  BarChart2,
+  Bell,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -33,11 +35,13 @@ const nav = [
     items: [
       { href: "/search", label: "Search", icon: Search },
       { href: "/chat", label: "AI Assistant", icon: MessageSquare },
+      { href: "/analytics", label: "Analytics", icon: BarChart2 },
     ],
   },
   {
     group: "Settings",
     items: [
+      { href: "/alerts", label: "Alerts", icon: Bell },
       { href: "/webhooks", label: "Webhooks", icon: Link2 },
     ],
   },

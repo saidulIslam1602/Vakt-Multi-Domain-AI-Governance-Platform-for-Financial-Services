@@ -44,3 +44,18 @@ class ErrorResponse(BaseModel):
     code: str
     message: str
     detail: str | None = None
+
+
+class BulkUploadItem(BaseModel):
+    filename: str
+    document_id: str | None = None
+    status: str  # "queued" | "skipped" | "error"
+    error: str | None = None
+
+
+class BulkUploadResponse(BaseModel):
+    total_files: int
+    queued: int
+    skipped: int
+    errors: int
+    results: list[BulkUploadItem]

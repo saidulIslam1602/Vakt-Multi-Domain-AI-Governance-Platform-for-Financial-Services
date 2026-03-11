@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DocumentList } from "@/components/documents/document-list";
 import { Upload, Clock } from "lucide-react";
+import { ExportCsvButton } from "@/components/documents/export-csv-button";
 
 export default function DocumentsPage() {
   return (
@@ -15,6 +16,7 @@ export default function DocumentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <ExportCsvButton />
           <Link href="/review" className="btn-secondary">
             <Clock className="h-4 w-4" />
             Review Queue

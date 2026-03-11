@@ -225,6 +225,13 @@ export const documentsApi = {
     return res.data;
   },
 
+  bulkUpload: async (zipFile: File): Promise<BulkUploadResponse> => {
+    const form = new FormData();
+    form.append("file", zipFile);
+    const res = await ingestClient.post<BulkUploadResponse>("/bulk", form);
+    return res.data;
+  },
+
   list: async (params: {
     limit?: number;
     offset?: number;
@@ -330,6 +337,186 @@ export const searchApi = {
       document_ids: documentIds,
     });
     return res.data;
+  },
+};
+
+// ─── New types ────────────────────────────────────────────────────────────────
+
+export interface BulkUploadItem {
+  filename: string;
+  document_id: string | null;
+  status: string;
+  error: string | null;
+}
+
+export interface BulkUploadResponse {
+  total_files: number;
+  queued: number;
+  skipped: number;
+  errors: number;
+  results: BulkUploadItem[];
+}
+
+export interface TagsResponse {
+  document_id: string;
+  tags: string[];
+}
+
+export type TriggerType =
+  | "invoice_overdue"
+  | "invoice_amount_threshold"
+  | "contract_expiring"
+  | "legal_risk"
+  | "low_confidence"
+  | "pending_review_threshold";
+
+export interface AlertRuleCreate {
+  name: string;
+  trigger_type: TriggerType;
+  threshold_value?: number;
+  days_before?: number;
+  document_category?: string;
+  channels?: string[];
+}
+
+export interface AlertRuleResponse extends AlertRuleCreate {
+  rule_id: string;
+  tenant_id: string;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface AlertEventResponse {
+  event_id: string;
+  rule_id: string;
+  document_id: string;
+  trigger_type: TriggerType;
+  message: string;
+  metadata: Record<string, unknown>;
+  acknowledged: boolean;
+  created_at: string;
+}
+
+export interface SpendDataPoint {
+  month: string;     // "2024-01"
+  count: number;
+  total_amount: number;
+}
+
+export interface VendorConcentration {
+  vendor_name: string;
+  count: number;
+  percentage: number;
+}
+
+export interface ExpiryItem {
+  document_id: string;
+  filename: string;
+  vendor_name: string | null;
+  contract_end_date: string;
+  days_until_expiry: number;
+  contract_value: string | null;
+}
+
+export interface AnalyticsResponse {
+  spend_by_month: SpendDataPoint[];
+  vendor_concentration: VendorConcentration[];
+  upcoming_expiries: ExpiryItem[];
+}
+
+export interface SavedQuery {
+  query_id: string;
+  name: string;
+  question: string;
+  created_at: string;
+}
+
+// ─── Extended API clients ──────────────────────────────────────────────────────
+
+const alertsClient = createClient("/api/documents/alerts");
+const tagsClient   = createClient("/api/documents/documents");
+const statsClient  = createClient("/api/documents/stats");
+const savedClient  = createClient("/api/chat/chat/saved");
+
+export const tagsApi = {
+  get: async (documentId: string): Promise<TagsResponse> => {
+    const res = await tagsClient.get<TagsResponse>(`/${documentId}/tags`);
+    return res.data;
+  },
+  set: async (documentId: string, tags: string[]): Promise<TagsResponse> => {
+    const res = await tagsClient.put<TagsResponse>(`/${documentId}/tags`, { tags });
+    return res.data;
+  },
+};
+
+export const alertsApi = {
+  getRules: async (): Promise<AlertRuleResponse[]> => {
+    const res = await alertsClient.get<AlertRuleResponse[]>("/rules");
+    return res.data;
+  },
+  createRule: async (data: AlertRuleCreate): Promise<AlertRuleResponse> => {
+    const res = await alertsClient.post<AlertRuleResponse>("/rules", data);
+    return res.data;
+  },
+  deleteRule: async (ruleId: string): Promise<void> => {
+    await alertsClient.delete(`/rules/${ruleId}`);
+  },
+  toggleRule: async (ruleId: string): Promise<AlertRuleResponse> => {
+    const res = await alertsClient.patch<AlertRuleResponse>(`/rules/${ruleId}/toggle`);
+    return res.data;
+  },
+  getEvents: async (unreadOnly = false): Promise<AlertEventResponse[]> => {
+    const res = await alertsClient.get<AlertEventResponse[]>("/events", {
+      params: { unread_only: unreadOnly },
+    });
+    return res.data;
+  },
+  acknowledgeEvent: async (eventId: string): Promise<void> => {
+    await alertsClient.patch(`/events/${eventId}/acknowledge`);
+  },
+  acknowledgeAll: async (): Promise<void> => {
+    await alertsClient.post("/events/acknowledge-all");
+  },
+};
+
+export const analyticsApi = {
+  get: async (params: { months?: number; expiry_days?: number } = {}): Promise<AnalyticsResponse> => {
+    const res = await statsClient.get<AnalyticsResponse>("/analytics", { params });
+    return res.data;
+  },
+};
+
+export const savedQueriesApi = {
+  list: async (): Promise<SavedQuery[]> => {
+    const res = await savedClient.get<SavedQuery[]>("/");
+    return res.data;
+  },
+  save: async (name: string, question: string): Promise<SavedQuery> => {
+    const res = await savedClient.post<SavedQuery>("/", { name, question });
+    return res.data;
+  },
+  delete: async (queryId: string): Promise<void> => {
+    await savedClient.delete(`/${queryId}`);
+  },
+};
+
+export const exportApi = {
+  /** Triggers a CSV download in the browser. */
+  downloadCsv: (params: { document_category?: string; review_status?: string } = {}): void => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const search = new URLSearchParams();
+    if (params.document_category) search.set("document_category", params.document_category);
+    if (params.review_status)     search.set("review_status", params.review_status);
+    const qs = search.toString() ? `?${search.toString()}` : "";
+    const url = `/api/documents/documents/export.csv${qs}`;
+    const a = document.createElement("a");
+    a.href = url;
+    if (token) {
+      // For auth-gated endpoints open in same tab; browser will follow redirect
+    }
+    a.download = "allergo_export.csv";
+    a.click();
   },
 };
 

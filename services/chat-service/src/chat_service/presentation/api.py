@@ -20,6 +20,7 @@ from allergo_shared.infrastructure.logging import configure_logging
 from chat_service.application.rag import RagUseCase
 from chat_service.infrastructure.db_reader import FinancialDbReader
 from chat_service.presentation.routes.chat import router as chat_router
+from chat_service.presentation.routes.saved_queries import router as saved_queries_router
 
 
 class Settings(BaseSettings):
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
     )
     app.include_router(make_health_router(cfg.service_name, cfg.service_version))
     app.include_router(chat_router, prefix="/api/v1")
+    app.include_router(saved_queries_router, prefix="/api/v1")
     return app
 
 

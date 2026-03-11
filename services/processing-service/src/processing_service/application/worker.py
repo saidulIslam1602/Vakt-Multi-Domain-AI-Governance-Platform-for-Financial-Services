@@ -136,6 +136,8 @@ class ProcessingWorker:
         await self._db_updater.mark_extracting(document_id, tenant_id)
         extraction = await self._extractor.extract(parse_result.text, document_id)
         await self._db_updater.mark_extracted(document_id, tenant_id, extraction)
+        # Evaluate alert rules against this extraction (non-blocking, errors swallowed)
+        await self._db_updater.evaluate_alerts(document_id, tenant_id, extraction)
 
         # 5. Chunk + embed + index
         await self._db_updater.mark_indexing(document_id, tenant_id)
