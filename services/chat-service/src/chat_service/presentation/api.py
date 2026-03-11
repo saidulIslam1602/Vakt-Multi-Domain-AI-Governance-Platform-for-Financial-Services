@@ -8,6 +8,8 @@ from collections.abc import AsyncGenerator
 import asyncpg
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from allergo_shared.infrastructure.rate_limit import RateLimitMiddleware
 from openai import AsyncAzureOpenAI
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -131,6 +133,13 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+    # Chat / RAG is expensive — tighter per-tenant limit (30 rpm, burst to 60)
+    app.add_middleware(
+        RateLimitMiddleware,
+        requests_per_minute=30,
+        burst_multiplier=2.0,
+        enabled=cfg.environment != "local",
     )
     app.include_router(make_health_router(cfg.service_name, cfg.service_version))
     app.include_router(chat_router, prefix="/api/v1")

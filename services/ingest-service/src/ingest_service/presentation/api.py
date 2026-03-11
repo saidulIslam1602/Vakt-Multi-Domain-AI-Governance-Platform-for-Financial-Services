@@ -10,6 +10,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from allergo_shared.infrastructure.rate_limit import RateLimitMiddleware
+
 from allergo_shared.domain.exceptions import AllergoError, ValidationError
 from allergo_shared.infrastructure.azure.blob import AzureBlobStorage
 from allergo_shared.infrastructure.azure.service_bus import AzureServiceBus
@@ -94,6 +96,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+    app.add_middleware(
+        RateLimitMiddleware,
+        requests_per_minute=120,
+        burst_multiplier=2.0,
+        enabled=cfg.environment != "local",
     )
 
     @app.exception_handler(ValidationError)

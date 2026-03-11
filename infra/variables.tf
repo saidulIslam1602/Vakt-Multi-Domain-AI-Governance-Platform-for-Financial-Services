@@ -30,3 +30,17 @@ variable "nextauth_secret" {
   sensitive   = true
   description = "NextAuth.js secret for session signing (min 32 chars)"
 }
+
+variable "smtp_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "SMTP account password for contract renewal email notifications"
+}
+
+variable "imap_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "IMAP account password for email document ingestion"
+}

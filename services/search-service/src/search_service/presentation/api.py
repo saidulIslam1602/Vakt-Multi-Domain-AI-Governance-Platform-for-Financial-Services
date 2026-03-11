@@ -7,6 +7,8 @@ from collections.abc import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from allergo_shared.infrastructure.rate_limit import RateLimitMiddleware
 from openai import AsyncAzureOpenAI
 
 from allergo_shared.infrastructure.health import make_health_router
@@ -91,6 +93,12 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+    app.add_middleware(
+        RateLimitMiddleware,
+        requests_per_minute=60,
+        burst_multiplier=2.0,
+        enabled=cfg.environment != "local",
     )
     app.include_router(make_health_router(cfg.service_name, cfg.service_version))
     app.include_router(search_router, prefix="/api/v1")

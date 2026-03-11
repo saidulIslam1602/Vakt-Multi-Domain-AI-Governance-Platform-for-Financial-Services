@@ -9,6 +9,8 @@ import asyncpg
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from allergo_shared.infrastructure.rate_limit import RateLimitMiddleware
+
 from allergo_shared.infrastructure.azure.blob import AzureBlobStorage
 from allergo_shared.infrastructure.health import make_health_router
 from allergo_shared.infrastructure.logging import configure_logging
@@ -51,6 +53,12 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+    app.add_middleware(
+        RateLimitMiddleware,
+        requests_per_minute=120,
+        burst_multiplier=2.0,
+        enabled=cfg.environment != "local",
     )
     app.include_router(make_health_router(cfg.service_name, cfg.service_version))
     app.include_router(alerts_router, prefix="/api/v1")

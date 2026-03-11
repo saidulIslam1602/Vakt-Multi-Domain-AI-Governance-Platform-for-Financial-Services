@@ -18,7 +18,9 @@ resource "azurerm_container_registry" "main" {
 
 locals {
   acr_url = azurerm_container_registry.main.login_server
-  db_url  = "postgresql://allergoadmin:${var.postgres_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/allergo?sslmode=require"
+  # DATABASE_URL is stored in Key Vault (azurerm_key_vault_secret.database_url).
+  # Container Apps pull it via secretRef at runtime — the plain-text connection
+  # string never appears in Container App environment variables.
   sb_fqdn = "${azurerm_servicebus_namespace.main.name}.servicebus.windows.net"
   img = {
     ingest     = "${azurerm_container_registry.main.login_server}/ingest-service:latest"
@@ -45,6 +47,18 @@ resource "azurerm_container_app" "ingest" {
     identity = "System"
   }
 
+  # ── Key Vault secret references ───────────────────────────────────────────
+  secret {
+    name                = "database-url"
+    key_vault_secret_id = azurerm_key_vault_secret.database_url.versionless_id
+    identity            = "System"
+  }
+  secret {
+    name                = "imap-password"
+    key_vault_secret_id = azurerm_key_vault_secret.imap_password.versionless_id
+    identity            = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
@@ -64,8 +78,12 @@ resource "azurerm_container_app" "ingest" {
         value = local.sb_fqdn
       }
       env {
-        name  = "DATABASE_URL"
-        value = local.db_url
+        name        = "DATABASE_URL"
+        secret_name = "database-url"
+      }
+      env {
+        name        = "IMAP_PASSWORD"
+        secret_name = "imap-password"
       }
       env {
         name  = "ENVIRONMENT"
@@ -104,6 +122,17 @@ resource "azurerm_container_app" "processing" {
     identity = "System"
   }
 
+  secret {
+    name                = "database-url"
+    key_vault_secret_id = azurerm_key_vault_secret.database_url.versionless_id
+    identity            = "System"
+  }
+  secret {
+    name                = "smtp-password"
+    key_vault_secret_id = azurerm_key_vault_secret.smtp_password.versionless_id
+    identity            = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 10
@@ -131,8 +160,12 @@ resource "azurerm_container_app" "processing" {
         value = azurerm_cognitive_account.openai.endpoint
       }
       env {
-        name  = "DATABASE_URL"
-        value = local.db_url
+        name        = "DATABASE_URL"
+        secret_name = "database-url"
+      }
+      env {
+        name        = "SMTP_PASSWORD"
+        secret_name = "smtp-password"
       }
       env {
         name  = "ENVIRONMENT"
@@ -168,6 +201,12 @@ resource "azurerm_container_app" "document" {
     identity = "System"
   }
 
+  secret {
+    name                = "database-url"
+    key_vault_secret_id = azurerm_key_vault_secret.database_url.versionless_id
+    identity            = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
@@ -179,8 +218,8 @@ resource "azurerm_container_app" "document" {
       memory = "0.5Gi"
 
       env {
-        name  = "DATABASE_URL"
-        value = local.db_url
+        name        = "DATABASE_URL"
+        secret_name = "database-url"
       }
       env {
         name  = "ENVIRONMENT"
@@ -352,8 +391,9 @@ resource "azurerm_container_app" "frontend" {
   }
 
   secret {
-    name  = "nextauth-secret"
-    value = var.nextauth_secret
+    name                = "nextauth-secret"
+    key_vault_secret_id = azurerm_key_vault_secret.nextauth_secret.versionless_id
+    identity            = "System"
   }
 
   ingress {

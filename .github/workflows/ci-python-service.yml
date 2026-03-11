@@ -11,6 +11,11 @@ on:
         description: Path to the service root (e.g. services/ingest-service)
         required: true
         type: string
+      run_migrations:
+        description: Set to true to run SQL migrations after deploy (ingest-service only)
+        required: false
+        type: boolean
+        default: false
     secrets:
       AZURE_CLIENT_ID:
         required: false
@@ -114,3 +119,59 @@ jobs:
             --name ${{ inputs.service_name }} \
             --resource-group ${{ vars.RESOURCE_GROUP }} \
             --image ${{ vars.ACR_NAME }}.azurecr.io/${{ inputs.service_name }}:${{ github.sha }}
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # migrate-db: runs SQL migrations via a one-off psql container inside
+  # Azure Container Apps Jobs.  Only fires when run_migrations=true (ingest).
+  # The DATABASE_URL is pulled from Azure Key Vault at runtime — no secret
+  # is ever written into the workflow YAML.
+  # ──────────────────────────────────────────────────────────────────────────
+  migrate-db:
+    name: Run DB migrations
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: >
+      inputs.run_migrations == true &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request'
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Fetch DATABASE_URL from Key Vault — never stored as a repo secret
+      - name: Fetch DATABASE_URL from Key Vault
+        run: |
+          DB_URL=$(az keyvault secret show \
+            --vault-name ${{ vars.KEY_VAULT_NAME }} \
+            --name database-url \
+            --query value -o tsv)
+          echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
+
+      - name: Run SQL migrations (psql)
+        run: |
+          MIGRATIONS_DIR=services/ingest-service/src/ingest_service/infrastructure/db/migrations
+
+          # Install psql client
+          sudo apt-get install -y postgresql-client
+
+          for f in $(ls $MIGRATIONS_DIR/*.sql | sort); do
+            echo "▶ Applying $f ..."
+            psql "$DATABASE_URL" \
+              --set ON_ERROR_STOP=1 \
+              --single-transaction \
+              -f "$f"
+            echo "✔ $f applied."
+          done
+
+          echo "✅ All migrations complete."
