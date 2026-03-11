@@ -17,6 +17,9 @@ export type DocumentStatus =
 
 export type DocumentType = "pdf" | "docx" | "xlsx" | "txt" | "html" | "image" | "unknown";
 
+/** How the document entered the system. `undefined` means an older record with no source recorded. */
+export type IngestSource = "upload" | "bulk" | "email";
+
 export interface DocumentListItem {
   document_id: string;
   filename: string;
@@ -24,6 +27,8 @@ export interface DocumentListItem {
   document_type: DocumentType;
   uploaded_at: string;
   updated_at: string;
+  /** Optional — present only when the backend returns it */
+  ingest_source?: IngestSource;
 }
 
 export interface ExtractionResult {
@@ -516,6 +521,26 @@ export const exportApi = {
     }
     a.download = "allergo_export.csv";
     a.click();
+  },
+};
+
+// ─── Email ingest status ───────────────────────────────────────────────────
+
+export interface EmailIngestStatus {
+  enabled: boolean;
+  imap_host: string;
+  imap_mailbox: string;
+  last_poll_at: string | null;
+  ingested_today: number;
+  errors_today: number;
+}
+
+const emailIngestClient = createClient("/api/ingest/documents");
+
+export const emailIngestApi = {
+  getStatus: async (): Promise<EmailIngestStatus> => {
+    const res = await emailIngestClient.get<EmailIngestStatus>("/email-status");
+    return res.data;
   },
 };
 

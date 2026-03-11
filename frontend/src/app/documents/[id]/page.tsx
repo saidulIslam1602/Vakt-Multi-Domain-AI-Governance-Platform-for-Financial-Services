@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { documentsApi, type ExtractionResult, type HistoryEntry } from "@/lib/api";
 import { StatusBadge } from "@/components/documents/status-badge";
+import { SourceBadge } from "@/components/documents/source-badge";
 import { ChatPanel } from "@/components/chat/chat-panel";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -292,6 +293,7 @@ export default function DocumentDetailPage() {
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="truncate">{doc.filename}</h1>
               <StatusBadge status={doc.status} />
+              <SourceBadge source={(doc as any).ingest_source} />
               <ReviewBadge status={(doc as any).review_status} />
               {ext.confidence_score !== undefined && (
                 <ConfidenceBadge score={ext.confidence_score} />

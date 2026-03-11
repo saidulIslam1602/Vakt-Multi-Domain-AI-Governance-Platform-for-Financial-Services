@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import io
 import zipfile
+from datetime import date, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
+from pydantic import BaseModel
 
 from allergo_shared.domain.exceptions import ValidationError
 from allergo_shared.infrastructure.auth import AuthenticatedUser
 
 from ingest_service.application.use_cases.upload_document import UploadDocumentUseCase
+from ingest_service.infrastructure.config import get_settings
 from ingest_service.infrastructure.db.repository import PostgresDocumentRepository
 from ingest_service.presentation.dependencies import (
     get_current_user,
@@ -182,4 +185,65 @@ async def bulk_upload(
         skipped=sum(1 for r in results if r.status == "skipped"),
         errors=sum(1 for r in results if r.status == "error"),
         results=results,
+    )
+
+
+# ── Email ingest status ───────────────────────────────────────────────────────
+
+class EmailIngestStatusResponse(BaseModel):
+    enabled: bool
+    imap_host: str
+    imap_mailbox: str
+    last_poll_at: str | None
+    ingested_today: int
+    errors_today: int
+
+
+@router.get(
+    "/email-status",
+    response_model=EmailIngestStatusResponse,
+    summary="Email ingestion poller status",
+    description=(
+        "Returns the current state of the IMAP email poller. "
+        "Always safe to call — returns enabled=false when the feature is off."
+    ),
+)
+async def email_ingest_status(
+    _: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    request: Request,
+) -> EmailIngestStatusResponse:
+    cfg = get_settings()
+
+    if not cfg.email_ingest_enabled:
+        return EmailIngestStatusResponse(
+            enabled=False,
+            imap_host=cfg.imap_host,
+            imap_mailbox=cfg.imap_mailbox,
+            last_poll_at=None,
+            ingested_today=0,
+            errors_today=0,
+        )
+
+    pool = request.app.state.pool
+    today = date.today()
+
+    row = await pool.fetchrow(
+        """
+        SELECT
+            COUNT(*) FILTER (WHERE error IS NULL)       AS ingested_today,
+            COUNT(*) FILTER (WHERE error IS NOT NULL)   AS errors_today,
+            MAX(ingested_at)                             AS last_poll_at
+        FROM email_ingest_log
+        WHERE ingested_at::date = $1
+        """,
+        today,
+    )
+
+    return EmailIngestStatusResponse(
+        enabled=True,
+        imap_host=cfg.imap_host,
+        imap_mailbox=cfg.imap_mailbox,
+        last_poll_at=row["last_poll_at"].isoformat() if row["last_poll_at"] else None,
+        ingested_today=int(row["ingested_today"] or 0),
+        errors_today=int(row["errors_today"] or 0),
     )

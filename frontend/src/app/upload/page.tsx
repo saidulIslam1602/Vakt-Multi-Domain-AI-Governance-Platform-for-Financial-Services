@@ -1,5 +1,6 @@
 import { UploadZone } from "@/components/documents/upload-zone";
 import { BulkUploadZone } from "@/components/documents/bulk-upload-zone";
+import { EmailIngestStatus } from "@/components/documents/email-ingest-status";
 
 export default function UploadPage() {
   return (
@@ -18,12 +19,18 @@ export default function UploadPage() {
       </div>
 
       {/* Bulk ZIP upload */}
-      <div>
+      <div className="mb-6">
         <h2 className="text-sm font-semibold text-slate-700 mb-1">Bulk Upload (ZIP)</h2>
         <p className="text-xs text-slate-400 mb-3">
           Pack multiple documents into a ZIP file and upload them all at once.
         </p>
         <BulkUploadZone />
+      </div>
+
+      {/* Email ingest status (shown when IMAP poller is configured) */}
+      <div>
+        <h2 className="text-sm font-semibold text-slate-700 mb-3">Email Ingest</h2>
+        <EmailIngestStatus />
       </div>
     </div>
   );

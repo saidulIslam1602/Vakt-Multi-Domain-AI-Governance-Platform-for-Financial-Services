@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { documentsApi, type DocumentListItem } from "@/lib/api";
 import { StatusBadge } from "./status-badge";
+import { SourceBadge } from "./source-badge";
 import { format } from "date-fns";
 import Link from "next/link";
 import { FileText, AlertCircle, Loader2, Clock, FileSpreadsheet, FileType } from "lucide-react";
@@ -100,6 +101,7 @@ function DocumentCard({ doc }: { doc: DocumentListItem & { needs_review?: boolea
               <Clock className="h-3 w-3" /> Review
             </span>
           )}
+          <SourceBadge source={doc.ingest_source} />
           <StatusBadge status={doc.status} />
         </div>
       </div>
