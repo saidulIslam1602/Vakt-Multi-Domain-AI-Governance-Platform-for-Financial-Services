@@ -11,12 +11,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from allergo_shared.infrastructure.rate_limit import RateLimitMiddleware
 from openai import AsyncAzureOpenAI
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from allergo_shared.infrastructure.health import make_health_router
 from allergo_shared.infrastructure.logging import configure_logging
 from chat_service.application.rag import RagUseCase
 from chat_service.infrastructure.db_reader import FinancialDbReader
+from chat_service.presentation.config import Settings  # re-exported for backward compat
 from chat_service.presentation.routes.chat import router as chat_router
 from chat_service.presentation.routes.saved_queries import router as saved_queries_router
 
@@ -26,28 +26,6 @@ _ELASTICSEARCH_MARKERS = (":9200", "elasticsearch", "localhost:9200", "127.0.0.1
 def _is_elasticsearch(endpoint: str) -> bool:
     lower = endpoint.lower()
     return any(m in lower for m in _ELASTICSEARCH_MARKERS)
-
-
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
-    service_name: str = "chat-service"
-    service_version: str = "0.1.0"
-    log_level: str = "INFO"
-    environment: str = "production"
-    database_url: str
-    azure_search_endpoint: str
-    azure_search_index_name: str = "documents"
-    azure_openai_endpoint: str
-    azure_openai_api_version: str = "2024-08-01-preview"
-    azure_openai_api_key: str = ""
-    azure_openai_chat_deployment: str = "gpt-4o"
-    azure_openai_embedding_deployment: str = "text-embedding-3-large"
-    auth_jwks_uri: str = ""
-    auth_audience: str = ""
-    auth_issuer: str = ""
-    auth_enabled: bool = True
-    cors_origins: list[str] = ["*"]
-    rag_top_k: int = 6
 
 
 def create_app() -> FastAPI:

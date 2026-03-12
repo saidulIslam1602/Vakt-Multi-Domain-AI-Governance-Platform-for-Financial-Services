@@ -272,6 +272,10 @@ resource "azurerm_container_app" "search" {
         value = azurerm_cognitive_account.openai.endpoint
       }
       env {
+        name  = "AUTH_ENABLED"
+        value = "false"
+      }
+      env {
         name  = "ENVIRONMENT"
         value = var.environment
       }
@@ -303,6 +307,12 @@ resource "azurerm_container_app" "chat" {
     identity = "System"
   }
 
+  secret {
+    name                = "database-url"
+    key_vault_secret_id = azurerm_key_vault_secret.database_url.versionless_id
+    identity            = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
@@ -320,6 +330,14 @@ resource "azurerm_container_app" "chat" {
       env {
         name  = "AZURE_OPENAI_ENDPOINT"
         value = azurerm_cognitive_account.openai.endpoint
+      }
+      env {
+        name        = "DATABASE_URL"
+        secret_name = "database-url"
+      }
+      env {
+        name  = "AUTH_ENABLED"
+        value = "false"
       }
       env {
         name  = "ENVIRONMENT"
