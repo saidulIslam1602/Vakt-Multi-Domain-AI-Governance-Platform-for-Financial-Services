@@ -29,7 +29,7 @@ def _is_elasticsearch(endpoint: str) -> bool:
 
 
 def create_app() -> FastAPI:
-    cfg = Settings()
+    cfg = Settings()  # type: ignore[call-arg]
     configure_logging(cfg.service_name, cfg.log_level)
 
     @asynccontextmanager

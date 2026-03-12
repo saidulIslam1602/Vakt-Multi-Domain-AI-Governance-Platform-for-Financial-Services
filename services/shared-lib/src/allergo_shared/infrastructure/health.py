@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 
-class HealthStatus(StrEnum):
+class HealthStatus(str, Enum):
     OK = "ok"
     DEGRADED = "degraded"
     DOWN = "down"

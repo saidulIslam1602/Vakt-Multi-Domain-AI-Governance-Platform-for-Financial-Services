@@ -6,7 +6,7 @@ from chat_service.presentation.api import Settings
 from allergo_shared.infrastructure.logging import configure_logging
 
 if __name__ == "__main__":
-    cfg = Settings()
+    cfg = Settings()  # type: ignore[call-arg]
     configure_logging(cfg.service_name, cfg.log_level)
     uvicorn.run(
         "chat_service.presentation.api:_get_app",

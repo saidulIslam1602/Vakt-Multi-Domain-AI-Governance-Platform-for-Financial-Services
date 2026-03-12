@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse
 from ingest_service.infrastructure.config import Settings, get_settings
 from ingest_service.presentation.routes.documents import router as documents_router
 from ingest_service.presentation.routes.email_config import router as email_config_router
+from ingest_service.presentation.routes.reprocess import router as reprocess_router
 
 logger = get_logger(__name__)
 
@@ -156,6 +157,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.include_router(documents_router, prefix="/api/v1")
     app.include_router(email_config_router, prefix="/api/v1")
+    app.include_router(reprocess_router, prefix="/api/v1")
 
     return app
 
