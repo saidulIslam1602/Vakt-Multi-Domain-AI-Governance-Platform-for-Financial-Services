@@ -145,6 +145,11 @@ resource "azurerm_container_app" "processing" {
     key_vault_secret_id = azurerm_key_vault_secret.smtp_password.versionless_id
     identity            = "System"
   }
+  secret {
+    name                = "openai-api-key"
+    key_vault_secret_id = azurerm_key_vault_secret.openai_api_key.versionless_id
+    identity            = "System"
+  }
 
   template {
     min_replicas = 1
@@ -171,6 +176,10 @@ resource "azurerm_container_app" "processing" {
       env {
         name  = "AZURE_OPENAI_ENDPOINT"
         value = azurerm_cognitive_account.openai.endpoint
+      }
+      env {
+        name        = "AZURE_OPENAI_API_KEY"
+        secret_name = "openai-api-key"
       }
       env {
         name        = "DATABASE_URL"
@@ -335,6 +344,12 @@ resource "azurerm_container_app" "chat" {
     identity            = "System"
   }
 
+  secret {
+    name                = "openai-api-key"
+    key_vault_secret_id = azurerm_key_vault_secret.openai_api_key.versionless_id
+    identity            = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
@@ -352,6 +367,10 @@ resource "azurerm_container_app" "chat" {
       env {
         name  = "AZURE_OPENAI_ENDPOINT"
         value = azurerm_cognitive_account.openai.endpoint
+      }
+      env {
+        name        = "AZURE_OPENAI_API_KEY"
+        secret_name = "openai-api-key"
       }
       env {
         name        = "DATABASE_URL"

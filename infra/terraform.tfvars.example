@@ -26,3 +26,7 @@ nextauth_secret = "<your-nextauth-secret-min-32-chars>"
 # Required by ingest-service (PostgresEmailConfigRepository).
 # Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
 db_encryption_key = "<your-32-byte-hex-encryption-key>"
+
+# Azure OpenAI API key — required when the resource has no custom subdomain.
+# Retrieve with: az cognitiveservices account keys list -g <rg> -n <openai-name> --query key1 -o tsv
+openai_api_key = "<your-azure-openai-api-key>"

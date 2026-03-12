@@ -119,6 +119,19 @@ resource "azurerm_key_vault_secret" "db_encryption_key" {
   depends_on = [azurerm_key_vault.main]
 }
 
+# Azure OpenAI API key — used by chat-service and processing-service when the
+# resource has no custom subdomain (regional endpoint requires key auth).
+# Retrieve: az cognitiveservices account keys list -g <rg> -n <name> --query key1 -o tsv
+resource "azurerm_key_vault_secret" "openai_api_key" {
+  name         = "openai-api-key"
+  value        = var.openai_api_key
+  key_vault_id = azurerm_key_vault.main.id
+  content_type = "text/plain"
+  tags         = local.tags
+
+  depends_on = [azurerm_key_vault.main]
+}
+
 # ── RBAC: pipeline (OIDC) must be bootstrapped MANUALLY by a subscription Owner ─
 #
 # The pipeline SP only holds Contributor on the subscription — it cannot create

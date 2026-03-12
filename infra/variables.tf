@@ -50,3 +50,9 @@ variable "db_encryption_key" {
   sensitive   = true
   description = "32-byte hex key for AES encryption of IMAP passwords in DB. Generate: python3 -c \"import secrets; print(secrets.token_hex(32))\""
 }
+
+variable "openai_api_key" {
+  type        = string
+  sensitive   = true
+  description = "Azure OpenAI API key — required when the resource has no custom subdomain (regional endpoint). Retrieve: az cognitiveservices account keys list -g <rg> -n <name> --query key1 -o tsv"
+}
