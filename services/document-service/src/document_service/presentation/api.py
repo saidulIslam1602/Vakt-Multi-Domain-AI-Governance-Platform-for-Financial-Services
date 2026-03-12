@@ -62,9 +62,12 @@ def create_app() -> FastAPI:
     )
     app.include_router(make_health_router(cfg.service_name, cfg.service_version))
     app.include_router(alerts_router, prefix="/api/v1")
+    # export_router MUST be registered before documents_router — FastAPI matches
+    # routes in registration order and /documents/{id} would otherwise swallow
+    # the literal path /documents/export.csv.
+    app.include_router(export_router, prefix="/api/v1")
     app.include_router(documents_router, prefix="/api/v1")
     app.include_router(download_router, prefix="/api/v1")
-    app.include_router(export_router, prefix="/api/v1")
     app.include_router(history_router, prefix="/api/v1")
     app.include_router(review_router, prefix="/api/v1")
     app.include_router(stats_router, prefix="/api/v1")

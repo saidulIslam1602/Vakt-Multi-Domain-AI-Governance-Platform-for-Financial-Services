@@ -35,11 +35,14 @@ export async function proxyRequest(
     .filter(Boolean)
     .join("/");
 
-  // Always append trailing slash — FastAPI routes accept it directly (200),
-  // avoiding any 307 redirect entirely. This is especially important for POST
-  // and streaming endpoints where following a 307 requires a second connection
-  // and can fail with "fetch failed" inside the Container Apps environment.
-  const url = `${upstreamBase}/${path}/${search}`;
+  // Append trailing slash unless the last segment looks like a file (has an
+  // extension, e.g. "export.csv"). FastAPI routes accept trailing slash
+  // directly (200), avoiding 307 redirects — critical for POST/streaming.
+  const lastSegment = pathSegments[pathSegments.length - 1] ?? "";
+  const hasExtension = /\.\w+$/.test(lastSegment);
+  const url = hasExtension
+    ? `${upstreamBase}/${path}${search}`
+    : `${upstreamBase}/${path}/${search}`;
 
   // Forward all request headers except hop-by-hop ones.
   const headers = new Headers();

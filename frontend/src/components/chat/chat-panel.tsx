@@ -160,7 +160,7 @@ function SuggestionChips({
         <button
           key={i}
           onClick={() => onSelect(s)}
-          className="text-xs bg-brand-50 text-brand-700 border border-brand-100 hover:bg-brand-100 px-2.5 py-1 rounded-full transition-colors text-left"
+          className="text-xs bg-white text-slate-700 border border-brand-200 hover:bg-brand-50 hover:border-brand-400 hover:text-brand-800 px-2.5 py-1 rounded-full transition-colors text-left shadow-sm"
         >
           {s}
         </button>
@@ -259,7 +259,7 @@ function QuickAskBar({ onSelect }: { onSelect: (_q: string) => void }) {
           <button
             key={q}
             onClick={() => onSelect(q)}
-            className="text-xs text-slate-600 bg-white border border-slate-200 hover:border-brand-400 hover:text-brand-700 px-2.5 py-1 rounded-full transition-colors"
+            className="text-xs text-slate-700 bg-white border border-slate-300 hover:border-brand-500 hover:bg-brand-50 hover:text-brand-800 px-2.5 py-1 rounded-full transition-colors shadow-sm"
           >
             {q}
           </button>
