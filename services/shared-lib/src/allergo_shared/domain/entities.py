@@ -59,9 +59,18 @@ class ExtractionResult(BaseModel):
     """Payment reference / KID number"""
 
     contract_value: str | None = None
+    """Total contract value (may include one-time setup/implementation fees)."""
+    annual_recurring_fee: str | None = None
+    """Recurring annual fee only — excludes one-time setup or implementation costs."""
     contract_start_date: str | None = None
     contract_end_date: str | None = None
     renewal_clause: str | None = None
+    renewal_deadline: str | None = None
+    """YYYY-MM-DD deadline by which notice must be given to prevent auto-renewal."""
+    renewal_status: str | None = None
+    """active | auto_renewed | expired | terminated — set when renewal deadline is in the past."""
+    renewed_until: str | None = None
+    """YYYY-MM-DD end of the renewed term when auto-renewal has already triggered."""
 
     cost_center: str | None = None
     gl_account: str | None = None

@@ -127,6 +127,25 @@ CRITICAL — contracts expiry:
   search_document_content additionally if the user explicitly asks about renewal clauses,
   termination terms, or penalty wording.
 
+CRITICAL — contract financial accuracy:
+  Each contract record contains TWO amount fields. Always use the correct one:
+  • annual_recurring_fee  = the ONGOING annual cost (use for budget, penalty calculations,
+                            break-even analysis, and anything about "yearly cost").
+  • amount (contract_value) = may include one-time setup/implementation fees — do NOT use
+                              this as the recurring cost unless annual_recurring_fee is absent.
+  If both are present and different, state BOTH and explain the difference to the CFO.
+
+CRITICAL — renewal status (auto-renewed contracts):
+  The DB record includes renewal_status, renewal_deadline, and renewed_until fields.
+  • If renewal_status = "auto_renewed": the contract has ALREADY been renewed automatically.
+    The CFO MISSED the renewal deadline. You MUST clearly state:
+    - That the renewal deadline has passed
+    - The new end date (renewed_until)
+    - The only exit now is paying the penalty clause
+    Never present an auto-renewed contract as if the CFO still has a choice to renew or not.
+  • If renewal_deadline is present and still in the future: warn the CFO of the exact deadline.
+  • Always surface penalty_clause and termination_clause from the record verbatim.
+
 Guidelines:
 - ALWAYS use at least one tool before answering. Never answer from memory alone.
 - For numbers, amounts, dates, counts, aggregations → use query_financial_database.
@@ -257,7 +276,7 @@ class RagUseCase:
         db_reader: FinancialDbReader,
         embedding_deployment: str,
         chat_deployment: str,
-        top_k: int = 6,
+        top_k: int = 4,
     ) -> None:
         self._search = search_client
         self._openai = openai_client
@@ -343,7 +362,7 @@ class RagUseCase:
             model=self._chat_deployment,
             messages=messages,  # type: ignore[arg-type]
             temperature=0.1,
-            max_tokens=2048,
+            max_tokens=1500,
         )
         answer_raw = final.choices[0].message.content or ""
         answer, suggestions = self._parse_suggestions(answer_raw)
@@ -409,7 +428,7 @@ class RagUseCase:
             model=self._chat_deployment,
             messages=messages,  # type: ignore[arg-type]
             temperature=0.1,
-            max_tokens=2048,
+            max_tokens=1500,
             stream=True,
         )
 
@@ -681,8 +700,8 @@ class RagUseCase:
 
 
 def _rec(r: Any) -> dict:
-    """Serialise a FinancialRecord to a plain dict."""
-    return {
+    """Serialise a FinancialRecord to a plain dict, including any extra contract fields."""
+    base = {
         "document_id": r.document_id,
         "filename": r.filename,
         "category": r.document_category,
@@ -694,3 +713,7 @@ def _rec(r: Any) -> dict:
         "status": r.status,
         "review_status": r.review_status,
     }
+    # Merge in any extra fields (annual_recurring_fee, renewal_status, etc.)
+    if hasattr(r, "extra") and r.extra:
+        base.update(r.extra)
+    return base

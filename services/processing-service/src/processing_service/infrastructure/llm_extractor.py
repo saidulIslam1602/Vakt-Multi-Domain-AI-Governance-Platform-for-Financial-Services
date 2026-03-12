@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date as _date
 
 from openai import AsyncAzureOpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -22,6 +23,8 @@ _FIRST_PASS_CHARS = 40_000
 _SYSTEM_PROMPT = """You are a financial and legal document analysis assistant for a CFO management platform.
 Extract structured information from the provided document text.
 Return ONLY a valid JSON object matching the schema below. Never add explanations or markdown.
+
+TODAY'S DATE: {today}  ← use this when computing renewal_status and renewal_deadline.
 
 The platform is used by CFOs and finance teams. Prioritise financial accuracy.
 For Norwegian documents: extract KID number as reference_number, use NOK as currency default.
@@ -57,10 +60,14 @@ Schema (all fields optional — only include when confidently present):
   "bank_account": "string or null",
   "reference_number": "KID or payment ref or null",
 
-  "contract_value": "string or null",
+  "contract_value": "TOTAL contract value including any one-time setup/implementation fees, or null",
+  "annual_recurring_fee": "RECURRING annual fee only — must EXCLUDE one-time setup, implementation, or non-recurring costs. E.g. if contract_value=380000 includes 95000 one-time impl, annual_recurring_fee=285000. Null if not a recurring contract.",
   "contract_start_date": "YYYY-MM-DD or null",
   "contract_end_date": "YYYY-MM-DD or null",
   "renewal_clause": "string describing renewal terms or null",
+  "renewal_deadline": "YYYY-MM-DD — the last date by which written notice must be given to PREVENT auto-renewal. Compute from contract_end_date minus notice_period. E.g. end=2026-04-15, notice=90days → renewal_deadline=2026-01-15. Null if no auto-renewal.",
+  "renewal_status": "active|auto_renewed|expired|terminated — set auto_renewed if today's date ({today}) is PAST the renewal_deadline and no termination has been recorded. Set active if renewal_deadline is still in the future.",
+  "renewed_until": "YYYY-MM-DD end date of the RENEWED term when auto_renewal has already triggered (renewal_status=auto_renewed), or null."
 
   "cost_center": "string or null",
   "gl_account": "string or null",
@@ -157,11 +164,12 @@ class LLMExtractor:
     async def _extract_segment(
         self, text: str, document_id: str, pass_num: int
     ) -> dict:
+        system_prompt = _SYSTEM_PROMPT.format(today=_date.today().isoformat())
         try:
             response = await self._client.chat.completions.create(
                 model=self._deployment,
                 messages=[
-                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Document text (segment {pass_num}):\n\n{text}"},
                 ],
                 temperature=0.0,
@@ -270,9 +278,13 @@ def _build_result(parsed: dict, document_id: str) -> ExtractionResult:
         reference_number=parsed.get("reference_number"),
         # Contract
         contract_value=parsed.get("contract_value"),
+        annual_recurring_fee=parsed.get("annual_recurring_fee"),
         contract_start_date=parsed.get("contract_start_date"),
         contract_end_date=parsed.get("contract_end_date"),
         renewal_clause=parsed.get("renewal_clause"),
+        renewal_deadline=parsed.get("renewal_deadline"),
+        renewal_status=parsed.get("renewal_status"),
+        renewed_until=parsed.get("renewed_until"),
         # Accounting
         cost_center=parsed.get("cost_center"),
         gl_account=parsed.get("gl_account"),

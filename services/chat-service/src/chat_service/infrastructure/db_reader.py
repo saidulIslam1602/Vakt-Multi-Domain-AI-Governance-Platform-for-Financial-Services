@@ -122,12 +122,20 @@ class FinancialDbReader:
         future = (date.today() + timedelta(days=days_ahead)).isoformat()
         rows = await self._pool.fetch(
             """SELECT id, filename,
-                      extraction->>'document_category'    AS document_category,
-                      extraction->>'vendor_name'           AS vendor_name,
-                      extraction->>'contract_value'        AS total_amount,
-                      extraction->>'contract_end_date'     AS due_date,
-                      extraction->>'invoice_number'        AS invoice_number,
-                      extraction->>'currency'              AS currency,
+                      extraction->>'document_category'        AS document_category,
+                      extraction->>'vendor_name'               AS vendor_name,
+                      extraction->>'contract_value'            AS total_amount,
+                      extraction->>'annual_recurring_fee'      AS annual_recurring_fee,
+                      extraction->>'contract_end_date'         AS due_date,
+                      extraction->>'contract_start_date'       AS contract_start_date,
+                      extraction->>'renewal_clause'            AS renewal_clause,
+                      extraction->>'renewal_deadline'          AS renewal_deadline,
+                      extraction->>'renewal_status'            AS renewal_status,
+                      extraction->>'renewed_until'             AS renewed_until,
+                      extraction->>'penalty_clause'            AS penalty_clause,
+                      extraction->>'termination_clause'        AS termination_clause,
+                      extraction->>'invoice_number'            AS invoice_number,
+                      extraction->>'currency'                  AS currency,
                       status, review_status, uploaded_at
                FROM documents
                WHERE tenant_id = $1
@@ -577,6 +585,22 @@ class FinancialDbReader:
 
     @staticmethod
     def _map(r: asyncpg.Record) -> FinancialRecord:
+        # Collect any extra contract/legal fields that may be present in the row.
+        # asyncpg.Record supports key lookup with .get(); missing keys return None.
+        extra: dict[str, Any] = {}
+        for col in (
+            "annual_recurring_fee",
+            "contract_start_date",
+            "renewal_clause",
+            "renewal_deadline",
+            "renewal_status",
+            "renewed_until",
+            "penalty_clause",
+            "termination_clause",
+        ):
+            val = r.get(col)  # type: ignore[call-overload]
+            if val is not None:
+                extra[col] = val
         return FinancialRecord(
             document_id=str(r["id"]),
             filename=r["filename"],
@@ -589,4 +613,5 @@ class FinancialDbReader:
             status=r["status"],
             review_status=r.get("review_status"),
             uploaded_at=r["uploaded_at"].isoformat() if r.get("uploaded_at") else "",
+            extra=extra,
         )
