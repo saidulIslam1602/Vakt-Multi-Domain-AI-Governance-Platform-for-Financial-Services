@@ -1,0 +1,68 @@
+ALLERGO NORDIC AS
+ANNUAL BUDGET — FY 2026
+Årsbudsjett / Annual Operating Budget
+
+Organization:  Allergo Nordic AS  |  Org.nr: 919 345 872
+Budget Year:   January – December 2026
+Prepared by:   Finance — Helene Thorvaldsen
+Approved by:   Board of Directors — 2026-01-20
+Version:       v2.1 (March reforecast)
+
+═══════════════════════════════════════════════════════════════════════════
+REVENUE BUDGET (INNTEKTSBUDSJETT)
+
+  Revenue Line                        Q1 2026      Q2 2026      Q3 2026      Q4 2026      FY 2026
+  ───────────────────────────────────────────────────────────────────────────────────────────────────
+  SaaS Subscription Revenue         8 455 000    9 100 000    9 800 000   10 500 000   37 855 000
+  Professional Services             1 200 000    1 350 000    1 500 000    1 650 000    5 700 000
+  Maintenance & Support Revenue     1 050 000    1 050 000    1 100 000    1 100 000    4 300 000
+  Implementation Fees                 750 000      900 000      850 000      950 000    3 450 000
+  Training & Certification            150 000      180 000      200 000      220 000      750 000
+  ───────────────────────────────────────────────────────────────────────────────────────────────────
+  TOTAL REVENUE                    11 605 000   12 580 000   13 450 000   14 420 000   52 055 000
+
+═══════════════════════════════════════════════════════════════════════════
+OPERATING EXPENDITURE (DRIFTSKOSTNADER)
+
+  Cost Category                       Q1 2026      Q2 2026      Q3 2026      Q4 2026      FY 2026
+  ───────────────────────────────────────────────────────────────────────────────────────────────────
+  Salaries & Wages (5000)           3 025 500    3 125 000    3 200 000    3 280 000   12 630 500
+  AGA + OTP (5100/5200)               583 918      603 000      617 600      632 600    2 437 118
+  Office Rent — Oslo HQ (6000)        524 500      524 500      524 500      524 500    2 098 000
+  IT Infrastructure & Cloud (6300)    945 000      980 000      950 000      970 000    3 845 000
+  External Consulting (7300)          980 000      750 000      600 000      550 000    2 880 000
+  Sales & Marketing (7100)            420 000      520 000      580 000      650 000    2 170 000
+  Travel & Entertainment (7700)       165 000      185 000      210 000      195 000      755 000
+  Software Licences (6400)            267 000      267 000      267 000      267 000    1 068 000
+  Professional Fees (legal/audit)     180 000      120 000       90 000      180 000      570 000
+  Depreciation & Amortisation         145 000      145 000      145 000      145 000      580 000
+  Other Operating Costs               130 000      140 000      145 000      155 000      570 000
+  ───────────────────────────────────────────────────────────────────────────────────────────────────
+  TOTAL OPEX                        7 365 918    7 359 500    7 329 100    7 549 100   29 603 618
+
+═══════════════════════════════════════════════════════════════════════════
+EBITDA SUMMARY
+
+  TOTAL REVENUE                      11 605 000   12 580 000   13 450 000   14 420 000   52 055 000
+  TOTAL OPEX                          7 365 918    7 359 500    7 329 100    7 549 100   29 603 618
+  ───────────────────────────────────────────────────────────────────────────────────────────────────
+  EBITDA                              4 239 082    5 220 500    6 120 900    6 870 900   22 451 382
+  EBITDA Margin                           36.5%        41.5%        45.5%        47.6%        43.1%
+
+  Target EBITDA Margin FY2026: 40%+   ← ON TRACK as of March reforecast ✓
+
+═══════════════════════════════════════════════════════════════════════════
+HEADCOUNT PLAN
+
+  Department         Q1 HC   Q2 HC   Q3 HC   Q4 HC   New Hires FY2026
+  ────────────────────────────────────────────────────────────────────
+  Engineering           8       9      10      11           3
+  Product               2       2       3       3           1
+  Sales                 3       4       4       5           2
+  Customer Success      2       2       3       3           1
+  Finance & HR          2       2       2       2           0
+  Executive             1       1       1       1           0
+  ────────────────────────────────────────────────────────────────────
+  TOTAL                18      20      23      25           7
+
+CAPEX BUDGET FY2026: NOK 2 100 000 (hardware refresh + office fit-out Q3)

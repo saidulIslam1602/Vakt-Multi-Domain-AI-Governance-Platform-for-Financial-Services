@@ -1,0 +1,82 @@
+SERVICE CONTRACT
+
+Parties:
+  Service Provider:  Cloudberget Hosting AS
+                     Org.nr: 924 581 102
+                     Grüneløkka Næringspark 7, 0555 Oslo, Norway
+                     E-post: contracts@cloudberget.no
+
+  Client:            Allergo Nordic AS
+                     Org.nr: 919 345 872
+                     Drammensveien 114, 0277 Oslo, Norway
+
+═══════════════════════════════════════════════════════════════
+CONTRACT DETAILS
+
+  Contract Number:   CB-AN-2026-0017
+  Contract Date:     2026-03-01
+  Effective Date:    2026-04-01
+  Expiry Date:       2027-03-31
+  Auto-Renewal:      Yes — 30 days written notice required to cancel
+  Contract Value:    NOK 480 000 per annum (NOK 40 000/month)
+  Payment Terms:     Net 30 days, invoiced monthly
+
+═══════════════════════════════════════════════════════════════
+1. SCOPE OF SERVICES
+
+   1.1  Managed Cloud Hosting — 3× dedicated virtual servers
+        (16 vCPU, 64 GB RAM, 2 TB NVMe SSD each)
+   1.2  24/7 Infrastructure Monitoring & Alerting
+   1.3  Daily Automated Backups (30-day retention)
+   1.4  DDoS Protection (up to 10 Gbps)
+   1.5  SSL Certificate Management
+   1.6  Monthly Capacity Review meetings
+   1.7  SLA: 99.95% uptime guaranteed
+
+2. SERVICE LEVELS
+
+   Priority 1 (Critical — service down):    Response < 15 min, Resolution < 2 hrs
+   Priority 2 (Major — partial outage):     Response < 1 hr,  Resolution < 8 hrs
+   Priority 3 (Minor — performance):        Response < 4 hrs, Resolution < 2 days
+
+   Penalty: 10% monthly fee credit per hour of Priority 1 breach beyond SLA.
+
+3. DATA PROTECTION
+
+   All data stored within Norwegian borders (Equinix OSL2).
+   GDPR compliant. ISO 27001 certified (cert. no. CB-ISO-2024-0481).
+   Data Processing Agreement (DPA) attached as Appendix A.
+
+4. INTELLECTUAL PROPERTY
+
+   All client data remains sole property of Allergo Nordic AS.
+   Service Provider has no right to process client data beyond service delivery.
+
+5. CONFIDENTIALITY
+
+   Both parties agree to maintain strict confidentiality of all shared
+   proprietary information for 5 years beyond contract termination.
+
+6. TERMINATION
+
+   6.1  Either party may terminate with 30 days written notice.
+   6.2  Allergo Nordic AS may terminate immediately upon material breach.
+   6.3  Cloudberget Hosting AS will provide 60-day data export window.
+
+7. LIABILITY
+
+   Maximum aggregate liability capped at 12 months contract value (NOK 480 000).
+   Excludes indirect, consequential, or punitive damages.
+
+═══════════════════════════════════════════════════════════════
+SIGNATURES
+
+  For Cloudberget Hosting AS:          For Allergo Nordic AS:
+  ____________________________          ____________________________
+  Knut Berglund, CEO                    Marte Eriksen, CFO
+  Date: ________________               Date: ________________
+
+Appendices:
+  A — Data Processing Agreement (DPA)
+  B — Service Level Agreement (SLA) Detail
+  C — Pricing Schedule

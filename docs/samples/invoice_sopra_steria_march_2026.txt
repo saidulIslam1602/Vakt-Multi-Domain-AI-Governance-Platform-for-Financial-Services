@@ -1,0 +1,48 @@
+FAKTURA / INVOICE
+
+Leverandør / Vendor:
+  Sopra Steria AS
+  Org.nr: 985 820 375
+  Lysaker Torg 45, 1366 Lysaker, Norway
+  IBAN: NO49 8601 1113 025
+  E-post: accounts@soprasteria.no
+
+Kjøper / Buyer:
+  Allergo Nordic AS
+  Org.nr: 919 345 872
+  Drammensveien 114, 0277 Oslo, Norway
+
+─────────────────────────────────────────────────
+FAKTURANUMMER:  SSN-2026-003812
+FAKTURADATO:    2026-03-01
+FORFALLSDATO:   2026-03-31
+BETALINGSREF:   KID 88241973650039
+─────────────────────────────────────────────────
+
+SPESIFIKASJON / LINE ITEMS:
+
+  Beskrivelse                              Antall   Enhetspris        Beløp
+  ──────────────────────────────────────────────────────────────────────────
+  IT Consulting — Digital Transformation    80 hrs  NOK 1 950.00   NOK 156 000.00
+  Enterprise Architecture Review             1      NOK  45 000.00   NOK  45 000.00
+  Change Management Workshop (2 days)        2      NOK  22 500.00   NOK  45 000.00
+  Travel & Accommodation (Reimbursement)     1      NOK   8 750.00   NOK   8 750.00
+  ──────────────────────────────────────────────────────────────────────────
+  Netto                                                              NOK 254 750.00
+  MVA (25 %)                                                         NOK  63 687.50
+  ──────────────────────────────────────────────────────────────────────────
+  TOTALT                                                             NOK 318 437.50
+
+BETALINGSINFORMASJON:
+  Bankkontonummer:  8601 11 13025
+  KID:              88241973650039
+  Betalingsfrist:   31. mars 2026
+  Betalingsbetingelser: Netto 30 dager
+
+NOTE: Invoice exceeds NOK 100,000 — CFO approval required per internal policy.
+Reference PO: AN-PO-2026-0044
+
+Cost Center:  Digital Transformation (CC-DT-005)
+GL Account:   7300 – External Consulting
+
+Sopra Steria AS  |  accounts@soprasteria.no  |  +47 67 81 20 00

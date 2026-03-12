@@ -1,0 +1,196 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{fancyhdr}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{enumitem}
+
+% ── Brand colours ──────────────────────────────────────────────────────────────
+\definecolor{brand}{HTML}{1E3A5F}
+\definecolor{accent}{HTML}{4472C4}
+\definecolor{lightgray}{HTML}{F2F2F2}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\textcolor{brand}{\bfseries Allergo Nordic AS}}
+\fancyhead[R]{\textcolor{brand}{\small Expense Claim EXP-CFO-2026-0041}}
+\fancyfoot[C]{\textcolor{gray}{\small Page \thepage}}
+
+\begin{document}
+
+% ── Header ─────────────────────────────────────────────────────────────────────
+\noindent
+\begin{minipage}[t]{0.52\textwidth}
+  {\color{brand}\LARGE\bfseries EXPENSE CLAIM}\\[4pt]
+  {\large Allergo Nordic AS}\\[4pt]
+  \small Drammensveien 114, 0277 Oslo\\
+  Org.nr: 919 345 872\\
+  \texttt{ap@allergo-nordic.no}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.42\textwidth}
+  \raggedleft
+  \begin{tabular}{rl}
+    \textbf{Claim Ref:}   & EXP-CFO-2026-0041 \\
+    \textbf{Date:}        & 5 March 2026 \\
+    \textbf{Period:}      & 14--15 February 2026 \\
+    \textbf{Event:}       & Nordic CFO Forum 2026 \\
+    \textbf{Location:}    & London, UK \\
+  \end{tabular}
+\end{minipage}
+
+\vspace{12pt}
+\noindent\rule{\textwidth}{1.5pt}
+\vspace{8pt}
+
+\noindent
+\begin{tabularx}{\textwidth}{lX lX}
+  \textbf{Claimant:}       & Knut Sørensen &
+  \textbf{Employee ID:}    & E001 \\
+  \textbf{Title:}          & Chief Financial Officer &
+  \textbf{Department:}     & Finance \\
+  \textbf{Cost Centre:}    & CC-FIN-001 &
+  \textbf{Approved by:}    & Anne-Lise Haugen (Board Chair) \\
+  \textbf{Business Purpose:} &
+  \multicolumn{3}{p{10cm}}{Attendance at Nordic CFO Forum 2026, ExCeL London.
+  Forum covers ESG reporting, AI in Finance, and Nordic regulatory updates.
+  Two client meetings arranged: Aker BP CFO (Oslo-Stockholm deal pipeline) and
+  potential investor (Verdane Capital).} \\
+\end{tabularx}
+
+\vspace{14pt}
+
+% ── Expense lines ──────────────────────────────────────────────────────────────
+\noindent\textbf{\textcolor{brand}{ITEMISED EXPENSES}}
+
+\vspace{6pt}
+\begin{tabularx}{\textwidth}{>{\centering}p{0.5cm} p{2cm} >{\raggedright}X p{2.2cm} r r}
+  \rowcolor{brand}
+  \color{white}\textbf{\#} &
+  \color{white}\textbf{Date} &
+  \color{white}\textbf{Description} &
+  \color{white}\textbf{Receipt} &
+  \color{white}\textbf{Orig.\ Amt} &
+  \color{white}\textbf{NOK} \\
+  \rowcolor{lightgray}
+  1 & 2026-02-13 & SAS flight Oslo (OSL) $\to$ London Heathrow (LHR), business class, return incl.\ seat upgrade &
+    RCP-E001-01 & NOK 6\,890.00 & 6\,890.00 \\
+  2 & 2026-02-13 & Heathrow Express — LHR $\to$ London Paddington, 1st class &
+    RCP-E001-02 & GBP 38.00 & 512.00 \\
+  \rowcolor{lightgray}
+  3 & 2026-02-14 & Marriott London Canary Wharf — 2 nights (superior king room incl.\ breakfast) &
+    RCP-E001-03 & GBP 648.00 & 8\,742.00 \\
+  4 & 2026-02-14 & Nordic CFO Forum 2026 — delegate registration fee &
+    RCP-E001-04 & GBP 1\,200.00 & 16\,188.00 \\
+  \rowcolor{lightgray}
+  5 & 2026-02-14 & Client dinner with Aker BP CFO (3 persons) — Hawksmoor Guildhall &
+    RCP-E001-05 & GBP 612.00 & 8\,256.00 \\
+  6 & 2026-02-15 & Forum lunch (per diem supplement — receipt lost; applying per diem rate) &
+    Per diem & GBP 40.00 & 540.00 \\
+  \rowcolor{lightgray}
+  7 & 2026-02-15 & CFO Forum gala dinner (included in delegate fee) + 1 guest ticket &
+    RCP-E001-06 & GBP 140.00 & 1\,890.00 \\
+  8 & 2026-02-15 & Meeting room hire — Verdane Capital partner meeting (2 hrs, Canary Wharf) &
+    RCP-E001-07 & GBP 220.00 & 2\,968.00 \\
+  \rowcolor{lightgray}
+  9 & 2026-02-15 & Taxi LHR $\to$ Allergo Oslo HQ airport car service (invoice via corporate account) &
+    RCP-E001-08 & NOK 1\,240.00 & 1\,240.00 \\
+  10 & 2026-02-13/15 & Miscellaneous (airport parking OSL, 3 days) &
+    RCP-E001-09 & NOK 645.00 & 645.00 \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{10pt}
+
+% ── Totals ─────────────────────────────────────────────────────────────────────
+\hfill
+\begin{tabular}{lr}
+  \toprule
+  \textbf{Total GBP items (at 13.49 NOK/GBP):} & NOK 39\,096.00 \\
+  \textbf{Total NOK items:} & NOK 8\,775.00 \\
+  \textbf{Less: Per Company Policy personal items:} & NOK 0.00 \\
+  \midrule
+  \rowcolor{brand}
+  \color{white}\textbf{TOTAL REIMBURSABLE:} & \color{white}\textbf{NOK 47\,871.00} \\
+  \bottomrule
+\end{tabular}
+
+\vspace{14pt}
+
+% ── Policy compliance ──────────────────────────────────────────────────────────
+\noindent\textbf{\textcolor{brand}{POLICY COMPLIANCE NOTES}}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item Items 1--3, 9--10: Within Allergo Nordic T\&E Policy (v2.0, September 2025) limits.
+  \item Item 4: Conference fee NOK 16\,188 exceeds standard NOK 10\,000 single-event limit.
+    \textbf{Exception approved by Board Chair (Anne-Lise Haugen) per email dated 10 January 2026}
+    on grounds of strategic importance (Aker BP and Verdane meetings at same event).
+  \item Item 5: Client entertainment NOK 8\,256 (3 persons = NOK 2\,752/head).
+    Within NOK 3\,000/head entertainment limit. Business purpose documented.
+  \item Item 6: Lunch receipt unavailable; per diem rate NOK 540 applied per Policy \S 4.3.
+  \item Item 7: Guest ticket for Verdane Capital prospect — pre-approved by CEO
+    (email ref CEO-EXP-20260110-003).
+  \item Items 8: Meeting room hire is reimbursable under Policy \S 3.8 (business meeting facilities).
+  \item FX rates: GBP/NOK 13.49 (Norges Bank rate, 15 February 2026).
+\end{itemize}
+
+\vspace{14pt}
+
+% ── Receipts checklist ─────────────────────────────────────────────────────────
+\noindent\textbf{\textcolor{brand}{RECEIPTS ATTACHED}}
+
+\begin{tabularx}{\textwidth}{llXl}
+  \rowcolor{brand}
+  \color{white}\textbf{Receipt} &
+  \color{white}\textbf{Type} &
+  \color{white}\textbf{Vendor} &
+  \color{white}\textbf{Attached?} \\
+  \rowcolor{lightgray}
+  RCP-E001-01 & E-ticket PDF & SAS & \checkmark \\
+  RCP-E001-02 & E-receipt & Heathrow Express & \checkmark \\
+  \rowcolor{lightgray}
+  RCP-E001-03 & Hotel invoice & Marriott London & \checkmark \\
+  RCP-E001-04 & Invoice & Nordic CFO Forum & \checkmark \\
+  \rowcolor{lightgray}
+  RCP-E001-05 & Restaurant receipt & Hawksmoor Guildhall & \checkmark \\
+  Per diem & Policy rate & N/A (receipt lost) & N/A \\
+  \rowcolor{lightgray}
+  RCP-E001-06 & Event invoice & ExCeL London & \checkmark \\
+  RCP-E001-07 & Invoice & WeWork Canary Wharf & \checkmark \\
+  \rowcolor{lightgray}
+  RCP-E001-08 & Corporate account invoice & Oslo Taxi Corporate & \checkmark \\
+  RCP-E001-09 & Parking receipt & OSL Gardermoen Parkering & \checkmark \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{16pt}
+
+% ── Signatures ─────────────────────────────────────────────────────────────────
+\noindent\textbf{\textcolor{brand}{SIGNATURES}}
+
+\vspace{8pt}
+\begin{tabularx}{\textwidth}{lXlX}
+  \textbf{Claimant:} & Knut Sørensen (CFO) &
+  \textbf{Approved by:} & Anne-Lise Haugen (Board Chair) \\[16pt]
+  Signature: & \underline{\hspace{5cm}} &
+  Signature: & \underline{\hspace{5cm}} \\[8pt]
+  Date: & \underline{\hspace{3cm}} &
+  Date: & \underline{\hspace{3cm}} \\[8pt]
+  \textbf{Processed by AP:} & \underline{\hspace{5cm}} &
+  \textbf{Payment Date:} & \underline{\hspace{3cm}} \\
+\end{tabularx}
+
+\vspace{16pt}
+\noindent\textit{\small Allergo Nordic AS T\&E Policy v2.0 requires original receipts for all
+items above NOK 300. Per diem rates per Norwegian Directorate of Taxes (Skattedirektoratet)
+2026 rates table.}
+
+\end{document}

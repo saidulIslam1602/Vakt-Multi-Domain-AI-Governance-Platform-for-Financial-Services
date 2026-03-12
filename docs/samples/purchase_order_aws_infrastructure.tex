@@ -1,0 +1,173 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{fancyhdr}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{titlesec}
+
+% ── Brand colours ──────────────────────────────────────────────────────────────
+\definecolor{brand}{HTML}{1E3A5F}
+\definecolor{accent}{HTML}{4472C4}
+\definecolor{lightgray}{HTML}{F2F2F2}
+\definecolor{awsorange}{HTML}{FF9900}
+
+\titleformat{\section}{\color{brand}\large\bfseries}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\color{accent}\normalsize\bfseries}{}{0em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\textcolor{brand}{\bfseries Allergo Nordic AS}}
+\fancyhead[R]{\textcolor{brand}{\small Purchase Order PO-2026-AWS-0088}}
+\fancyfoot[C]{\textcolor{gray}{\small Page \thepage}}
+
+\begin{document}
+
+% ── Header ─────────────────────────────────────────────────────────────────────
+\noindent
+\begin{minipage}[t]{0.52\textwidth}
+  {\color{brand}\LARGE\bfseries ALLERGO NORDIC AS}\\[4pt]
+  Drammensveien 114, 0277 Oslo, Norway\\
+  Org.nr: 919 345 872 | VAT: NO919345872MVA\\
+  \texttt{ap@allergo-nordic.no} | +47 22 44 88 00
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.42\textwidth}
+  \raggedleft
+  \colorbox{brand}{\color{white}\bfseries\Large\quad PURCHASE ORDER \quad}\\[8pt]
+  \begin{tabular}{rl}
+    \textbf{PO Number:}    & PO-2026-AWS-0088 \\
+    \textbf{Issue Date:}   & 15 April 2026 \\
+    \textbf{Valid Until:}  & 15 May 2026 \\
+    \textbf{Dept:}         & IT \& Cloud Infrastructure \\
+    \textbf{Budget Ref:}   & IT-CLOUD-2026 \\
+  \end{tabular}
+\end{minipage}
+
+\vspace{12pt}
+\noindent\rule{\textwidth}{1.5pt}
+\vspace{8pt}
+
+\section{Vendor Details}
+
+\begin{tabularx}{\textwidth}{lX lX}
+  \textbf{Vendor:}    & Amazon Web Services EMEA SARL &
+  \textbf{Address:}   & 38 Avenue John F.\ Kennedy, L-1855 Luxembourg \\
+  \textbf{AWS Account:} & 482-914-3810 &
+  \textbf{Contact:}   & enterprise@aws.amazon.com \\
+  \textbf{Account Manager:} & Håvard Nygaard (Nordic Enterprise) &
+  \textbf{Tel:}       & +47 21 04 21 00 \\
+\end{tabularx}
+
+\section{Delivery and Billing}
+
+\begin{tabularx}{\textwidth}{lX lX}
+  \textbf{Ship To:}   & N/A (Cloud Services) &
+  \textbf{Bill To:}   & Allergo Nordic AS, Accounts Payable \\
+  \textbf{AP Email:}  & ap@allergo-nordic.no &
+  \textbf{Invoice Ref:} & Quote QT-AWS-2026-00441 \\
+\end{tabularx}
+
+\section{Order Lines}
+
+\begin{tabularx}{\textwidth}{>{\centering}p{0.5cm} >{\raggedright}X r r r}
+  \rowcolor{brand}
+  \color{white}\textbf{\#} &
+  \color{white}\textbf{Service Description} &
+  \color{white}\textbf{Duration} &
+  \color{white}\textbf{Unit Price (NOK)} &
+  \color{white}\textbf{Total (NOK)} \\
+  \rowcolor{lightgray}
+  1 & AWS Reserved Instances — m7i.4xlarge (2 $\times$ 1-year, partial upfront) &
+    12 months & 84\,200.00 & 168\,400.00 \\
+  2 & Amazon RDS PostgreSQL — db.r7g.2xlarge, Multi-AZ (eu-north-1) &
+    12 months & 36\,400.00 & 436\,800.00 \\
+  \rowcolor{lightgray}
+  3 & Amazon OpenSearch Service — 3-node cluster, 1 TB gp3 storage &
+    12 months & 24\,800.00 & 297\,600.00 \\
+  4 & AWS S3 Storage — estimated 200 TB/month (Intelligent-Tiering) &
+    12 months & 6\,200.00 & 74\,400.00 \\
+  \rowcolor{lightgray}
+  5 & AWS CloudFront CDN — estimated 50 TB/month transfer &
+    12 months & 3\,800.00 & 45\,600.00 \\
+  6 & AWS Transit Gateway + VPN — site-to-site to Oslo HQ &
+    12 months & 4\,100.00 & 49\,200.00 \\
+  \rowcolor{lightgray}
+  7 & Amazon SES — transactional email (est.\ 500k/month) &
+    12 months & 1\,200.00 & 14\,400.00 \\
+  8 & AWS Shield Standard + WAF — 10 ACL rules &
+    12 months & 8\,400.00 & 100\,800.00 \\
+  \rowcolor{lightgray}
+  9 & AWS Enterprise Support Plan &
+    12 months & 18\,000.00 & 216\,000.00 \\
+  10 & Professional Services — Migration Assessment \& Architecture Review &
+    1 lump sum & 95\,000.00 & 95\,000.00 \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{10pt}
+
+\hfill
+\begin{tabular}{lr}
+  \toprule
+  \textbf{Subtotal (excl.\ VAT):} & NOK 1\,498\,200.00 \\
+  \textbf{VAT 25\%:}              & NOK\;\;\; 374\,550.00 \\
+  \midrule
+  \rowcolor{brand}
+  \color{white}\textbf{TOTAL PURCHASE ORDER VALUE:} &
+  \color{white}\textbf{NOK 1\,872\,750.00} \\
+  \bottomrule
+\end{tabular}
+
+\section{Terms and Conditions}
+
+\begin{enumerate}[leftmargin=*, label=\arabic{*}.]
+  \item \textbf{Payment Terms:} Net 30 days from AWS invoice date. AWS invoices monthly based on
+    actual consumption; Reserved Instance upfront portions invoiced at order activation.
+  \item \textbf{Budget Authority:} This PO is authorised under Board Resolution BRD-2026-03-03
+    (Allergo Digital AI Platform CapEx, NOK 4.2M) and OPEX budget line IT-CLOUD-2026.
+  \item \textbf{Governing Agreement:} AWS Customer Agreement and AWS Service Terms as published at
+    \texttt{aws.amazon.com/agreement} govern all services ordered herein.
+  \item \textbf{Data Residency:} All primary workloads to be hosted in \texttt{eu-north-1}
+    (Stockholm) with disaster recovery in \texttt{eu-west-1} (Ireland). No data shall be
+    processed outside the EU/EEA without prior written consent of Allergo Nordic AS.
+  \item \textbf{GDPR:} AWS acts as Data Processor. Allergo Nordic AS acts as Data Controller.
+    AWS Data Processing Addendum (DPA) incorporated by reference.
+  \item \textbf{Cancellation:} Reserved Instance commitments are non-cancellable; on-demand and
+    support charges may be cancelled with 30 days' notice.
+  \item \textbf{PO Validity:} This PO is valid for 30 days. Orders placed after 15 May 2026 will
+    require a revised PO.
+\end{enumerate}
+
+\section{Approval Workflow}
+
+\begin{tabularx}{\textwidth}{lllX}
+  \rowcolor{brand}
+  \color{white}\textbf{Step} &
+  \color{white}\textbf{Approver} &
+  \color{white}\textbf{Role} &
+  \color{white}\textbf{Signature \& Date} \\
+  \rowcolor{lightgray}
+  1 & Bjørn Lie & Cloud Infrastructure Lead &
+    \underline{\hspace{5cm}} \quad \underline{\quad Date \quad} \\
+  2 & Ingrid Bakke & Procurement Manager &
+    \underline{\hspace{5cm}} \quad \underline{\quad Date \quad} \\
+  \rowcolor{lightgray}
+  3 & Knut Sørensen & CFO (required $>$NOK 500k) &
+    \underline{\hspace{5cm}} \quad \underline{\quad Date \quad} \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{20pt}
+\noindent\textit{\small This Purchase Order is issued subject to Allergo Nordic AS General Purchasing Terms and Conditions (v2.1, January 2026).
+Vendor acceptance of goods/services delivery constitutes acceptance of these terms.}
+
+\end{document}
