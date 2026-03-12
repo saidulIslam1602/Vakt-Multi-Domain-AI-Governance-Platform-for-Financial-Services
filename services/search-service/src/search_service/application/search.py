@@ -70,8 +70,6 @@ class SearchUseCase:
             filter=filter_expr,
             top=top,
             highlight_fields="text",
-            query_type="semantic",
-            semantic_configuration_name="semantic-config",
         )
 
         hits: list[SearchHit] = []
