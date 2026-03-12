@@ -20,6 +20,7 @@ class DashboardStats(BaseModel):
     approved: int
     rejected: int
     failed: int
+    not_required: int
     total_amount_sum: str | None
 
 
@@ -58,11 +59,12 @@ async def get_dashboard_stats(
     """Return aggregate counts for the CFO dashboard."""
     row = await pool.fetchrow(
         """SELECT
-               COUNT(*)                                           AS total_documents,
-               COUNT(*) FILTER (WHERE review_status = 'pending_review') AS pending_review,
-               COUNT(*) FILTER (WHERE review_status = 'approved')        AS approved,
-               COUNT(*) FILTER (WHERE review_status = 'rejected')        AS rejected,
-               COUNT(*) FILTER (WHERE status = 'failed')                 AS failed
+               COUNT(*)                                                      AS total_documents,
+               COUNT(*) FILTER (WHERE review_status = 'pending_review')     AS pending_review,
+               COUNT(*) FILTER (WHERE review_status = 'approved')           AS approved,
+               COUNT(*) FILTER (WHERE review_status = 'rejected')           AS rejected,
+               COUNT(*) FILTER (WHERE review_status = 'not_required')       AS not_required,
+               COUNT(*) FILTER (WHERE status = 'failed')                    AS failed
            FROM documents
            WHERE tenant_id = $1""",
         str(current_user.tenant_id),
@@ -73,6 +75,7 @@ async def get_dashboard_stats(
         approved=row["approved"],
         rejected=row["rejected"],
         failed=row["failed"],
+        not_required=row["not_required"],
         total_amount_sum=None,
     )
 

@@ -117,6 +117,7 @@ export interface DashboardStats {
   approved: number;
   rejected: number;
   failed: number;
+  not_required: number;
   total_amount_sum: string | null;
 }
 

@@ -87,7 +87,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <StatCard
           label="Total Documents"
           value={v(stats?.total_documents)}
@@ -113,6 +113,12 @@ export default function DashboardPage() {
           value={v(stats?.rejected)}
           icon={XCircle}
           iconBg="bg-rose-500"
+        />
+        <StatCard
+          label="Auto-Processed"
+          value={v(stats?.not_required)}
+          icon={CheckCircle}
+          iconBg="bg-slate-500"
         />
         <StatCard
           label="Failed"
