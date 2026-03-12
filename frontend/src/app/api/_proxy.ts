@@ -35,12 +35,18 @@ export async function proxyRequest(
     .filter(Boolean)
     .join("/");
 
-  // Append trailing slash unless the last segment looks like a file (has an
-  // extension, e.g. "export.csv"). FastAPI routes accept trailing slash
-  // directly (200), avoiding 307 redirects — critical for POST/streaming.
+  // Append trailing slash unless:
+  //   (a) the last segment looks like a file (has an extension, e.g. "export.csv"), or
+  //   (b) the last segment is a UUID/ID — PATCH/PUT/DELETE on /{id} routes do NOT
+  //       have a trailing-slash variant in FastAPI, so appending "/" causes a 404/307.
   const lastSegment = pathSegments[pathSegments.length - 1] ?? "";
   const hasExtension = /\.\w+$/.test(lastSegment);
-  const url = hasExtension
+  const isId =
+    // UUID v4 (e.g. "3f2504e0-4f89-11d3-9a0c-0305e82c3301")
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lastSegment) ||
+    // Short alphanumeric IDs without hyphens (e.g. CUID, nanoid ≥ 10 chars)
+    /^[a-z0-9]{10,}$/i.test(lastSegment);
+  const url = hasExtension || isId
     ? `${upstreamBase}/${path}${search}`
     : `${upstreamBase}/${path}/${search}`;
 

@@ -7,6 +7,7 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { documentsApi, type ReviewItem, type ReviewStatus } from "@/lib/api";
@@ -39,6 +40,9 @@ export default function ReviewQueuePage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<ReviewStatus>("pending_review");
   const [offset, setOffset] = useState(0);
+  // Track which document is being actioned and what decision is in-flight
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["review-queue", activeTab, offset],
@@ -50,10 +54,22 @@ export default function ReviewQueuePage() {
       }),
   });
 
-  const approveMutation = useMutation({
+  const reviewMutation = useMutation({
     mutationFn: ({ id, decision }: { id: string; decision: "approved" | "rejected" }) =>
       documentsApi.submitReview(id, decision),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["review-queue"] }),
+    onMutate: ({ id }) => {
+      setPendingId(id);
+      setError(null);
+    },
+    onSuccess: () => {
+      setPendingId(null);
+      queryClient.invalidateQueries({ queryKey: ["review-queue"] });
+    },
+    onError: (err: unknown) => {
+      setPendingId(null);
+      const msg = err instanceof Error ? err.message : "Request failed. Please try again.";
+      setError(msg);
+    },
   });
 
   return (
@@ -76,7 +92,7 @@ export default function ReviewQueuePage() {
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.value}
-              onClick={() => { setActiveTab(tab.value); setOffset(0); }}
+              onClick={() => { setActiveTab(tab.value); setOffset(0); setError(null); }}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === tab.value
                   ? "bg-brand-500 text-white shadow-sm"
@@ -87,6 +103,14 @@ export default function ReviewQueuePage() {
             </button>
           ))}
         </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="rounded-lg bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-700 flex items-center justify-between">
+            <span>⚠ {error}</span>
+            <button onClick={() => setError(null)} className="ml-4 text-rose-400 hover:text-rose-700 font-bold">✕</button>
+          </div>
+        )}
 
         {/* Table */}
         <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
@@ -114,54 +138,64 @@ export default function ReviewQueuePage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {items.map((item: ReviewItem) => (
-                  <tr key={item.document_id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-3">
-                      <Link
-                        href={`/documents/${item.document_id}`}
-                        className="font-medium text-brand-600 hover:underline truncate max-w-xs block"
-                      >
-                        {item.filename}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {item.vendor_name ?? <span className="text-slate-400">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700 font-medium">
-                      {item.total_amount ?? <span className="text-slate-400">—</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <ConfidenceBadge score={item.confidence_score} />
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 capitalize">
-                      {item.document_category ?? "—"}
-                    </td>
-                    {activeTab === "pending_review" && (
-                      <td className="px-5 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() =>
-                              approveMutation.mutate({ id: item.document_id, decision: "approved" })
-                            }
-                            disabled={approveMutation.isPending}
-                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-1 text-xs font-semibold transition-colors"
-                          >
-                            <CheckCircle className="h-3.5 w-3.5" /> Approve
-                          </button>
-                          <button
-                            onClick={() =>
-                              approveMutation.mutate({ id: item.document_id, decision: "rejected" })
-                            }
-                            disabled={approveMutation.isPending}
-                            className="inline-flex items-center gap-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 px-3 py-1 text-xs font-semibold transition-colors"
-                          >
-                            <XCircle className="h-3.5 w-3.5" /> Reject
-                          </button>
-                        </div>
+                {items.map((item: ReviewItem) => {
+                  const isThisRowPending = pendingId === item.document_id;
+                  const anyPending = pendingId !== null;
+                  return (
+                    <tr key={item.document_id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-5 py-3">
+                        <Link
+                          href={`/documents/${item.document_id}`}
+                          className="font-medium text-brand-600 hover:underline truncate max-w-xs block"
+                        >
+                          {item.filename}
+                        </Link>
                       </td>
-                    )}
-                  </tr>
-                ))}
+                      <td className="px-4 py-3 text-slate-600">
+                        {item.vendor_name ?? <span className="text-slate-400">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 font-medium">
+                        {item.total_amount ?? <span className="text-slate-400">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <ConfidenceBadge score={item.confidence_score} />
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 capitalize">
+                        {item.document_category ?? "—"}
+                      </td>
+                      {activeTab === "pending_review" && (
+                        <td className="px-5 py-3 text-right">
+                          {isThisRowPending ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
+                            </span>
+                          ) : (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() =>
+                                  reviewMutation.mutate({ id: item.document_id, decision: "approved" })
+                                }
+                                disabled={anyPending}
+                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-xs font-semibold transition-colors"
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" /> Approve
+                              </button>
+                              <button
+                                onClick={() =>
+                                  reviewMutation.mutate({ id: item.document_id, decision: "rejected" })
+                                }
+                                disabled={anyPending}
+                                className="inline-flex items-center gap-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1 text-xs font-semibold transition-colors"
+                              >
+                                <XCircle className="h-3.5 w-3.5" /> Reject
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
