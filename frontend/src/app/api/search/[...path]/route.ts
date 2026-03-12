@@ -1,46 +1,15 @@
 /**
  * Runtime proxy → search-service.
  */
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest } from "next/server";
+import { proxyRequest } from "@/app/api/_proxy";
 
-const upstream = () =>
+const base = () =>
   (process.env.SEARCH_SERVICE_URL || "http://localhost:8003") + "/api/v1";
 
 export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
-  return proxy(req, params.path, "GET");
+  return proxyRequest(req, params.path, "GET", base());
 }
 export async function POST(req: NextRequest, { params }: { params: { path: string[] } }) {
-  return proxy(req, params.path, "POST");
-}
-
-async function proxy(req: NextRequest, pathSegments: string[], method: string) {
-  const search = req.nextUrl.search ?? "";
-  const path = pathSegments.join("/");
-  // Append trailing slash to the upstream URL so FastAPI routes match without
-  // issuing a 307 redirect. The slash must be on the upstream fetch URL, NOT
-  // on the Next.js /api/* path (which causes Next.js to emit a 308 itself).
-  const url = `${upstream()}/${path}/${search}`;
-
-  const headers = new Headers();
-  req.headers.forEach((v, k) => {
-    if (!["host", "connection"].includes(k.toLowerCase())) headers.set(k, v);
-  });
-
-  const body =
-    method === "GET"
-      ? undefined
-      : await req.arrayBuffer();
-
-  const res = await fetch(url, { method, headers, body: body as BodyInit, redirect: "manual" });
-
-  const resHeaders = new Headers();
-  res.headers.forEach((v, k) => {
-    if (!["transfer-encoding", "connection"].includes(k.toLowerCase()))
-      resHeaders.set(k, v);
-  });
-
-  return new NextResponse(res.body, {
-    status: res.status,
-    headers: resHeaders,
-  });
+  return proxyRequest(req, params.path, "POST", base());
 }
