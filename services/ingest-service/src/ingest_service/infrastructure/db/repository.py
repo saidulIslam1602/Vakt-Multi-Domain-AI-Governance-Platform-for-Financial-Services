@@ -79,8 +79,8 @@ class PostgresDocumentRepository(DocumentRepository):
 
 def _row_to_document(row: dict) -> Document:
     return Document(
-        id=DocumentId(value=row["id"]),
-        tenant_id=TenantId(value=row["tenant_id"]),
+        id=DocumentId(value=str(row["id"])),
+        tenant_id=TenantId(value=str(row["tenant_id"])),
         filename=row["filename"],
         document_type=DocumentType(row["document_type"]),
         status=DocumentStatus(row["status"]),
