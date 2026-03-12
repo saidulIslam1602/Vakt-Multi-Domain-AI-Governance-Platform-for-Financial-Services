@@ -109,6 +109,11 @@ resource "azurerm_key_vault_secret" "imap_password" {
 # DB encryption key — used by ingest-service to AES-encrypt IMAP passwords
 # stored in email_ingest_configs.  Required by PostgresEmailConfigRepository.
 # Generate: python3 -c "import secrets; print(secrets.token_hex(32))"
+import {
+  to = azurerm_key_vault_secret.db_encryption_key
+  id = "https://allergodev-kv.vault.azure.net/secrets/allergo-db-encryption-key/83f2e6b0bf3947b58bb4e382f7818863"
+}
+
 resource "azurerm_key_vault_secret" "db_encryption_key" {
   name         = "allergo-db-encryption-key"
   value        = var.db_encryption_key
@@ -122,6 +127,11 @@ resource "azurerm_key_vault_secret" "db_encryption_key" {
 # Azure OpenAI API key — used by chat-service and processing-service when the
 # resource has no custom subdomain (regional endpoint requires key auth).
 # Retrieve: az cognitiveservices account keys list -g <rg> -n <name> --query key1 -o tsv
+import {
+  to = azurerm_key_vault_secret.openai_api_key
+  id = "https://allergodev-kv.vault.azure.net/secrets/openai-api-key/1cef041f1cd548a98546a66a15b9f4d1"
+}
+
 resource "azurerm_key_vault_secret" "openai_api_key" {
   name         = "openai-api-key"
   value        = var.openai_api_key

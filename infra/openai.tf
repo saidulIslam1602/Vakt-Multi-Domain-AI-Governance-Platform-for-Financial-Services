@@ -1,13 +1,12 @@
 # Azure OpenAI — GPT-4o chat + text-embedding-3-large
 
 resource "azurerm_cognitive_account" "openai" {
-  name                  = "${local.prefix}-openai"
-  location              = var.azure_openai_location
-  resource_group_name   = azurerm_resource_group.main.name
-  kind                  = "OpenAI"
-  sku_name              = "S0"
-  custom_subdomain_name = "${local.prefix}-openai"
-  tags                  = local.tags
+  name                = "${local.prefix}-openai"
+  location            = var.azure_openai_location
+  resource_group_name = azurerm_resource_group.main.name
+  kind                = "OpenAI"
+  sku_name            = "S0"
+  tags                = local.tags
 
   identity {
     type = "SystemAssigned"
