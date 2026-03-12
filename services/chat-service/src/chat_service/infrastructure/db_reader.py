@@ -374,12 +374,31 @@ class FinancialDbReader:
                             ELSE 0
                         END
                     )                                           AS total_amount_nok,
+                    SUM(
+                        CASE
+                            WHEN extraction->>'vat_amount' IS NOT NULL
+                                 AND regexp_replace(extraction->>'vat_amount', '[^0-9.]', '', 'g') <> ''
+                            THEN regexp_replace(extraction->>'vat_amount', '[^0-9.]', '', 'g')::numeric
+                            ELSE 0
+                        END
+                    )                                           AS total_vat_nok,
+                    SUM(
+                        CASE
+                            WHEN extraction->>'net_amount' IS NOT NULL
+                                 AND regexp_replace(extraction->>'net_amount', '[^0-9.]', '', 'g') <> ''
+                            THEN regexp_replace(extraction->>'net_amount', '[^0-9.]', '', 'g')::numeric
+                            ELSE 0
+                        END
+                    )                                           AS total_net_nok,
                     jsonb_agg(
                         jsonb_build_object(
                             'document_id', id::text,
                             'filename', filename,
                             'vendor', extraction->>'vendor_name',
                             'amount', extraction->>'total_amount',
+                            'vat_amount', extraction->>'vat_amount',
+                            'net_amount', extraction->>'net_amount',
+                            'vat_rate', extraction->>'vat_rate',
                             'category', extraction->>'document_category'
                         )
                     ) FILTER (WHERE true)                       AS documents
