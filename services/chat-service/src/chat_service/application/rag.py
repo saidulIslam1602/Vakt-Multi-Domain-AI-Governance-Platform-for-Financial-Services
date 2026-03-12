@@ -15,6 +15,7 @@ The loop runs up to MAX_TOOL_ROUNDS to prevent runaway tool calls.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator
@@ -122,7 +123,9 @@ CRITICAL — VAT / tax questions:
 CRITICAL — contracts expiry:
   When the CFO asks about expiring contracts without specifying a window, use days_ahead=90.
   A contract expiring within 90 days is urgent — always surface it even if the user just says
-  'soon' or 'expiring'. Also use search_document_content to find renewal clauses and penalties.
+  'soon' or 'expiring'. The DB query already returns contract value and end dates — only call
+  search_document_content additionally if the user explicitly asks about renewal clauses,
+  termination terms, or penalty wording.
 
 Guidelines:
 - ALWAYS use at least one tool before answering. Never answer from memory alone.
@@ -284,7 +287,7 @@ class RagUseCase:
                 tools=TOOLS,  # type: ignore[arg-type]
                 tool_choice="auto",
                 temperature=0.1,
-                max_tokens=2048,
+                max_tokens=1024,  # tool-selection rounds only need JSON args; final answer uses 2048
             )
             msg = response.choices[0].message
 
@@ -309,14 +312,13 @@ class RagUseCase:
                     intent=intent,
                 )
 
-            # Execute each tool call the LLM requested
+            # Execute all tool calls in this round concurrently
             messages.append(msg.model_dump(exclude_none=True))  # type: ignore[arg-type]
-            for tool_call in msg.tool_calls:
-                result, new_citations = await self._execute_tool(
-                    tool_call, tenant_id, document_ids
-                )
+            tool_results = await asyncio.gather(
+                *[self._execute_tool(tc, tenant_id, document_ids) for tc in msg.tool_calls]
+            )
+            for tool_call, (result, new_citations) in zip(msg.tool_calls, tool_results):
                 citations.extend(new_citations)
-                # For DB calls, record the query_type for accurate intent detection
                 if tool_call.function.name == "query_financial_database":
                     try:
                         qt = json.loads(tool_call.function.arguments).get("query_type", tool_call.function.name)
@@ -380,8 +382,11 @@ class RagUseCase:
             if not msg.tool_calls:
                 break
             messages.append(msg.model_dump(exclude_none=True))  # type: ignore[arg-type]
-            for tc in msg.tool_calls:
-                result, new_cits = await self._execute_tool(tc, tenant_id, document_ids)
+            # Execute all tool calls in this round concurrently
+            tc_results = await asyncio.gather(
+                *[self._execute_tool(tc, tenant_id, document_ids) for tc in msg.tool_calls]
+            )
+            for tc, (result, new_cits) in zip(msg.tool_calls, tc_results):
                 citations.extend(new_cits)
                 if tc.function.name == "query_financial_database":
                     try:
