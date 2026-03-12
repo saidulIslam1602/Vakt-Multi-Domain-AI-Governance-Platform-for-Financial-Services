@@ -123,6 +123,12 @@ jobs:
 
       - name: Terraform apply
         run: |
+          # Wait for any recently-created role assignments to propagate through
+          # Azure AD before Terraform tries to use them (KV Secrets Officer,
+          # User Access Administrator).  Azure guarantees eventual consistency
+          # within ~5 minutes; 90 s covers the common case.
+          echo "Waiting 90s for RBAC propagation..."
+          sleep 90
           terraform apply \
             -var="environment=${{ vars.ENVIRONMENT || 'dev' }}" \
             -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \

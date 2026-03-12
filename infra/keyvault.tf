@@ -48,10 +48,22 @@ resource "azurerm_key_vault_secret" "postgres_password" {
   key_vault_id = azurerm_key_vault.main.id
   content_type = "text/plain"
   tags         = local.tags
+
+  depends_on = [azurerm_key_vault.main]
 }
 
 # Full DATABASE_URL — composed here so services never need to know the raw
 # password.  Container Apps pull this via secretRef at runtime.
+#
+# If the secret already exists in the vault (created out-of-band or by a
+# previous partial apply), import it into state before applying:
+#   terraform import azurerm_key_vault_secret.database_url \
+#     "https://allergodev-kv.vault.azure.net/secrets/database-url/e14f8b221c734402abb81fe993d88ca1"
+import {
+  to = azurerm_key_vault_secret.database_url
+  id = "https://allergodev-kv.vault.azure.net/secrets/database-url/e14f8b221c734402abb81fe993d88ca1"
+}
+
 resource "azurerm_key_vault_secret" "database_url" {
   name         = "database-url"
   value        = "postgresql://allergoadmin:${var.postgres_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/allergo?sslmode=require"
@@ -66,6 +78,8 @@ resource "azurerm_key_vault_secret" "nextauth_secret" {
   key_vault_id = azurerm_key_vault.main.id
   content_type = "text/plain"
   tags         = local.tags
+
+  depends_on = [azurerm_key_vault.main]
 }
 
 # SMTP password — stored in KV; injected into processing-service at runtime.
@@ -77,6 +91,8 @@ resource "azurerm_key_vault_secret" "smtp_password" {
   key_vault_id = azurerm_key_vault.main.id
   content_type = "text/plain"
   tags         = local.tags
+
+  depends_on = [azurerm_key_vault.main]
 }
 
 # IMAP password — stored in KV; injected into ingest-service at runtime.
@@ -86,6 +102,8 @@ resource "azurerm_key_vault_secret" "imap_password" {
   key_vault_id = azurerm_key_vault.main.id
   content_type = "text/plain"
   tags         = local.tags
+
+  depends_on = [azurerm_key_vault.main]
 }
 
 # ── RBAC: pipeline (OIDC) must be bootstrapped MANUALLY by a subscription Owner ─
