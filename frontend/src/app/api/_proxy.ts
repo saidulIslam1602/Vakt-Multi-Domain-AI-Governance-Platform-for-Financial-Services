@@ -7,16 +7,16 @@
  *     `trailingSlash: false` in next.config.js means Next.js never emits a 308
  *     for incoming /api/* URLs regardless of trailing slash. ✅
  *
- *   Next.js proxy → FastAPI:
- *     We do NOT append a trailing slash to the upstream URL.  FastAPI's default
- *     behaviour (redirect_slashes=True, the default) emits a 307 when a route
- *     like @router.get("/") is called as /foo instead of /foo/.  We use
- *     `redirect: "follow"` so Node resolves that 307 entirely server-side —
- *     the browser never sees it. ✅
+ *   Next.js proxy → Backend services (internal Container Apps DNS):
+ *     Service URLs use internal Container Apps DNS names (http://chat-service,
+ *     http://document-service, etc.) — traffic never leaves the environment,
+ *     no TLS, no egress, no DNS lookup failures.
  *
- *     Crucially, path-parameter routes like @router.get("/{id}") also work
- *     correctly because we do NOT blindly append a slash, so /documents/abc
- *     reaches /documents/abc/ via the 307 follow and then matches. ✅
+ *     We ALWAYS append a trailing slash to the upstream URL. FastAPI routes are
+ *     defined as @router.get("/") and @router.get("/{id}") — both accept a
+ *     trailing slash directly (200), so we never trigger a 307 redirect.
+ *     This is critical for POST/streaming endpoints where following a 307 would
+ *     require a second connection and can cause "fetch failed" errors. ✅
  */
 
 import { type NextRequest, NextResponse } from "next/server";
@@ -35,10 +35,11 @@ export async function proxyRequest(
     .filter(Boolean)
     .join("/");
 
-  // No trailing slash appended here.  FastAPI (redirect_slashes=True default)
-  // emits a 307 for slash-missing root routes; redirect:"follow" resolves it
-  // server-side so the browser never sees a redirect.
-  const url = `${upstreamBase}/${path}${search}`;
+  // Always append trailing slash — FastAPI routes accept it directly (200),
+  // avoiding any 307 redirect entirely. This is especially important for POST
+  // and streaming endpoints where following a 307 requires a second connection
+  // and can fail with "fetch failed" inside the Container Apps environment.
+  const url = `${upstreamBase}/${path}/${search}`;
 
   // Forward all request headers except hop-by-hop ones.
   const headers = new Headers();

@@ -442,20 +442,23 @@ resource "azurerm_container_app" "frontend" {
       memory = "1Gi"
 
       env {
+        # Internal Container Apps DNS — traffic stays inside the environment,
+        # no TLS overhead, no 307 redirect loop on POST/streaming endpoints.
+        # See: https://learn.microsoft.com/en-us/azure/container-apps/connect-apps
         name  = "INGEST_SERVICE_URL"
-        value = "https://${azurerm_container_app.ingest.ingress[0].fqdn}"
+        value = "http://ingest-service"
       }
       env {
         name  = "DOCUMENT_SERVICE_URL"
-        value = "https://${azurerm_container_app.document.ingress[0].fqdn}"
+        value = "http://document-service"
       }
       env {
         name  = "SEARCH_SERVICE_URL"
-        value = "https://${azurerm_container_app.search.ingress[0].fqdn}"
+        value = "http://search-service"
       }
       env {
         name  = "CHAT_SERVICE_URL"
-        value = "https://${azurerm_container_app.chat.ingress[0].fqdn}"
+        value = "http://chat-service"
       }
       env {
         name  = "NEXTAUTH_URL"
