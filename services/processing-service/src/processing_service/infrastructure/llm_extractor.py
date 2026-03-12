@@ -164,7 +164,7 @@ class LLMExtractor:
     async def _extract_segment(
         self, text: str, document_id: str, pass_num: int
     ) -> dict:
-        system_prompt = _SYSTEM_PROMPT.format(today=_date.today().isoformat())
+        system_prompt = _SYSTEM_PROMPT.replace("{today}", _date.today().isoformat())
         try:
             response = await self._client.chat.completions.create(
                 model=self._deployment,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -152,36 +152,36 @@ class Document(BaseModel):
     model_config = {"frozen": False}
 
     def mark_parsing(self) -> None:
-        object.__setattr__(self, "status", DocumentStatus.PARSING)
-        object.__setattr__(self, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
+        self.status = DocumentStatus.PARSING
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_parsed(self, raw_text_path: str, page_count: int | None = None) -> None:
-        object.__setattr__(self, "status", DocumentStatus.PARSED)
-        object.__setattr__(self, "raw_text_path", raw_text_path)
-        object.__setattr__(self, "page_count", page_count)
-        object.__setattr__(self, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
+        self.status = DocumentStatus.PARSED
+        self.raw_text_path = raw_text_path
+        self.page_count = page_count
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_extracting(self) -> None:
-        object.__setattr__(self, "status", DocumentStatus.EXTRACTING)
-        object.__setattr__(self, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
+        self.status = DocumentStatus.EXTRACTING
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_extracted(self, extraction: ExtractionResult) -> None:
-        object.__setattr__(self, "status", DocumentStatus.EXTRACTED)
-        object.__setattr__(self, "extraction", extraction)
-        object.__setattr__(self, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
+        self.status = DocumentStatus.EXTRACTED
+        self.extraction = extraction
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_indexing(self) -> None:
-        object.__setattr__(self, "status", DocumentStatus.INDEXING)
-        object.__setattr__(self, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
+        self.status = DocumentStatus.INDEXING
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_ready(self) -> None:
-        object.__setattr__(self, "status", DocumentStatus.READY)
-        object.__setattr__(self, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
+        self.status = DocumentStatus.READY
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
     def mark_failed(self, error: str) -> None:
-        object.__setattr__(self, "status", DocumentStatus.FAILED)
-        object.__setattr__(self, "error_message", error)
-        object.__setattr__(self, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
+        self.status = DocumentStatus.FAILED
+        self.error_message = error
+        self.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
 
 class DocumentChunk(BaseModel):

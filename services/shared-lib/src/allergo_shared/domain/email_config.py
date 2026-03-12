@@ -8,7 +8,7 @@ value indicating no change.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 
@@ -87,8 +87,8 @@ class EmailIngestConfig:
         self.blocked_subject_kw = blocked_subject_kw
         self.min_attachment_bytes = min_attachment_bytes
         self.max_attachment_bytes = max_attachment_bytes
-        self.created_at = created_at or datetime.now(timezone.utc)
-        self.updated_at = updated_at or datetime.now(timezone.utc)
+        self.created_at = created_at or datetime.now(UTC)
+        self.updated_at = updated_at or datetime.now(UTC)
 
     # ── Validation ────────────────────────────────────────────────────────────
 

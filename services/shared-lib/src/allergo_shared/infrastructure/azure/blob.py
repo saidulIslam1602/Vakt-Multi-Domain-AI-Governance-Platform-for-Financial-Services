@@ -136,7 +136,7 @@ class AzureBlobStorage(BlobStoragePort):
         For production: uses a user delegation key from Managed Identity.
         """
         try:
-            now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+            now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
             expiry = now + datetime.timedelta(hours=expiry_hours)
 
             if self._is_local:

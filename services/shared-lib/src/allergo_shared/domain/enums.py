@@ -1,9 +1,9 @@
 """Domain enumerations shared across all services."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class DocumentStatus(str, Enum):
+class DocumentStatus(StrEnum):
     UPLOADED = "uploaded"
     PARSING = "parsing"
     PARSED = "parsed"
@@ -14,7 +14,7 @@ class DocumentStatus(str, Enum):
     FAILED = "failed"
 
 
-class DocumentType(str, Enum):
+class DocumentType(StrEnum):
     PDF = "pdf"
     DOCX = "docx"
     XLSX = "xlsx"
@@ -24,7 +24,7 @@ class DocumentType(str, Enum):
     UNKNOWN = "unknown"
 
 
-class JobEventType(str, Enum):
+class JobEventType(StrEnum):
     DOCUMENT_UPLOADED = "document.uploaded"
     DOCUMENT_PARSED = "document.parsed"
     DOCUMENT_EXTRACTED = "document.extracted"
