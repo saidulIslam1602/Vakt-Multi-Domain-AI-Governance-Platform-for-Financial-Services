@@ -1,20 +1,16 @@
 /**
  * Shared reverse-proxy utility used by all /api/* route handlers.
  *
- * Root cause of the 308 redirect loop:
- *   The old proxy built upstream URLs as `${base}/${path}/` (hard trailing
- *   slash).  When the upstream FastAPI service responded with a 307/308 (e.g.
- *   /stats → /stats/) the old code passed `redirect: "manual"` straight back
- *   to the browser, which then followed the redirect — but without the
- *   Authorization header, producing 401/404 errors.  Separately, Next.js
- *   itself emits a 308 for any incoming request whose pathname ends with a
- *   slash (trailingSlash: false is the default; the slash is stripped).
+ * Slash handling:
+ *   All backend services use FastAPI with redirect_slashes=False.  Routes
+ *   registered as @router.get("/") (e.g. /stats/, /documents/) return a hard
+ *   404 — NOT a 307 redirect — when called without the trailing slash.  So the
+ *   proxy always appends a trailing slash to the upstream URL.
  *
- * Fix:
- *   1. Build the upstream URL WITHOUT a trailing slash.
- *   2. Use `redirect: "follow"` so Node resolves any 307/308 from FastAPI
- *      entirely on the server side — the browser never sees a redirect.
- *   3. Never forward 3xx status codes to the client.
+ *   On the Next.js side, `trailingSlash: false` is set in next.config.js, which
+ *   means Next.js never emits a 308 for incoming /api/* requests regardless of
+ *   whether they include a trailing slash.  The browser therefore never sees any
+ *   redirect at all.
  */
 
 import { type NextRequest, NextResponse } from "next/server";
@@ -33,8 +29,13 @@ export async function proxyRequest(
     .filter(Boolean)
     .join("/");
 
-  // NO trailing slash — FastAPI's redirect (307) is resolved by Node below.
-  const url = `${upstreamBase}/${path}${search}`;
+  // Always send a trailing slash to the upstream service.
+  // All services set redirect_slashes=False in FastAPI, so routes registered
+  // as @router.get("/") return a hard 404 (not 307) when called without the
+  // trailing slash. We append it here (server-side only).
+  // Next.js trailingSlash:false in next.config.js prevents 308 on the
+  // *incoming* /api/* URL, so the browser never sees a redirect.
+  const url = `${upstreamBase}/${path}/${search}`;
 
   // Forward all request headers except hop-by-hop ones.
   const headers = new Headers();
