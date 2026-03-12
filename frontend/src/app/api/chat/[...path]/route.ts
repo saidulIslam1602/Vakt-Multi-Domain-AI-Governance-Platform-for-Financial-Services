@@ -18,8 +18,10 @@ export async function DELETE(req: NextRequest, { params }: { params: { path: str
 
 async function proxy(req: NextRequest, pathSegments: string[], method: string) {
   const search = req.nextUrl.search ?? "";
-  // Always include trailing slash to avoid 307 redirects from FastAPI
   const path = pathSegments.join("/");
+  // Append trailing slash to the upstream URL so FastAPI routes match without
+  // issuing a 307 redirect. The slash must be on the upstream fetch URL, NOT
+  // on the Next.js /api/* path (which causes Next.js to emit a 308 itself).
   const url = `${upstream()}/${path}/${search}`;
 
   const headers = new Headers();

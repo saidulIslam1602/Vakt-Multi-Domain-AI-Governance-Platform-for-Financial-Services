@@ -45,6 +45,7 @@ def create_app() -> FastAPI:
         description="Document metadata CRUD, review-queue, audit trail, download, and webhook APIs.",
         version=cfg.service_version,
         lifespan=lifespan,
+        redirect_slashes=False,
         docs_url="/docs" if cfg.environment != "production" else None,
     )
     app.add_middleware(
