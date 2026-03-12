@@ -142,6 +142,25 @@ resource "azurerm_key_vault_secret" "openai_api_key" {
   depends_on = [azurerm_key_vault.main]
 }
 
+# Azure AI Search admin key — required when the search service is configured
+# with authOptions=apiKeyOnly (the default). Used by chat-service and
+# processing-service for vector search and index management.
+# Retrieve: az search admin-key show --service-name <name> -g <rg> --query primaryKey -o tsv
+import {
+  to = azurerm_key_vault_secret.search_api_key
+  id = "https://allergodev-kv.vault.azure.net/secrets/azure-search-key/65c3502090674513abbedb15d79e5eb8"
+}
+
+resource "azurerm_key_vault_secret" "search_api_key" {
+  name         = "azure-search-key"
+  value        = var.search_api_key
+  key_vault_id = azurerm_key_vault.main.id
+  content_type = "text/plain"
+  tags         = local.tags
+
+  depends_on = [azurerm_key_vault.main]
+}
+
 # ── RBAC: pipeline (OIDC) must be bootstrapped MANUALLY by a subscription Owner ─
 #
 # The pipeline SP only holds Contributor on the subscription — it cannot create

@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     database_url: str
     azure_search_endpoint: str
     azure_search_index_name: str = "documents"
+    azure_search_key: str = ""  # API key for AI Search (set when authOptions=apiKeyOnly)
     azure_openai_endpoint: str
     azure_openai_api_version: str = "2024-08-01-preview"
     azure_openai_api_key: str = ""

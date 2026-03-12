@@ -76,18 +76,25 @@ async def main() -> None:
         cleanup_search = None
     else:
         logger.info("indexer_backend", backend="azure_search", endpoint=cfg.azure_search_endpoint)
-        credential = DefaultAzureCredential()
         from azure.search.documents.aio import SearchClient
         from azure.search.documents.indexes.aio import SearchIndexClient
+
+        if cfg.azure_search_key:
+            from azure.core.credentials import AzureKeyCredential
+            search_cred = AzureKeyCredential(cfg.azure_search_key)
+            credential = None
+        else:
+            credential = DefaultAzureCredential()
+            search_cred = credential
 
         search_client = SearchClient(
             endpoint=cfg.azure_search_endpoint,
             index_name=cfg.azure_search_index_name,
-            credential=credential,
+            credential=search_cred,
         )
         index_client = SearchIndexClient(
             endpoint=cfg.azure_search_endpoint,
-            credential=credential,
+            credential=search_cred,
         )
         await ensure_index(index_client, cfg.azure_search_index_name)
 
@@ -99,7 +106,8 @@ async def main() -> None:
         async def cleanup_search() -> None:
             await search_client.close()
             await index_client.close()
-            await credential.close()
+            if credential is not None:
+                await credential.close()
 
     extractor = LLMExtractor(openai_client, cfg.azure_openai_chat_deployment)
     db_updater = DocumentStatusUpdater(pool)

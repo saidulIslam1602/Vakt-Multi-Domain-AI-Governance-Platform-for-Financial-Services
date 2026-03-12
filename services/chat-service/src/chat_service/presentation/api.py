@@ -73,13 +73,19 @@ def create_app() -> FastAPI:
             await pool.close()
             await openai_client.close()
         else:
-            from azure.identity.aio import DefaultAzureCredential
             from azure.search.documents.aio import SearchClient
-            credential = DefaultAzureCredential()
+            if cfg.azure_search_key:
+                from azure.core.credentials import AzureKeyCredential
+                search_credential = AzureKeyCredential(cfg.azure_search_key)
+                credential = None
+            else:
+                from azure.identity.aio import DefaultAzureCredential
+                credential = DefaultAzureCredential()
+                search_credential = credential
             search_client = SearchClient(
                 endpoint=cfg.azure_search_endpoint,
                 index_name=cfg.azure_search_index_name,
-                credential=credential,
+                credential=search_credential,
             )
             application.state.rag = RagUseCase(
                 search_client=search_client,
@@ -93,7 +99,8 @@ def create_app() -> FastAPI:
             await pool.close()
             await search_client.close()
             await openai_client.close()
-            await credential.close()
+            if credential is not None:
+                await credential.close()
 
     app = FastAPI(
         title="Allergo Nordic — CFO Chat Service",

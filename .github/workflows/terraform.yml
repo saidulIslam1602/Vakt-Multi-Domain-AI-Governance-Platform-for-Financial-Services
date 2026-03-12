@@ -70,6 +70,7 @@ jobs:
             -var="imap_password=${{ secrets.IMAP_PASSWORD || 'placeholder' }}" \
             -var="db_encryption_key=${{ secrets.DB_ENCRYPTION_KEY || 'placeholder00000000000000000000000000000000000000000000000000000' }}" \
             -var="openai_api_key=${{ secrets.OPENAI_API_KEY || 'placeholder' }}" \
+            -var="search_api_key=${{ secrets.SEARCH_API_KEY || 'placeholder' }}" \
             -no-color -out=tfplan
         continue-on-error: true
         env:
@@ -139,6 +140,7 @@ jobs:
             -var="imap_password=${{ secrets.IMAP_PASSWORD }}" \
             -var="db_encryption_key=${{ secrets.DB_ENCRYPTION_KEY }}" \
             -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" \
+            -var="search_api_key=${{ secrets.SEARCH_API_KEY }}" \
             -auto-approve
         env:
           ARM_USE_OIDC: "true"

@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     azure_servicebus_namespace_fqdn: str
     azure_search_endpoint: str
     azure_search_index_name: str = "documents"
+    azure_search_key: str = ""  # API key for AI Search (set when authOptions=apiKeyOnly)
 
     # Azure OpenAI
     azure_openai_endpoint: str

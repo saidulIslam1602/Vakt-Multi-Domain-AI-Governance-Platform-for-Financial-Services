@@ -150,6 +150,11 @@ resource "azurerm_container_app" "processing" {
     key_vault_secret_id = azurerm_key_vault_secret.openai_api_key.versionless_id
     identity            = "System"
   }
+  secret {
+    name                = "azure-search-key"
+    key_vault_secret_id = azurerm_key_vault_secret.search_api_key.versionless_id
+    identity            = "System"
+  }
 
   template {
     min_replicas = 1
@@ -172,6 +177,10 @@ resource "azurerm_container_app" "processing" {
       env {
         name  = "AZURE_SEARCH_ENDPOINT"
         value = "https://${azurerm_search_service.main.name}.search.windows.net"
+      }
+      env {
+        name        = "AZURE_SEARCH_KEY"
+        secret_name = "azure-search-key"
       }
       env {
         name  = "AZURE_OPENAI_ENDPOINT"
@@ -350,6 +359,12 @@ resource "azurerm_container_app" "chat" {
     identity            = "System"
   }
 
+  secret {
+    name                = "azure-search-key"
+    key_vault_secret_id = azurerm_key_vault_secret.search_api_key.versionless_id
+    identity            = "System"
+  }
+
   template {
     min_replicas = 1
     max_replicas = 5
@@ -363,6 +378,10 @@ resource "azurerm_container_app" "chat" {
       env {
         name  = "AZURE_SEARCH_ENDPOINT"
         value = "https://${azurerm_search_service.main.name}.search.windows.net"
+      }
+      env {
+        name        = "AZURE_SEARCH_KEY"
+        secret_name = "azure-search-key"
       }
       env {
         name  = "AZURE_OPENAI_ENDPOINT"

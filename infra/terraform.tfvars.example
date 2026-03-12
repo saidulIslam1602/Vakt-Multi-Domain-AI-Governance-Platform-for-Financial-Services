@@ -30,3 +30,7 @@ db_encryption_key = "<your-32-byte-hex-encryption-key>"
 # Azure OpenAI API key — required when the resource has no custom subdomain.
 # Retrieve with: az cognitiveservices account keys list -g <rg> -n <openai-name> --query key1 -o tsv
 openai_api_key = "<your-azure-openai-api-key>"
+
+# Azure AI Search admin key — required when authOptions=apiKeyOnly (default).
+# Retrieve with: az search admin-key show --service-name <name> -g <rg> --query primaryKey -o tsv
+search_api_key = "<your-azure-search-admin-key>"

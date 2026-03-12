@@ -56,3 +56,9 @@ variable "openai_api_key" {
   sensitive   = true
   description = "Azure OpenAI API key — required when the resource has no custom subdomain (regional endpoint). Retrieve: az cognitiveservices account keys list -g <rg> -n <name> --query key1 -o tsv"
 }
+
+variable "search_api_key" {
+  type        = string
+  sensitive   = true
+  description = "Azure AI Search admin key — required when authOptions=apiKeyOnly. Retrieve: az search admin-key show --service-name <name> -g <rg> --query primaryKey -o tsv"
+}
