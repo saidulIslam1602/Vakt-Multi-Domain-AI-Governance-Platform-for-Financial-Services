@@ -66,7 +66,7 @@ import {
 
 resource "azurerm_key_vault_secret" "database_url" {
   name         = "database-url"
-  value        = "postgresql://allergoadmin:${var.postgres_admin_password}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/allergo?sslmode=require"
+  value        = "postgresql://allergoadmin:${urlencode(var.postgres_admin_password)}@${azurerm_postgresql_flexible_server.main.fqdn}:5432/allergo?sslmode=require"
   key_vault_id = azurerm_key_vault.main.id
   content_type = "text/plain"
   tags         = local.tags
@@ -99,6 +99,19 @@ resource "azurerm_key_vault_secret" "smtp_password" {
 resource "azurerm_key_vault_secret" "imap_password" {
   name         = "imap-password"
   value        = var.imap_password
+  key_vault_id = azurerm_key_vault.main.id
+  content_type = "text/plain"
+  tags         = local.tags
+
+  depends_on = [azurerm_key_vault.main]
+}
+
+# DB encryption key — used by ingest-service to AES-encrypt IMAP passwords
+# stored in email_ingest_configs.  Required by PostgresEmailConfigRepository.
+# Generate: python3 -c "import secrets; print(secrets.token_hex(32))"
+resource "azurerm_key_vault_secret" "db_encryption_key" {
+  name         = "allergo-db-encryption-key"
+  value        = var.db_encryption_key
   key_vault_id = azurerm_key_vault.main.id
   content_type = "text/plain"
   tags         = local.tags

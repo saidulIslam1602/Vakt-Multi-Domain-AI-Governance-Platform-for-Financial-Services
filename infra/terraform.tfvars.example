@@ -21,3 +21,8 @@ postgres_admin_password = "<your-strong-db-password>"
 # NextAuth.js session signing secret (min 32 chars)
 # Tip: generate with: openssl rand -base64 32
 nextauth_secret = "<your-nextauth-secret-min-32-chars>"
+
+# 32-byte hex key for AES encryption of IMAP passwords stored in PostgreSQL.
+# Required by ingest-service (PostgresEmailConfigRepository).
+# Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
+db_encryption_key = "<your-32-byte-hex-encryption-key>"

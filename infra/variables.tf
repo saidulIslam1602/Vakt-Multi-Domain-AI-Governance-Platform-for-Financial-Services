@@ -44,3 +44,9 @@ variable "imap_password" {
   default     = ""
   description = "IMAP account password for email document ingestion"
 }
+
+variable "db_encryption_key" {
+  type        = string
+  sensitive   = true
+  description = "32-byte hex key for AES encryption of IMAP passwords in DB. Generate: python3 -c \"import secrets; print(secrets.token_hex(32))\""
+}

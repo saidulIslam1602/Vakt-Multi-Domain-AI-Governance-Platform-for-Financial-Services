@@ -58,6 +58,11 @@ resource "azurerm_container_app" "ingest" {
     key_vault_secret_id = azurerm_key_vault_secret.imap_password.versionless_id
     identity            = "System"
   }
+  secret {
+    name                = "allergo-db-encryption-key"
+    key_vault_secret_id = azurerm_key_vault_secret.db_encryption_key.versionless_id
+    identity            = "System"
+  }
 
   template {
     min_replicas = 1
@@ -84,6 +89,10 @@ resource "azurerm_container_app" "ingest" {
       env {
         name        = "IMAP_PASSWORD"
         secret_name = "imap-password"
+      }
+      env {
+        name        = "ALLERGO_DB_ENCRYPTION_KEY"
+        secret_name = "allergo-db-encryption-key"
       }
       env {
         name  = "AUTH_ENABLED"
@@ -221,6 +230,11 @@ resource "azurerm_container_app" "document" {
       cpu    = 0.25
       memory = "0.5Gi"
 
+      env {
+        # pydantic-settings field: azure_storage_account_url → AZURE_STORAGE_ACCOUNT_URL
+        name  = "AZURE_STORAGE_ACCOUNT_URL"
+        value = "https://${azurerm_storage_account.docs.name}.blob.core.windows.net"
+      }
       env {
         name        = "DATABASE_URL"
         secret_name = "database-url"
