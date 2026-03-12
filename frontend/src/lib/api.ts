@@ -58,12 +58,37 @@ export interface ExtractionResult {
   bank_account?: string;
   reference_number?: string;
   contract_value?: string;
+  annual_recurring_fee?: string;
   contract_start_date?: string;
   contract_end_date?: string;
   renewal_clause?: string;
+  renewal_deadline?: string;
+  renewal_status?: string;
+  renewed_until?: string;
   cost_center?: string;
   gl_account?: string;
   approval_required?: boolean;
+  store_location?: string;
+  department?: string;
+  governing_law?: string;
+  termination_clause?: string;
+  penalty_clause?: string;
+  liability_cap?: string;
+  force_majeure?: boolean;
+  indemnity_clause?: boolean;
+  dispute_resolution?: string;
+  legal_obligations?: string[];
+  legal_risk_flag?: boolean;
+  report_period?: string;
+  report_type?: string;
+  total_revenue?: string;
+  total_expenses?: string;
+  ebitda?: string;
+  net_profit?: string;
+  report_line_items?: Array<{ account: string; amount: string; period?: string }>;
+  ledger_entries?: Array<{ date: string; account_code: string; account_name: string; debit: string | null; credit: string | null; description: string }>;
+  posting_period?: string;
+  journal_ref?: string;
 }
 
 export type ReviewStatus =

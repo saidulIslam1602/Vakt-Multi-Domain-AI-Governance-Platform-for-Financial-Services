@@ -226,6 +226,98 @@ function CfoFinancePanel({
 
 // ── Raw extraction accordion ───────────────────────────────────────────────
 
+function FinancialReportPanel({
+  ext,
+}: {
+  ext: Partial<ExtractionResult>;
+}) {
+  const hasReport = ext.report_period || ext.report_type || ext.total_revenue
+    || ext.total_expenses || ext.ebitda || ext.net_profit;
+  const hasLedger = ext.ledger_entries && ext.ledger_entries.length > 0;
+  const hasLineItems = ext.report_line_items && ext.report_line_items.length > 0;
+
+  if (!hasReport && !hasLedger && !hasLineItems) return null;
+
+  return (
+    <SectionCard icon={Tag} title="Financial Report">
+      {hasReport && (
+        <div className="space-y-0 mb-4">
+          <FieldRow label="Report Type" value={ext.report_type} />
+          <FieldRow label="Period" value={ext.report_period} highlight />
+          <FieldRow label="Total Revenue" value={ext.total_revenue} highlight />
+          <FieldRow label="Total Expenses" value={ext.total_expenses} />
+          <FieldRow label="EBITDA" value={ext.ebitda} />
+          <FieldRow label="Net Profit" value={ext.net_profit} highlight />
+          <FieldRow label="Posting Period" value={ext.posting_period} />
+          <FieldRow label="Journal Ref" value={ext.journal_ref} />
+          <FieldRow label="Department" value={ext.department} />
+          <FieldRow label="Store / Location" value={ext.store_location} />
+        </div>
+      )}
+      {hasLineItems && (
+        <div className="mt-3">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+            Line Items ({ext.report_line_items!.length})
+          </p>
+          <div className="overflow-x-auto rounded-lg border border-slate-100">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50 text-slate-400 uppercase tracking-wide">
+                <tr>
+                  <th className="px-3 py-2 text-left">Account</th>
+                  <th className="px-3 py-2 text-right">Amount</th>
+                  <th className="px-3 py-2 text-left">Period</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {ext.report_line_items!.map((item, i) => (
+                  <tr key={i} className="hover:bg-slate-50">
+                    <td className="px-3 py-2 text-slate-700">{item.account}</td>
+                    <td className="px-3 py-2 text-right font-medium text-slate-900">{item.amount}</td>
+                    <td className="px-3 py-2 text-slate-400">{item.period ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      {hasLedger && (
+        <div className="mt-3">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+            Ledger Entries ({ext.ledger_entries!.length})
+          </p>
+          <div className="overflow-x-auto rounded-lg border border-slate-100">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50 text-slate-400 uppercase tracking-wide">
+                <tr>
+                  <th className="px-3 py-2 text-left">Date</th>
+                  <th className="px-3 py-2 text-left">Account</th>
+                  <th className="px-3 py-2 text-right">Debit</th>
+                  <th className="px-3 py-2 text-right">Credit</th>
+                  <th className="px-3 py-2 text-left">Description</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {ext.ledger_entries!.map((e, i) => (
+                  <tr key={i} className="hover:bg-slate-50">
+                    <td className="px-3 py-2 text-slate-400 whitespace-nowrap">{e.date}</td>
+                    <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{e.account_code} {e.account_name}</td>
+                    <td className="px-3 py-2 text-right text-emerald-700 font-medium whitespace-nowrap">{e.debit ?? "—"}</td>
+                    <td className="px-3 py-2 text-right text-rose-600 font-medium whitespace-nowrap">{e.credit ?? "—"}</td>
+                    <td className="px-3 py-2 text-slate-500 max-w-xs truncate">{e.description}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+// ── Raw extraction accordion ───────────────────────────────────────────────
+
 function RawExtractionPanel({
   ext,
   onChange,
@@ -235,7 +327,7 @@ function RawExtractionPanel({
   onChange: (key: keyof ExtractionResult, value: string | string[]) => void;
 }) {
   return (
-    <SectionCard icon={History} title="Raw Extraction Data" defaultOpen={false}>
+    <SectionCard icon={History} title="Raw Extraction Data" defaultOpen={true}>
       <p className="text-xs text-slate-400 mb-4">
         Raw arrays extracted by the AI — edit chips to correct mistakes before saving.
       </p>
@@ -476,7 +568,10 @@ export default function DocumentDetailPage() {
           />
         )}
 
-        {/* Raw extraction data — collapsed by default */}
+        {/* Financial Report / Payroll / Ledger details */}
+        {ext && <FinancialReportPanel ext={ext} />}
+
+        {/* Raw extraction data */}
         {ext && (
           <RawExtractionPanel
             ext={ext}
