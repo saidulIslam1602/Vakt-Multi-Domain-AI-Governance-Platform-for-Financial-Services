@@ -28,7 +28,7 @@ async function proxy(req: NextRequest, pathSegments: string[], method: string) {
       ? undefined
       : await req.arrayBuffer();
 
-  const res = await fetch(url, { method, headers, body: body as BodyInit, redirect: "follow" });
+  const res = await fetch(url, { method, headers, body: body as BodyInit, redirect: "manual" });
 
   const resHeaders = new Headers();
   res.headers.forEach((v, k) => {

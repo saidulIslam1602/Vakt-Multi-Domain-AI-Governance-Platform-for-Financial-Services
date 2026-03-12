@@ -32,7 +32,19 @@ async function proxy(req: NextRequest, pathSegments: string[], method: string) {
       ? undefined
       : await req.arrayBuffer();
 
-  const res = await fetch(url, { method, headers, body: body as BodyInit, redirect: "follow" });
+  let res: Response;
+  try {
+    // Use redirect:"manual" so a 307/308 from FastAPI is returned as-is rather
+    // than Node.js re-issuing the request without the body (which loses POST data).
+    res = await fetch(url, { method, headers, body: body as BodyInit, redirect: "manual" });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "upstream unreachable";
+    console.error(`[chat-proxy] fetch failed → ${url}:`, message);
+    return new NextResponse(
+      JSON.stringify({ detail: `Chat service unavailable: ${message}` }),
+      { status: 503, headers: { "Content-Type": "application/json" } }
+    );
+  }
 
   const resHeaders = new Headers();
   res.headers.forEach((v, k) => {

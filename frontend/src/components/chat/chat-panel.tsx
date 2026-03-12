@@ -207,7 +207,7 @@ function ChatBubble({
             </span>
           ) : message.error ? (
             <span className="flex items-center gap-1.5 text-rose-600">
-              <AlertCircle size={14} /> Something went wrong. Please try again.
+              <AlertCircle size={14} /> {message.content || "Something went wrong. Please try again."}
             </span>
           ) : (
             <ReactMarkdown className="prose prose-sm max-w-none prose-p:my-1 prose-li:my-0.5">
@@ -314,10 +314,23 @@ export function ChatPanel({ documentIds, fullPage = false, externalQuestion, onE
             intent: response.intent,
           },
         ]);
-      } catch {
+      } catch (err: unknown) {
+        // Extract the most useful error message for the user.
+        // axios wraps HTTP errors in err.response.data.detail; network errors in err.message.
+        let detail = "Something went wrong. Please try again.";
+        if (err && typeof err === "object") {
+          const axiosErr = err as { response?: { data?: { detail?: string }; status?: number } };
+          if (axiosErr.response?.data?.detail) {
+            detail = axiosErr.response.data.detail;
+          } else if (axiosErr.response?.status) {
+            detail = `Request failed with status ${axiosErr.response.status}.`;
+          } else if ("message" in err && typeof (err as { message: unknown }).message === "string") {
+            detail = (err as { message: string }).message;
+          }
+        }
         setMessages((prev) => [
           ...prev.slice(0, -1),
-          { role: "assistant", content: "", error: true },
+          { role: "assistant", content: detail, error: true },
         ]);
       } finally {
         setIsLoading(false);
