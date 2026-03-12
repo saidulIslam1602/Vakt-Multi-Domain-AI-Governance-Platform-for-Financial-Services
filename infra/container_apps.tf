@@ -86,6 +86,10 @@ resource "azurerm_container_app" "ingest" {
         secret_name = "imap-password"
       }
       env {
+        name  = "AUTH_ENABLED"
+        value = "false"
+      }
+      env {
         name  = "ENVIRONMENT"
         value = var.environment
       }
@@ -220,6 +224,10 @@ resource "azurerm_container_app" "document" {
       env {
         name        = "DATABASE_URL"
         secret_name = "database-url"
+      }
+      env {
+        name  = "AUTH_ENABLED"
+        value = "false"
       }
       env {
         name  = "ENVIRONMENT"
