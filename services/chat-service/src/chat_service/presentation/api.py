@@ -112,10 +112,6 @@ def create_app() -> FastAPI:
         ),
         version=cfg.service_version,
         lifespan=lifespan,
-        # Disable automatic trailing-slash redirects (307/308). The Next.js proxy
-        # sits in front and cannot follow a redirect without losing the POST body,
-        # so FastAPI must accept both /path and /path/ without redirecting.
-        redirect_slashes=False,
         docs_url="/docs" if cfg.environment != "production" else None,
     )
     app.add_middleware(  # type: ignore[call-arg]

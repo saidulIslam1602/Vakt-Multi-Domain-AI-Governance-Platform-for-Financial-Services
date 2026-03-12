@@ -110,7 +110,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         ),
         version=cfg.service_version,
         lifespan=lifespan,
-        redirect_slashes=False,
         docs_url="/docs" if cfg.environment != "production" else None,
         redoc_url="/redoc" if cfg.environment != "production" else None,
     )

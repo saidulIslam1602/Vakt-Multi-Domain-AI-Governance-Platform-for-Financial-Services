@@ -1,16 +1,22 @@
 /**
  * Shared reverse-proxy utility used by all /api/* route handlers.
  *
- * Slash handling:
- *   All backend services use FastAPI with redirect_slashes=False.  Routes
- *   registered as @router.get("/") (e.g. /stats/, /documents/) return a hard
- *   404 — NOT a 307 redirect — when called without the trailing slash.  So the
- *   proxy always appends a trailing slash to the upstream URL.
+ * Slash handling (why this works without 308/307 loops):
  *
- *   On the Next.js side, `trailingSlash: false` is set in next.config.js, which
- *   means Next.js never emits a 308 for incoming /api/* requests regardless of
- *   whether they include a trailing slash.  The browser therefore never sees any
- *   redirect at all.
+ *   Browser → Next.js:
+ *     `trailingSlash: false` in next.config.js means Next.js never emits a 308
+ *     for incoming /api/* URLs regardless of trailing slash. ✅
+ *
+ *   Next.js proxy → FastAPI:
+ *     We do NOT append a trailing slash to the upstream URL.  FastAPI's default
+ *     behaviour (redirect_slashes=True, the default) emits a 307 when a route
+ *     like @router.get("/") is called as /foo instead of /foo/.  We use
+ *     `redirect: "follow"` so Node resolves that 307 entirely server-side —
+ *     the browser never sees it. ✅
+ *
+ *     Crucially, path-parameter routes like @router.get("/{id}") also work
+ *     correctly because we do NOT blindly append a slash, so /documents/abc
+ *     reaches /documents/abc/ via the 307 follow and then matches. ✅
  */
 
 import { type NextRequest, NextResponse } from "next/server";
@@ -29,13 +35,10 @@ export async function proxyRequest(
     .filter(Boolean)
     .join("/");
 
-  // Always send a trailing slash to the upstream service.
-  // All services set redirect_slashes=False in FastAPI, so routes registered
-  // as @router.get("/") return a hard 404 (not 307) when called without the
-  // trailing slash. We append it here (server-side only).
-  // Next.js trailingSlash:false in next.config.js prevents 308 on the
-  // *incoming* /api/* URL, so the browser never sees a redirect.
-  const url = `${upstreamBase}/${path}/${search}`;
+  // No trailing slash appended here.  FastAPI (redirect_slashes=True default)
+  // emits a 307 for slash-missing root routes; redirect:"follow" resolves it
+  // server-side so the browser never sees a redirect.
+  const url = `${upstreamBase}/${path}${search}`;
 
   // Forward all request headers except hop-by-hop ones.
   const headers = new Headers();

@@ -85,7 +85,6 @@ def create_app() -> FastAPI:
         description="Hybrid full-text + semantic search over processed documents.",
         version=cfg.service_version,
         lifespan=lifespan,
-        redirect_slashes=False,
         docs_url="/docs" if cfg.environment != "production" else None,
     )
     app.add_middleware(
