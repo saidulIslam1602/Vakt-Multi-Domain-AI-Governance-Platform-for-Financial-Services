@@ -73,11 +73,13 @@ def create_app() -> FastAPI:
             await pool.close()
             await openai_client.close()
         else:
+            from azure.core.credentials_async import AsyncTokenCredential
             from azure.search.documents.aio import SearchClient
+            from azure.core.credentials import AzureKeyCredential
+            credential: DefaultAzureCredential | None = None
+            search_credential: AzureKeyCredential | AsyncTokenCredential
             if cfg.azure_search_key:
-                from azure.core.credentials import AzureKeyCredential
                 search_credential = AzureKeyCredential(cfg.azure_search_key)
-                credential = None
             else:
                 from azure.identity.aio import DefaultAzureCredential
                 credential = DefaultAzureCredential()

@@ -76,13 +76,15 @@ async def main() -> None:
         cleanup_search = None
     else:
         logger.info("indexer_backend", backend="azure_search", endpoint=cfg.azure_search_endpoint)
+        from azure.core.credentials import AzureKeyCredential
+        from azure.core.credentials_async import AsyncTokenCredential
         from azure.search.documents.aio import SearchClient
         from azure.search.documents.indexes.aio import SearchIndexClient
 
+        credential: DefaultAzureCredential | None = None
+        search_cred: AzureKeyCredential | AsyncTokenCredential
         if cfg.azure_search_key:
-            from azure.core.credentials import AzureKeyCredential
             search_cred = AzureKeyCredential(cfg.azure_search_key)
-            credential = None
         else:
             credential = DefaultAzureCredential()
             search_cred = credential
