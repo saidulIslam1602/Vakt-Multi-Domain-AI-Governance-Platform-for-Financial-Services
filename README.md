@@ -17,6 +17,8 @@
 - [Quick Start (Local Dev)](#quick-start-local-dev)
 - [Environment Variables](#environment-variables)
 - [API Reference](#api-reference)
+- [Governance Platform](#governance-platform)
+- [How findings get into infra_findings](#how-findings-get-into-infra_findings)
 - [Infrastructure (Azure / Terraform)](#infrastructure-azure--terraform)
 - [Development Guide](#development-guide)
 - [Testing](#testing)
@@ -27,7 +29,9 @@
 
 ## Overview
 
-Allergo Nordic is a multi-tenant SaaS platform that automates the financial document lifecycle:
+Allergo Nordic is a multi-tenant SaaS platform that automates the financial document lifecycle. It is framed as **multi-domain agentic governance**: structured findings flow into machine-generated proposals, automated validation, human approval, and an **append-only audit trail**. Finance documents are one domain (CFO review queue, RAG chat); **infrastructure posture and IaC change proposals** are a second domain that can reuse the same control plane (workflow states, review patterns, audit). The LLM is a component inside those workflows—not the product headline. What ships here uses **fixture-backed** cloud/plan context where noted; production would swap in cloud SDKs and isolated agent runners.
+
+Concrete backlog: [`docs/governance-platform-backlog.md`](docs/governance-platform-backlog.md).
 
 1. **Ingest** — Upload files via browser or email (IMAP polling); ZIP bulk-upload supported
 2. **Process** — Parse PDF/DOCX/XLSX/images → LLM extraction → semantic chunking → vector + full-text indexing
@@ -361,6 +365,86 @@ Payloads are signed with `X-Allergo-Signature: sha256=<hmac>` (compatible with G
 
 ---
 
+## Governance Platform
+
+The platform implements a **Cloudgeni-shaped governance loop** for infrastructure posture — aligned with the finance review workflow but applied to IaC policy findings, automated remediation proposals, and a human-in-the-loop approval gate.
+
+### Architecture
+
+```
+Checkov CI scan
+  └── checkov-results.json ──► scripts/import_checkov_findings.py
+                                       │ INSERT (idempotent)
+                                       ▼
+                               infra_findings (DB)
+                                       │
+         Chat agent (session_type=infra_remediation)
+           list_infra_findings ◄───────┘
+           propose_remediation ──► agent_workflow_runs + change_proposals
+                                                │
+                     POST /posture/proposals/{id}/approve
+                                                │
+                              audit_events (append-only)
+```
+
+### UI pages
+
+| Page | URL | Description |
+|------|-----|-------------|
+| Findings list | `/posture/findings` | IaC policy violations from Checkov; severity filter, detail drawer |
+| Proposals list | `/posture/proposals` | Agent workflow runs; state filter; "New run" button |
+| Proposal detail | `/posture/proposals/{run_id}` | Diff viewer, markdown rationale, Approve / Reject modal, PR export |
+
+### Governance API (document-service `/api/v1`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/posture/findings` | List findings (severity filter, pagination) |
+| `GET` | `/posture/findings/{id}` | Single finding with `detail_json` |
+| `POST` | `/posture/runs` | Create agent workflow run (`gathering_context`) |
+| `GET` | `/posture/runs` | List runs (state filter) |
+| `GET` | `/posture/runs/{id}` | Single run |
+| `POST` | `/posture/runs/{id}/proposals` | Attach change proposal (diff + rationale) |
+| `POST` | `/posture/runs/{id}/context-snapshot` | Build + store versioned context bundle |
+| `GET` | `/posture/snapshots/{id}` | Read context snapshot |
+| `GET` | `/posture/proposals/{id}` | Single proposal |
+| `POST` | `/posture/proposals/{id}/validate` | Schema validation gate |
+| `POST` | `/posture/proposals/{id}/approve` | HITL approve → audit event |
+| `POST` | `/posture/proposals/{id}/reject` | HITL reject → audit event |
+| `POST` | `/posture/proposals/{id}/export` | PR title/body + patch + git apply |
+| `POST` | `/audit` | Cross-service audit write (used by chat-service) |
+
+### Chat infra remediation session
+
+```http
+POST /api/v1/chat/
+{
+  "question": "Fix the Key Vault purge protection finding",
+  "session_type": "infra_remediation"
+}
+→ 200 {
+  "answer": "...",
+  "tools_used": ["list_infra_findings", "propose_remediation"],
+  "session_type": "infra_remediation",
+  "tool_rounds_used": 2
+}
+```
+
+Infra tools available: `list_infra_findings`, `get_infra_finding`, `get_terraform_plan_summary`, `propose_remediation`, `get_infra_context_bundle`.  
+Finance tools (`query_financial_database`, `search_document_content`) are **blocked** in `infra_remediation` sessions and vice versa. Policy violations emit audit events.
+
+### Evals
+
+```bash
+# No Azure keys required — mock LLM with frozen transcripts
+python3 evals/infra/eval_runner.py --cases evals/infra/cases.jsonl --mock --verbose
+# → 6/6 PASS
+```
+
+CI job: `.github/workflows/ci-evals.yml` runs on every push/PR touching `evals/` or `services/chat-service/`.
+
+---
+
 ## Infrastructure (Azure / Terraform)
 
 All infrastructure is defined in `infra/` using Terraform. Target region: **Norway East** (`norwayeast`); Azure OpenAI in **Sweden Central** (GPT-4o availability).
@@ -482,6 +566,53 @@ Set `AZURE_OPENAI_API_KEY=""` (empty) in production to automatically fall back t
 
 ---
 
+## How findings get into `infra_findings`
+
+The platform ingests IaC policy findings through two complementary paths:
+
+### Path 1 — CI (Checkov → artifact → optional DB import)
+
+1. `.github/workflows/ci-infra-scan.yml` runs **Checkov** on every push/PR that touches `infra/`.
+2. Results are saved as `checkov-results.json` and uploaded as a GitHub Actions artifact (`checkov-results`).
+3. On pushes to `main`, the `import-findings` job calls `scripts/import_checkov_findings.py` to write rows into `infra_findings`.
+
+   **To enable DB import in CI:** add `DEV_DATABASE_URL` to repository secrets. If the secret is absent the import step prints a warning and exits 0 (scan still runs).
+
+   **To run locally after downloading the artifact:**
+   ```bash
+   # Download artifact from the Actions UI, then:
+   python scripts/import_checkov_findings.py \
+     --input checkov-results.json \
+     --tenant dev-tenant \
+     --source-scan-id "$(git rev-parse HEAD)"
+   ```
+
+4. The importer generates a **deterministic UUID** from `(tenant_id, rule_id, file_path, line_start)` so re-runs are fully idempotent (`ON CONFLICT DO NOTHING`).
+
+### Path 2 — SQL seeds (local dev / demo)
+
+Migration `013_posture_seed_demo.sql` inserts three fixture findings for `dev-tenant` (the noop-auth default tenant). These are always present after running migrations locally:
+
+```bash
+make migrate   # or: psql $DATABASE_URL < services/ingest-service/src/ingest_service/infrastructure/db/migrations/013_posture_seed_demo.sql
+```
+
+### Sample fixtures
+
+| File | Purpose |
+|------|---------|
+| `fixtures/checkov-sample.json` | Redacted 5-finding Checkov output — use with `--dry-run` to inspect or as import source |
+| `fixtures/terraform-plan-sample.json` | Small mock `terraform show -json` plan — used by the `get_terraform_plan_summary` chat tool and context bundle builder |
+
+**Dry-run (no DB required):**
+```bash
+python scripts/import_checkov_findings.py \
+  --input fixtures/checkov-sample.json \
+  --dry-run
+```
+
+---
+
 ## ADRs & Design Decisions
 
 | ADR | Decision |
@@ -489,6 +620,7 @@ Set `AZURE_OPENAI_API_KEY=""` (empty) in production to automatically fall back t
 | [001 — Queue-based processing](docs/adr/001-queue-based-document-processing.md) | Async queue decouples upload from heavy LLM pipeline; ingest returns 202 immediately |
 | [002 — Vector store: pgvector vs managed](docs/adr/002-vector-store-pgvector-vs-managed.md) | Azure AI Search (prod) / Elasticsearch (dev) — not pgvector — for hybrid search capability |
 | [003 — LLM for extraction](docs/adr/003-llm-for-extraction.md) | GPT-4o chosen over rule-based extraction; structured output via JSON mode + retry |
+| [005 — Audit architecture](docs/adr/005-audit-architecture.md) | Single-service audit trail (document-service owns `audit_events`); cross-service writes via thin HTTP endpoint |
 
 ---
 

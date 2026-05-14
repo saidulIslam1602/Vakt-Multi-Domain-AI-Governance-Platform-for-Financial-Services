@@ -26,12 +26,51 @@ from openai import AsyncAzureOpenAI
 from openai.types.chat import ChatCompletionMessageToolCall
 
 from allergo_shared.infrastructure.logging import get_logger
-from chat_service.application.tools import TOOLS
+from chat_service.application.tools import FINANCE_TOOL_NAMES, INFRA_TOOL_NAMES, TOOLS
 from chat_service.infrastructure.db_reader import FinancialDbReader
 
 logger = get_logger(__name__)
 
 MAX_TOOL_ROUNDS = 6
+
+# ── Tool allowlist per session type ──────────────────────────────────────────
+# finance_chat: only finance tools
+# infra_remediation: only infra tools
+# (any other value → all tools allowed)
+_SESSION_ALLOWED_TOOLS: dict[str, frozenset[str]] = {
+    "finance_chat": FINANCE_TOOL_NAMES,
+    "infra_remediation": INFRA_TOOL_NAMES,
+}
+
+# ── System prompt for infra remediation sessions ─────────────────────────────
+_INFRA_SYSTEM_PROMPT = """You are a governed infrastructure remediation agent for Allergo Nordic.
+Your role is to identify IaC policy violations, propose diffs that fix them, and create
+governed change proposals for human approval.
+
+TODAY'S DATE: {today}
+
+You have access to five tools:
+• list_infra_findings        — list open policy violations from Checkov CI scans
+• get_infra_finding          — get full detail + remediation hint for a specific finding
+• get_terraform_plan_summary — see what the latest Terraform plan would change
+• propose_remediation        — create a governed proposal (diff + rationale); NEVER applies changes
+• get_infra_context_bundle   — read a frozen context snapshot from a previous run
+
+CRITICAL constraints:
+- You MUST use list_infra_findings or get_infra_finding before proposing a remediation.
+- propose_remediation creates a PROPOSAL only — it NEVER runs terraform apply.
+- The unified_diff MUST be a valid unified diff. Start with --- lines.
+- Always explain the risk level and rationale in plain language.
+- A proposal requires human approval before any change can be applied.
+
+Response format:
+- Be concise and precise. You are talking to an infrastructure engineer.
+- When proposing a fix: show Finding → Root cause → Proposed diff → Resource addresses → Risk.
+- After your answer, suggest 2–3 follow-up questions as a JSON block:
+  ```suggestions
+  ["Follow-up 1?", "Follow-up 2?"]
+  ```
+"""
 
 # _SYSTEM_PROMPT is now a callable — see _build_system_prompt() below.
 # This ensures today's date is injected at request time, not at module import time.
@@ -266,6 +305,8 @@ class AgentResponse:
     suggestions: list[str] = field(default_factory=list)
     model: str = ""
     intent: str = "general"
+    session_type: str = "finance_chat"
+    tool_rounds_used: int = 0
 
 
 class RagUseCase:
@@ -277,6 +318,7 @@ class RagUseCase:
         embedding_deployment: str,
         chat_deployment: str,
         top_k: int = 4,
+        document_service_url: str = "http://localhost:8002",
     ) -> None:
         self._search = search_client
         self._openai = openai_client
@@ -284,6 +326,7 @@ class RagUseCase:
         self._embed_deployment = embedding_deployment
         self._chat_deployment = chat_deployment
         self._top_k = min(top_k, 12)
+        self._doc_service_url = document_service_url.rstrip("/")
 
     # ── Public API ────────────────────────────────────────────────────────────
 
@@ -293,20 +336,26 @@ class RagUseCase:
         tenant_id: str,
         history: list[ChatMessage] | None = None,
         document_ids: list[str] | None = None,
+        session_type: str = "finance_chat",
+        auth_token: str | None = None,
     ) -> AgentResponse:
         """Run the agentic tool-calling loop and return a structured response."""
-        messages = self._build_messages(question, history)
+        allowed_tools = _SESSION_ALLOWED_TOOLS.get(session_type)
+        session_tools = self._session_tools(session_type)
+        messages = self._build_messages(question, history, session_type)
         citations: list[Citation] = []
         tools_used: list[str] = []
+        rounds_used = 0
 
         for _round in range(MAX_TOOL_ROUNDS):
+            rounds_used = _round + 1
             response = await self._openai.chat.completions.create(  # type: ignore[call-overload]
                 model=self._chat_deployment,
                 messages=messages,  # type: ignore[arg-type]
-                tools=TOOLS,  # type: ignore[arg-type]
+                tools=session_tools,  # type: ignore[arg-type]
                 tool_choice="auto",
                 temperature=0.1,
-                max_tokens=1024,  # tool-selection rounds only need JSON args; final answer uses 2048
+                max_tokens=1024,
             )
             msg = response.choices[0].message
 
@@ -318,9 +367,10 @@ class RagUseCase:
                 logger.info(
                     "agent_answer_ready",
                     tenant_id=tenant_id,
+                    session_type=session_type,
                     tools=tools_used,
                     citations=len(citations),
-                    rounds=_round + 1,
+                    rounds=rounds_used,
                 )
                 return AgentResponse(
                     answer=answer,
@@ -329,12 +379,22 @@ class RagUseCase:
                     suggestions=suggestions,
                     model=response.model,
                     intent=intent,
+                    session_type=session_type,
+                    tool_rounds_used=rounds_used,
                 )
 
-            # Execute all tool calls in this round concurrently
+            # Policy gate — check each tool call before executing
             messages.append(msg.model_dump(exclude_none=True))  # type: ignore[arg-type]
             tool_results = await asyncio.gather(
-                *[self._execute_tool(tc, tenant_id, document_ids) for tc in msg.tool_calls]
+                *[
+                    self._execute_tool(
+                        tc, tenant_id, document_ids,
+                        allowed_tools=allowed_tools,
+                        session_type=session_type,
+                        auth_token=auth_token,
+                    )
+                    for tc in msg.tool_calls
+                ]
             )
             for tool_call, (result, new_citations) in zip(msg.tool_calls, tool_results):
                 citations.extend(new_citations)
@@ -373,6 +433,8 @@ class RagUseCase:
             suggestions=suggestions,
             model=final.model,
             intent=self._detect_intent(tools_used),
+            session_type=session_type,
+            tool_rounds_used=MAX_TOOL_ROUNDS,
         )
 
     async def answer_stream(
@@ -381,10 +443,14 @@ class RagUseCase:
         tenant_id: str,
         history: list[ChatMessage] | None = None,
         document_ids: list[str] | None = None,
+        session_type: str = "finance_chat",
+        auth_token: str | None = None,
     ) -> "tuple[AgentResponse, AsyncIterator[str]]":
         """Run tool calls first (non-streaming), then stream the final answer."""
+        allowed_tools = _SESSION_ALLOWED_TOOLS.get(session_type)
+        session_tools = self._session_tools(session_type)
         # Phase 1: collect tool results
-        messages = self._build_messages(question, history)
+        messages = self._build_messages(question, history, session_type)
         citations: list[Citation] = []
         tools_used: list[str] = []
 
@@ -392,10 +458,10 @@ class RagUseCase:
             response = await self._openai.chat.completions.create(  # type: ignore[call-overload]
                 model=self._chat_deployment,
                 messages=messages,  # type: ignore[arg-type]
-                tools=TOOLS,  # type: ignore[arg-type]
+                tools=session_tools,  # type: ignore[arg-type]
                 tool_choice="auto",
                 temperature=0.1,
-                max_tokens=1024,  # Enough for tool selection + arguments; 128 was too small
+                max_tokens=1024,
             )
             msg = response.choices[0].message
             if not msg.tool_calls:
@@ -403,7 +469,15 @@ class RagUseCase:
             messages.append(msg.model_dump(exclude_none=True))  # type: ignore[arg-type]
             # Execute all tool calls in this round concurrently
             tc_results = await asyncio.gather(
-                *[self._execute_tool(tc, tenant_id, document_ids) for tc in msg.tool_calls]
+                *[
+                    self._execute_tool(
+                        tc, tenant_id, document_ids,
+                        allowed_tools=allowed_tools,
+                        session_type=session_type,
+                        auth_token=auth_token,
+                    )
+                    for tc in msg.tool_calls
+                ]
             )
             for tc, (result, new_cits) in zip(msg.tool_calls, tc_results):
                 citations.extend(new_cits)
@@ -457,6 +531,9 @@ class RagUseCase:
         tool_call: ChatCompletionMessageToolCall,
         tenant_id: str,
         document_ids: list[str] | None,
+        allowed_tools: frozenset[str] | None = None,
+        session_type: str = "finance_chat",
+        auth_token: str | None = None,
     ) -> tuple[Any, list[Citation]]:
         name = tool_call.function.name
         try:
@@ -464,6 +541,33 @@ class RagUseCase:
         except json.JSONDecodeError:
             return {"error": "Invalid tool arguments"}, []
 
+        # Policy gate: if an allowlist is configured for this session type, enforce it
+        if allowed_tools is not None and name not in allowed_tools:
+            logger.warning(
+                "tool_policy_violation",
+                tool=name,
+                session_type=session_type,
+                tenant_id=tenant_id,
+            )
+            await self._emit_audit(
+                tenant_id=tenant_id,
+                actor=f"chat-agent/{session_type}",
+                action="chat.tool_policy_violation",
+                resource_type="tool",
+                resource_id=name,
+                metadata={
+                    "tool_name": name,
+                    "session_type": session_type,
+                    "allowed_tools": list(allowed_tools),
+                },
+                auth_token=auth_token,
+            )
+            return {
+                "error": f"Tool '{name}' is not allowed in session_type='{session_type}'. "
+                f"Allowed: {sorted(allowed_tools)}"
+            }, []
+
+        # Finance tools
         if name == "search_document_content":
             return await self._tool_search(
                 query=args.get("query", ""),
@@ -475,7 +579,227 @@ class RagUseCase:
         if name == "query_financial_database":
             return await self._tool_db(args, tenant_id), []
 
+        # Infra tools
+        if name == "list_infra_findings":
+            return await self._tool_list_findings(args, tenant_id, auth_token), []
+
+        if name == "get_infra_finding":
+            return await self._tool_get_finding(args, tenant_id, auth_token), []
+
+        if name == "get_terraform_plan_summary":
+            return await self._tool_plan_summary(), []
+
+        if name == "propose_remediation":
+            return await self._tool_propose_remediation(args, tenant_id, auth_token), []
+
+        if name == "get_infra_context_bundle":
+            return await self._tool_get_context_bundle(args, tenant_id, auth_token), []
+
         return {"error": f"Unknown tool: {name}"}, []
+
+    # ── Infra tool implementations ────────────────────────────────────────────
+
+    async def _doc_service_get(
+        self,
+        path: str,
+        tenant_id: str,
+        params: dict[str, Any] | None = None,
+        auth_token: str | None = None,
+    ) -> Any:
+        """GET request to the document-service API."""
+        import aiohttp
+
+        headers = {"Content-Type": "application/json"}
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+        url = f"{self._doc_service_url}/api/v1{path}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, params=params or {}) as resp:
+                if resp.status == 404:
+                    return {"error": "Not found"}
+                resp.raise_for_status()
+                return await resp.json()
+
+    async def _doc_service_post(
+        self,
+        path: str,
+        tenant_id: str,
+        body: dict[str, Any],
+        auth_token: str | None = None,
+    ) -> Any:
+        """POST request to the document-service API."""
+        import aiohttp
+
+        headers = {"Content-Type": "application/json"}
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+        url = f"{self._doc_service_url}/api/v1{path}"
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers=headers, json=body) as resp:
+                if resp.status in (204,):
+                    return {}
+                resp.raise_for_status()
+                return await resp.json()
+
+    async def _emit_audit(
+        self,
+        *,
+        tenant_id: str,
+        actor: str,
+        action: str,
+        resource_type: str,
+        resource_id: str | None,
+        metadata: dict[str, Any],
+        auth_token: str | None,
+    ) -> None:
+        """Fire-and-forget audit event via document-service HTTP endpoint."""
+        try:
+            await self._doc_service_post(
+                "/audit",
+                tenant_id,
+                {
+                    "actor": actor,
+                    "action": action,
+                    "resource_type": resource_type,
+                    "resource_id": resource_id,
+                    "metadata": metadata,
+                },
+                auth_token=auth_token,
+            )
+        except Exception as exc:
+            logger.warning("audit_emit_failed", error=str(exc))
+
+    async def _tool_list_findings(
+        self, args: dict[str, Any], tenant_id: str, auth_token: str | None
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            "limit": min(int(args.get("limit", 20)), 50),
+            "offset": int(args.get("offset", 0)),
+        }
+        if args.get("severity"):
+            params["severity"] = args["severity"]
+        try:
+            findings = await self._doc_service_get("/posture/findings", tenant_id, params, auth_token)
+            return {"findings": findings, "count": len(findings) if isinstance(findings, list) else 0}
+        except Exception as exc:
+            return {"error": f"Failed to list findings: {exc}"}
+
+    async def _tool_get_finding(
+        self, args: dict[str, Any], tenant_id: str, auth_token: str | None
+    ) -> dict[str, Any]:
+        finding_id = args.get("finding_id", "")
+        if not finding_id:
+            return {"error": "finding_id is required"}
+        try:
+            return await self._doc_service_get(f"/posture/findings/{finding_id}", tenant_id, auth_token=auth_token)
+        except Exception as exc:
+            return {"error": f"Failed to get finding: {exc}"}
+
+    async def _tool_plan_summary(self) -> dict[str, Any]:
+        """Return terraform plan summary from fixture file."""
+        import json
+        from pathlib import Path
+
+        fixture = Path(__file__).parent.parent.parent.parent.parent.parent / "fixtures" / "terraform-plan-sample.json"
+        try:
+            if fixture.exists():
+                with fixture.open() as fh:
+                    data = json.load(fh)
+                changes = data.get("resource_changes", [])
+                action_counts: dict[str, int] = {}
+                resources = []
+                for rc in changes:
+                    actions = rc.get("change", {}).get("actions", ["no-op"])
+                    action = "no-op" if actions == ["no-op"] else actions[0]
+                    action_counts[action] = action_counts.get(action, 0) + 1
+                    resources.append({
+                        "address": rc.get("address"),
+                        "type": rc.get("type"),
+                        "action": action,
+                    })
+                return {
+                    "source": "fixture",
+                    "terraform_version": data.get("terraform_version"),
+                    "resource_changes_count": len(changes),
+                    "action_summary": action_counts,
+                    "resources": resources,
+                }
+        except Exception as exc:
+            logger.warning("plan_fixture_load_failed", error=str(exc))
+        return {"source": "fixture", "error": "Plan fixture not available"}
+
+    async def _tool_propose_remediation(
+        self, args: dict[str, Any], tenant_id: str, auth_token: str | None
+    ) -> dict[str, Any]:
+        """Create an agent_workflow_run + change_proposal via document-service."""
+        finding_id = args.get("finding_id", "")
+        unified_diff = args.get("unified_diff", "")
+        rationale_md = args.get("rationale_md", "")
+        resource_addresses = args.get("resource_addresses", [])
+        risk_level = args.get("risk_level", "medium")
+
+        if not all([finding_id, unified_diff, rationale_md]):
+            return {"error": "finding_id, unified_diff, and rationale_md are required"}
+
+        try:
+            run = await self._doc_service_post(
+                "/posture/runs",
+                tenant_id,
+                {
+                    "session_type": "infra_remediation",
+                    "max_tool_rounds": MAX_TOOL_ROUNDS,
+                    "metadata": {"source_finding_id": finding_id},
+                },
+                auth_token=auth_token,
+            )
+            run_id = run.get("id")
+            if not run_id:
+                return {"error": "Failed to create run — no id in response"}
+
+            proposal = await self._doc_service_post(
+                f"/posture/runs/{run_id}/proposals",
+                tenant_id,
+                {
+                    "unified_diff": unified_diff,
+                    "rationale_md": rationale_md,
+                    "resource_addresses": resource_addresses,
+                    "risk_level": risk_level,
+                },
+                auth_token=auth_token,
+            )
+            return {
+                "status": "proposal_created",
+                "run_id": run_id,
+                "proposal_id": proposal.get("id"),
+                "workflow_state": "proposing",
+                "next_step": "Human approval required at POST /posture/proposals/{id}/approve",
+                "note": "This is a PROPOSAL only — no Terraform apply has been triggered.",
+            }
+        except Exception as exc:
+            return {"error": f"Failed to create proposal: {exc}"}
+
+    async def _tool_get_context_bundle(
+        self, args: dict[str, Any], tenant_id: str, auth_token: str | None
+    ) -> dict[str, Any]:
+        snapshot_id = args.get("snapshot_id", "")
+        if not snapshot_id:
+            return {"error": "snapshot_id is required"}
+        try:
+            return await self._doc_service_get(
+                f"/posture/snapshots/{snapshot_id}", tenant_id, auth_token=auth_token
+            )
+        except Exception as exc:
+            return {"error": f"Failed to get context bundle: {exc}"}
+
+    # ── Session helpers ───────────────────────────────────────────────────────
+
+    @staticmethod
+    def _session_tools(session_type: str) -> list[dict]:
+        """Return the TOOLS subset allowed for this session_type."""
+        allowed = _SESSION_ALLOWED_TOOLS.get(session_type)
+        if allowed is None:
+            return TOOLS  # all tools
+        return [t for t in TOOLS if t["function"]["name"] in allowed]
 
     async def _tool_search(
         self,
@@ -654,9 +978,14 @@ class RagUseCase:
 
     @staticmethod
     def _build_messages(
-        question: str, history: list[ChatMessage] | None
+        question: str, history: list[ChatMessage] | None, session_type: str = "finance_chat"
     ) -> list[dict[str, str]]:
-        msgs: list[dict[str, str]] = [{"role": "system", "content": _build_system_prompt()}]
+        from datetime import date
+        if session_type == "infra_remediation":
+            system_content = _INFRA_SYSTEM_PROMPT.format(today=date.today().isoformat())
+        else:
+            system_content = _build_system_prompt()
+        msgs: list[dict[str, str]] = [{"role": "system", "content": system_content}]
         for h in (history or [])[-10:]:  # Keep last 10 turns to manage context
             msgs.append({"role": h.role, "content": h.content})
         msgs.append({"role": "user", "content": question})

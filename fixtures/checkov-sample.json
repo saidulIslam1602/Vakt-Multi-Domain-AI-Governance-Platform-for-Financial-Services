@@ -1,0 +1,144 @@
+{
+  "check_type": "terraform",
+  "results": {
+    "passed_checks": [],
+    "failed_checks": [
+      {
+        "check_id": "CKV_AZURE_88",
+        "check_address": "azurerm_key_vault.main",
+        "check_class": "checkov.terraform.checks.resource.azure.KeyVaultPurgeProtection",
+        "check_name": "Ensure Azure Key Vault enables purge protection",
+        "check_result": {
+          "result": "FAILED",
+          "evaluated_keys": ["purge_protection_enabled"]
+        },
+        "code_block": "resource \"azurerm_key_vault\" \"main\" {\n  purge_protection_enabled = false\n}",
+        "file_path": "infra/keyvault.tf",
+        "file_abs_path": "/workspace/infra/keyvault.tf",
+        "repo_file_path": "infra/keyvault.tf",
+        "file_line_range": [12, 18],
+        "resource": "azurerm_key_vault.main",
+        "evaluations": null,
+        "check_type": "terraform",
+        "entity_tags": {},
+        "caller_file_path": null,
+        "caller_file_line_range": null,
+        "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/ensure-azure-key-vault-enables-purge-protection",
+        "details": [],
+        "bc_check_id": "BC_AZR_GENERAL_2",
+        "severity": "HIGH"
+      },
+      {
+        "check_id": "CKV_AZURE_42",
+        "check_address": "azurerm_network_security_rule.allow_ssh",
+        "check_class": "checkov.terraform.checks.resource.azure.NSGRulePortAccessRestricted",
+        "check_name": "Ensure SSH access is restricted from the internet",
+        "check_result": {
+          "result": "FAILED",
+          "evaluated_keys": ["source_address_prefix", "destination_port_range"]
+        },
+        "code_block": "resource \"azurerm_network_security_rule\" \"allow_ssh\" {\n  source_address_prefix = \"*\"\n  destination_port_range = \"22\"\n}",
+        "file_path": "infra/network.tf",
+        "file_abs_path": "/workspace/infra/network.tf",
+        "repo_file_path": "infra/network.tf",
+        "file_line_range": [44, 52],
+        "resource": "azurerm_network_security_rule.allow_ssh",
+        "evaluations": null,
+        "check_type": "terraform",
+        "entity_tags": {},
+        "caller_file_path": null,
+        "caller_file_line_range": null,
+        "guideline": "https://docs.bridgecrew.io/docs/networking_1",
+        "details": [],
+        "bc_check_id": "BC_AZR_NETWORKING_1",
+        "severity": "MEDIUM"
+      },
+      {
+        "check_id": "CKV2_AZURE_1",
+        "check_address": "azurerm_storage_account.data",
+        "check_class": "checkov.terraform.checks.resource.azure.StorageAccountName",
+        "check_name": "Ensure storage accounts adhere to naming rules",
+        "check_result": {
+          "result": "FAILED",
+          "evaluated_keys": ["name"]
+        },
+        "code_block": "resource \"azurerm_storage_account\" \"data\" {\n  name = \"allergo_data_store\"\n}",
+        "file_path": "infra/storage.tf",
+        "file_abs_path": "/workspace/infra/storage.tf",
+        "repo_file_path": "infra/storage.tf",
+        "file_line_range": [3, 3],
+        "resource": "azurerm_storage_account.data",
+        "evaluations": null,
+        "check_type": "terraform",
+        "entity_tags": {},
+        "caller_file_path": null,
+        "caller_file_line_range": null,
+        "guideline": "https://docs.bridgecrew.io/docs/bc-azr-general-storage-naming",
+        "details": [],
+        "bc_check_id": "BC_AZR_GENERAL_STORAGE_1",
+        "severity": "LOW"
+      },
+      {
+        "check_id": "CKV_AZURE_35",
+        "check_address": "azurerm_storage_account.data",
+        "check_class": "checkov.terraform.checks.resource.azure.StorageAccountAllowBlobPublicAccess",
+        "check_name": "Ensure that Azure Storage blob is not publicly accessible",
+        "check_result": {
+          "result": "FAILED",
+          "evaluated_keys": ["allow_blob_public_access"]
+        },
+        "code_block": "resource \"azurerm_storage_account\" \"data\" {\n  allow_blob_public_access = true\n}",
+        "file_path": "infra/storage.tf",
+        "file_abs_path": "/workspace/infra/storage.tf",
+        "repo_file_path": "infra/storage.tf",
+        "file_line_range": [4, 10],
+        "resource": "azurerm_storage_account.data",
+        "evaluations": null,
+        "check_type": "terraform",
+        "entity_tags": {},
+        "caller_file_path": null,
+        "caller_file_line_range": null,
+        "guideline": "https://docs.bridgecrew.io/docs/bc_azr_storage_2",
+        "details": [],
+        "bc_check_id": "BC_AZR_STORAGE_2",
+        "severity": "HIGH"
+      },
+      {
+        "check_id": "CKV_AZURE_13",
+        "check_address": "azurerm_postgresql_server.main",
+        "check_class": "checkov.terraform.checks.resource.azure.PostgreSQLServerSSLEnforcement",
+        "check_name": "Ensure 'ssl_enforcement_enabled' is set to 'true' on PostgreSQL Server",
+        "check_result": {
+          "result": "FAILED",
+          "evaluated_keys": ["ssl_enforcement_enabled"]
+        },
+        "code_block": "resource \"azurerm_postgresql_server\" \"main\" {\n  ssl_enforcement_enabled = false\n}",
+        "file_path": "infra/postgres.tf",
+        "file_abs_path": "/workspace/infra/postgres.tf",
+        "repo_file_path": "infra/postgres.tf",
+        "file_line_range": [20, 28],
+        "resource": "azurerm_postgresql_server.main",
+        "evaluations": null,
+        "check_type": "terraform",
+        "entity_tags": {},
+        "caller_file_path": null,
+        "caller_file_line_range": null,
+        "guideline": "https://docs.bridgecrew.io/docs/bc_azr_database_3",
+        "details": [],
+        "bc_check_id": "BC_AZR_DATABASE_3",
+        "severity": "HIGH"
+      }
+    ],
+    "parsing_errors": [],
+    "skipped_checks": [],
+    "resource_count": 12
+  },
+  "summary": {
+    "passed": 0,
+    "failed": 5,
+    "skipped": 0,
+    "parsing_error": 0,
+    "resource_count": 12,
+    "checkov_version": "3.2.0"
+  }
+}

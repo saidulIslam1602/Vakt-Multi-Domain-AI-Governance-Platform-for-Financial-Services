@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from allergo_shared.infrastructure.auth import AuthenticatedUser
+from document_service.infrastructure.audit import append_audit_event
 from document_service.presentation.dependencies import get_current_user, get_pool
 
 router = APIRouter(prefix="/review", tags=["review"])
@@ -116,4 +117,16 @@ async def submit_review_decision(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found or already reviewed.",
         )
+    await append_audit_event(
+        pool,
+        tenant_id=str(current_user.tenant_id),
+        actor=current_user.sub,
+        action=f"document_review.{body.decision}",
+        resource_type="document",
+        resource_id=document_id,
+        metadata={
+            "reason": body.reason,
+            "review_status": body.decision,
+        },
+    )
     return {"document_id": document_id, "review_status": body.decision}

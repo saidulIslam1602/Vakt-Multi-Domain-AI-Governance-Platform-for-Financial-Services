@@ -1,0 +1,88 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.7.5",
+  "variables": {},
+  "planned_values": {
+    "root_module": {
+      "resources": [
+        {
+          "address": "azurerm_key_vault.main",
+          "type": "azurerm_key_vault",
+          "name": "main",
+          "provider_name": "registry.terraform.io/hashicorp/azurerm"
+        }
+      ]
+    }
+  },
+  "resource_changes": [
+    {
+      "address": "azurerm_key_vault.main",
+      "type": "azurerm_key_vault",
+      "name": "main",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": ["update"],
+        "before": {
+          "purge_protection_enabled": false,
+          "soft_delete_retention_days": 7
+        },
+        "after": {
+          "purge_protection_enabled": true,
+          "soft_delete_retention_days": 90
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_network_security_rule.allow_ssh",
+      "type": "azurerm_network_security_rule",
+      "name": "allow_ssh",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": ["update"],
+        "before": {
+          "source_address_prefix": "*",
+          "destination_port_range": "22"
+        },
+        "after": {
+          "source_address_prefix": "10.0.0.0/8",
+          "destination_port_range": "22"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_storage_account.data",
+      "type": "azurerm_storage_account",
+      "name": "data",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": ["update"],
+        "before": {
+          "allow_blob_public_access": true,
+          "name": "allergo_data_store"
+        },
+        "after": {
+          "allow_blob_public_access": false,
+          "name": "allergodata"
+        },
+        "after_unknown": {}
+      }
+    },
+    {
+      "address": "azurerm_postgresql_server.main",
+      "type": "azurerm_postgresql_server",
+      "name": "main",
+      "provider_name": "registry.terraform.io/hashicorp/azurerm",
+      "change": {
+        "actions": ["no-op"],
+        "before": { "ssl_enforcement_enabled": true },
+        "after":  { "ssl_enforcement_enabled": true },
+        "after_unknown": {}
+      }
+    }
+  ],
+  "configuration": {
+    "root_module": {}
+  }
+}

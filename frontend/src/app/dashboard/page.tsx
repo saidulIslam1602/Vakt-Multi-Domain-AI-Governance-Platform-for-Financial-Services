@@ -6,6 +6,7 @@ import {
   Clock,
   FileText,
   AlertTriangle,
+  ShieldAlert,
   XCircle,
   ArrowRight,
   Upload,
@@ -82,7 +83,7 @@ export default function DashboardPage() {
         <p className="section-label">Overview</p>
         <h1>CFO Dashboard</h1>
         <p className="text-slate-500 text-sm mt-1">
-          Financial documents · Review queue · Audit trail
+          Financial documents · Review queue · Infra posture · Audit trail
         </p>
       </div>
 
@@ -196,10 +197,17 @@ export default function DashboardPage() {
       {/* Quick actions */}
       <section>
         <p className="section-label">Quick Actions</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-3">
           {[
             { href: "/upload", label: "Upload Document", sub: "PDF, DOCX, XLSX…", icon: Upload, color: "bg-brand-50 text-brand-600" },
             { href: "/review", label: "Review Queue", sub: `${v(stats?.pending_review)} pending`, icon: Clock, color: "bg-amber-50 text-amber-600" },
+            {
+              href: "/posture/findings",
+              label: "Infra findings",
+              sub: "IaC policy & scans",
+              icon: ShieldAlert,
+              color: "bg-indigo-50 text-indigo-600",
+            },
             { href: "/search", label: "Search Docs", sub: "Full-text & semantic", icon: FileText, color: "bg-purple-50 text-purple-600" },
             { href: "/chat", label: "AI Assistant", sub: "Ask anything", icon: AlertTriangle, color: "bg-emerald-50 text-emerald-600" },
           ].map(({ href, label, sub, icon: Icon, color }) => (

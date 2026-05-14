@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     auth_enabled: bool = True
     cors_origins: list[str] = ["*"]
     rag_top_k: int = 6
+    # Base URL for document-service calls (posture tools + cross-service audit).
+    # In Docker Compose this is http://document-service:8002; locally http://localhost:8002.
+    document_service_url: str = "http://localhost:8002"
 
 
 @lru_cache(maxsize=1)

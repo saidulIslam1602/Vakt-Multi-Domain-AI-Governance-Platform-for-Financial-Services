@@ -51,6 +51,7 @@ class ElasticsearchRagUseCase:
         embedding_deployment: str,
         chat_deployment: str,
         top_k: int = 6,
+        document_service_url: str = "http://localhost:8002",
     ) -> None:
         # Normalise endpoint: strip trailing slash
         self._es_endpoint = es_endpoint.rstrip("/")
@@ -60,6 +61,7 @@ class ElasticsearchRagUseCase:
         self._embed_deployment = embedding_deployment
         self._chat_deployment = chat_deployment
         self._top_k = min(top_k, 12)
+        self._doc_service_url = document_service_url.rstrip("/")
 
     # ── Public API (same signature as RagUseCase) ─────────────────────────────
 
@@ -69,6 +71,8 @@ class ElasticsearchRagUseCase:
         tenant_id: str,
         history: list[ChatMessage] | None = None,
         document_ids: list[str] | None = None,
+        session_type: str = "finance_chat",
+        auth_token: str | None = None,
     ) -> AgentResponse:
         messages = self._build_messages(question, history)
         citations: list[Citation] = []
@@ -151,6 +155,8 @@ class ElasticsearchRagUseCase:
         tenant_id: str,
         history: list[ChatMessage] | None = None,
         document_ids: list[str] | None = None,
+        session_type: str = "finance_chat",
+        auth_token: str | None = None,
     ) -> "tuple[AgentResponse, AsyncIterator[str]]":
         """Tool-call phase (blocking) → streaming final answer."""
         messages = self._build_messages(question, history)

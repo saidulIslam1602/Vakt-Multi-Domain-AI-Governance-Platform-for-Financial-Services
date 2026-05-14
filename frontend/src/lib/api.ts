@@ -146,6 +146,77 @@ export interface DashboardStats {
   total_amount_sum: string | null;
 }
 
+export interface InfraFindingListItem {
+  id: string;
+  severity: string;
+  rule_id: string;
+  title: string;
+  file_path: string | null;
+  line_start: number | null;
+  line_end: number | null;
+  policy_pack_ref: string | null;
+  remediation_hint: string | null;
+  source_scan_id: string | null;
+  created_at: string;
+}
+
+export interface InfraFindingDetail extends InfraFindingListItem {
+  detail_json: Record<string, unknown>;
+}
+
+// ─── Governance proposals + runs ──────────────────────────────────────────────
+
+export type WorkflowState =
+  | "gathering_context"
+  | "proposing"
+  | "validating"
+  | "pending_approval"
+  | "approved"
+  | "rejected"
+  | "failed_validation"
+  | "context_frozen";
+
+export interface AgentWorkflowRun {
+  id: string;
+  tenant_id: string;
+  session_type: string;
+  workflow_state: WorkflowState;
+  created_by: string;
+  tool_rounds_used: number;
+  max_tool_rounds: number;
+  metadata_json: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChangeProposal {
+  id: string;
+  run_id: string;
+  unified_diff: string;
+  rationale_md: string;
+  resource_addresses: string[];
+  risk_level: string | null;
+  validation_errors: Record<string, string> | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  created_at: string;
+}
+
+export interface ContextSnapshot {
+  id: string;
+  run_id: string | null;
+  bundle_json: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ProposalExport {
+  pr_title: string;
+  pr_body: string;
+  patch_filename: string;
+  patch_content: string;
+  git_apply_instructions: string;
+}
+
 export interface DocumentDetail extends DocumentListItem {
   tenant_id: string;
   page_count: number | null;
@@ -333,6 +404,121 @@ export const documentsApi = {
 
   getDashboardStats: async (): Promise<DashboardStats> => {
     const res = await statsClient.get<DashboardStats>("/stats");
+    return res.data;
+  },
+};
+
+export const postureApi = {
+  listFindings: async (
+    params: { severity?: string; limit?: number; offset?: number } = {}
+  ): Promise<InfraFindingListItem[]> => {
+    const res = await documentClient.get<InfraFindingListItem[]>("/posture/findings", {
+      params,
+    });
+    return res.data;
+  },
+
+  getFinding: async (id: string): Promise<InfraFindingDetail> => {
+    const res = await documentClient.get<InfraFindingDetail>(`/posture/findings/${id}`);
+    return res.data;
+  },
+};
+
+export const proposalsApi = {
+  // Runs
+  createRun: async (params: {
+    session_type?: string;
+    max_tool_rounds?: number;
+    metadata?: Record<string, unknown>;
+  } = {}): Promise<AgentWorkflowRun> => {
+    const res = await documentClient.post<AgentWorkflowRun>("/posture/runs", params);
+    return res.data;
+  },
+
+  listRuns: async (params: {
+    workflow_state?: WorkflowState;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<AgentWorkflowRun[]> => {
+    const res = await documentClient.get<AgentWorkflowRun[]>("/posture/runs", { params });
+    return res.data;
+  },
+
+  getRun: async (runId: string): Promise<AgentWorkflowRun> => {
+    const res = await documentClient.get<AgentWorkflowRun>(`/posture/runs/${runId}`);
+    return res.data;
+  },
+
+  // Proposals
+  createProposal: async (
+    runId: string,
+    body: {
+      unified_diff: string;
+      rationale_md?: string;
+      resource_addresses?: string[];
+      risk_level?: string;
+    }
+  ): Promise<ChangeProposal> => {
+    const res = await documentClient.post<ChangeProposal>(`/posture/runs/${runId}/proposals`, body);
+    return res.data;
+  },
+
+  getProposal: async (proposalId: string): Promise<ChangeProposal> => {
+    const res = await documentClient.get<ChangeProposal>(`/posture/proposals/${proposalId}`);
+    return res.data;
+  },
+
+  validateProposal: async (
+    proposalId: string,
+    body: {
+      unified_diff: string;
+      rationale_md: string;
+      resource_addresses: string[];
+      risk_level: string;
+    }
+  ): Promise<ChangeProposal> => {
+    const res = await documentClient.post<ChangeProposal>(
+      `/posture/proposals/${proposalId}/validate`,
+      body
+    );
+    return res.data;
+  },
+
+  approveProposal: async (proposalId: string, reason?: string): Promise<ChangeProposal> => {
+    const res = await documentClient.post<ChangeProposal>(
+      `/posture/proposals/${proposalId}/approve`,
+      { reason: reason ?? null }
+    );
+    return res.data;
+  },
+
+  rejectProposal: async (proposalId: string, reason?: string): Promise<ChangeProposal> => {
+    const res = await documentClient.post<ChangeProposal>(
+      `/posture/proposals/${proposalId}/reject`,
+      { reason: reason ?? null }
+    );
+    return res.data;
+  },
+
+  exportProposal: async (proposalId: string): Promise<ProposalExport> => {
+    const res = await documentClient.post<ProposalExport>(
+      `/posture/proposals/${proposalId}/export`,
+      {}
+    );
+    return res.data;
+  },
+
+  // Context snapshots
+  createSnapshot: async (runId: string): Promise<ContextSnapshot> => {
+    const res = await documentClient.post<ContextSnapshot>(
+      `/posture/runs/${runId}/context-snapshot`,
+      {}
+    );
+    return res.data;
+  },
+
+  getSnapshot: async (snapshotId: string): Promise<ContextSnapshot> => {
+    const res = await documentClient.get<ContextSnapshot>(`/posture/snapshots/${snapshotId}`);
     return res.data;
   },
 };

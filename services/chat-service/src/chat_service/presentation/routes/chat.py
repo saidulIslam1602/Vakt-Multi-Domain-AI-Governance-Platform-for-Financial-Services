@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Annotated, Any, AsyncIterator
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -24,6 +24,14 @@ class ChatRequest(BaseModel):
     history: list[ChatMessage] | None = None
     document_ids: list[str] | None = None
     stream: bool = False
+    session_type: str = Field(
+        default="finance_chat",
+        description=(
+            "Session profile controlling which tools the agent may call. "
+            "'finance_chat' (default): finance tools only. "
+            "'infra_remediation': infra posture tools only."
+        ),
+    )
 
 
 class CitationResponse(BaseModel):
@@ -42,6 +50,8 @@ class ChatResponse(BaseModel):
     suggestions: list[str]
     model: str
     intent: str
+    session_type: str = "finance_chat"
+    tool_rounds_used: int = 0
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -59,17 +69,21 @@ class ChatResponse(BaseModel):
 )
 async def chat(
     body: ChatRequest,
+    request: Request,
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     rag: Annotated[Any, Depends(get_rag_use_case)],
 ) -> ChatResponse | StreamingResponse:
+    auth_token = _extract_token(request)
     if body.stream:
-        return await _stream_response(body, current_user, rag)
+        return await _stream_response(body, current_user, rag, auth_token)
 
     result: AgentResponse = await rag.answer(
         question=body.question,
         tenant_id=str(current_user.tenant_id),
         history=body.history,
         document_ids=body.document_ids,
+        session_type=body.session_type,
+        auth_token=auth_token,
     )
     return ChatResponse(
         answer=result.answer,
@@ -88,13 +102,23 @@ async def chat(
         suggestions=result.suggestions,
         model=result.model,
         intent=result.intent,
+        session_type=getattr(result, "session_type", body.session_type),
+        tool_rounds_used=getattr(result, "tool_rounds_used", 0),
     )
+
+
+def _extract_token(request: Request) -> str | None:
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        return auth_header[7:]
+    return None
 
 
 async def _stream_response(
     body: ChatRequest,
     current_user: AuthenticatedUser,
     rag: Any,
+    auth_token: str | None = None,
 ) -> StreamingResponse:
     """SSE stream: first emit metadata (citations, tools_used, suggestions),
     then stream answer tokens, then emit [DONE]."""
@@ -104,6 +128,8 @@ async def _stream_response(
         tenant_id=str(current_user.tenant_id),
         history=body.history,
         document_ids=body.document_ids,
+        session_type=body.session_type,
+        auth_token=auth_token,
     )
 
     async def _generate() -> AsyncIterator[str]:

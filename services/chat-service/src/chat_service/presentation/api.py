@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 
@@ -34,7 +35,17 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
-        pool = await asyncpg.create_pool(cfg.database_url, min_size=2, max_size=8)
+        async def _init_conn(conn: asyncpg.Connection) -> None:
+            await conn.set_type_codec(
+                "jsonb",
+                encoder=json.dumps,
+                decoder=json.loads,
+                schema="pg_catalog",
+            )
+
+        pool = await asyncpg.create_pool(
+            cfg.database_url, min_size=2, max_size=8, init=_init_conn
+        )
         db_reader = FinancialDbReader(pool)
         # Store pool so saved_queries route can access it
         application.state.pool = pool
@@ -68,6 +79,7 @@ def create_app() -> FastAPI:
                 embedding_deployment=cfg.azure_openai_embedding_deployment,
                 chat_deployment=cfg.azure_openai_chat_deployment,
                 top_k=cfg.rag_top_k,
+                document_service_url=cfg.document_service_url,
             )
             yield
             await pool.close()
@@ -96,6 +108,7 @@ def create_app() -> FastAPI:
                 embedding_deployment=cfg.azure_openai_embedding_deployment,
                 chat_deployment=cfg.azure_openai_chat_deployment,
                 top_k=cfg.rag_top_k,
+                document_service_url=cfg.document_service_url,
             )
             yield
             await pool.close()

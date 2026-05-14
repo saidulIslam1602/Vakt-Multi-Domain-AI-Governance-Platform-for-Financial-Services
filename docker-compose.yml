@@ -210,11 +210,14 @@ services:
       AZURE_OPENAI_CHAT_DEPLOYMENT: gpt-4o
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-large
       CORS_ORIGINS: '["http://localhost:3000"]'
+      DOCUMENT_SERVICE_URL: http://document-service:8000
     depends_on:
       postgres:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+      document-service:
+        condition: service_started
     restart: unless-stopped
 
   # ── Frontend ───────────────────────────────────────────────────────────────

@@ -1,0 +1,51 @@
+name: Infra agent evals
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "evals/**"
+      - "services/chat-service/**"
+      - ".github/workflows/ci-evals.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "evals/**"
+      - "services/chat-service/**"
+
+permissions:
+  contents: read
+
+jobs:
+  infra-evals:
+    name: Infra remediation agent evals (mock LLM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install chat-service dependencies
+        working-directory: services/chat-service
+        run: |
+          pip install -e ".[dev]" --quiet
+
+      - name: Install shared lib
+        working-directory: services/shared-lib
+        run: pip install -e . --quiet
+
+      - name: Run infra evals (mock mode — no Azure keys required)
+        run: |
+          python evals/infra/eval_runner.py \
+            --cases evals/infra/cases.jsonl \
+            --mock \
+            --verbose
+
+      - name: Upload eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: evals/

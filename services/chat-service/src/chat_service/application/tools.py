@@ -1,18 +1,35 @@
-"""OpenAI function/tool definitions for the CFO chat agent.
+"""OpenAI function/tool definitions for the CFO and infra-remediation chat agents.
 
-The LLM decides which tools to call. Each tool maps 1:1 to a method
-on FinancialDbReader or the vector search pipeline.
+The LLM decides which tools to call. Each tool maps 1:1 to a handler
+in RagUseCase._execute_tool.
 
-Design:
+Finance tools (session_type=finance_chat):
   - search_document_content  → vector + keyword hybrid retrieval
   - query_financial_database → structured SQL against the metadata DB
-  - get_dashboard_snapshot   → high-level KPIs in one shot
+
+Infra remediation tools (session_type=infra_remediation):
+  - list_infra_findings       → paginated infra_findings via document-service
+  - get_infra_finding         → single finding detail
+  - get_terraform_plan_summary → fixture-backed plan summary
+  - propose_remediation        → creates agent_workflow_run + change_proposal
+  - get_infra_context_bundle   → reads a stored infra_context_snapshots row
 
 The agentic loop in RagUseCase can call tools multiple times before
 composing the final answer (ReAct pattern).
 """
 
 from __future__ import annotations
+
+FINANCE_TOOL_NAMES = frozenset({"search_document_content", "query_financial_database"})
+INFRA_TOOL_NAMES = frozenset(
+    {
+        "list_infra_findings",
+        "get_infra_finding",
+        "get_terraform_plan_summary",
+        "propose_remediation",
+        "get_infra_context_bundle",
+    }
+)
 
 TOOLS: list[dict] = [
     {
@@ -164,6 +181,143 @@ TOOLS: list[dict] = [
                     },
                 },
                 "required": ["query_type"],
+            },
+        },
+    },
+    # ── Infra remediation tools ───────────────────────────────────────────────
+    {
+        "type": "function",
+        "function": {
+            "name": "list_infra_findings",
+            "description": (
+                "List IaC / policy findings from the infra_findings table. "
+                "Use to enumerate open policy violations before proposing remediations. "
+                "Supports optional severity filter (HIGH / MEDIUM / LOW / CRITICAL) and pagination."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "severity": {
+                        "type": "string",
+                        "enum": ["HIGH", "MEDIUM", "LOW", "CRITICAL", "INFORMATIONAL"],
+                        "description": "Filter by severity level. Omit to return all severities.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of findings to return (default 20, max 50).",
+                        "default": 20,
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Pagination offset (default 0).",
+                        "default": 0,
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_infra_finding",
+            "description": (
+                "Retrieve the full detail (including detail_json) for a single infra finding by ID. "
+                "Use after list_infra_findings to get remediation_hint and scanner metadata."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "finding_id": {
+                        "type": "string",
+                        "description": "UUID of the infra finding.",
+                    },
+                },
+                "required": ["finding_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_terraform_plan_summary",
+            "description": (
+                "Return a structured summary of the most recent Terraform plan, "
+                "including resource change counts (create/update/delete/no-op) and "
+                "the list of resources being modified. "
+                "This uses a fixture-backed plan — not a live cloud state."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "propose_remediation",
+            "description": (
+                "Create a governed change proposal for a specific finding. "
+                "This creates an agent_workflow_run and attaches a change_proposal with "
+                "a unified diff, rationale, and resource addresses. "
+                "The proposal starts in 'proposing' state and requires human approval. "
+                "NEVER call this tool to apply Terraform — it only creates a proposal record."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "finding_id": {
+                        "type": "string",
+                        "description": "UUID of the infra finding being remediated.",
+                    },
+                    "unified_diff": {
+                        "type": "string",
+                        "description": (
+                            "A valid unified diff (---/+++ lines) showing the Terraform change. "
+                            "Must start with ---, diff, @@, or +."
+                        ),
+                    },
+                    "rationale_md": {
+                        "type": "string",
+                        "description": "Markdown explanation of why this change fixes the finding.",
+                    },
+                    "resource_addresses": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Terraform resource addresses affected (e.g. azurerm_key_vault.main).",
+                    },
+                    "risk_level": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high", "critical"],
+                        "description": "Estimated risk of applying this change.",
+                        "default": "medium",
+                    },
+                },
+                "required": ["finding_id", "unified_diff", "rationale_md", "resource_addresses"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_infra_context_bundle",
+            "description": (
+                "Retrieve a previously frozen infra context snapshot by its ID. "
+                "The bundle contains findings, pipeline run, and terraform plan summary "
+                "at the time the snapshot was created. Use to ground answers in a specific "
+                "point-in-time state rather than live queries."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "snapshot_id": {
+                        "type": "string",
+                        "description": "UUID of the infra_context_snapshots row.",
+                    },
+                },
+                "required": ["snapshot_id"],
             },
         },
     },

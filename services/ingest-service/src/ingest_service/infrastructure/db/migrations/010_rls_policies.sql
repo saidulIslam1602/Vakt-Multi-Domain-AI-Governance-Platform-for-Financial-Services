@@ -12,6 +12,8 @@
 -- Tables covered:
 --   documents, alert_rules, alert_events,
 --   scheduled_alert_log, email_ingest_log
+--   (012+) audit_events, infra_findings, agent_workflow_runs, change_proposals,
+--          pipeline_runs, infra_context_snapshots — policies defined in 012
 --
 -- Note: The superuser / migration role bypasses RLS automatically (it holds
 -- the BYPASSRLS privilege) so migrations themselves are never blocked.
