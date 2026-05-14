@@ -1,0 +1,114 @@
+{
+  "dataset_path": "evals/rag/eval_dataset.jsonl",
+  "sample_count": 10,
+  "mode": "offline",
+  "overall_passed": true,
+  "metrics": [
+    {
+      "name": "faithfulness",
+      "score": 0.634,
+      "threshold": 0.6,
+      "passed": true
+    },
+    {
+      "name": "answer_relevancy",
+      "score": 0.6682,
+      "threshold": 0.6,
+      "passed": true
+    },
+    {
+      "name": "context_precision",
+      "score": 0.95,
+      "threshold": 0.6,
+      "passed": true
+    },
+    {
+      "name": "context_recall",
+      "score": 0.5006,
+      "threshold": 0.45,
+      "passed": true
+    }
+  ],
+  "per_sample": [
+    {
+      "id": "rag-001",
+      "question": "Which invoices are overdue?",
+      "faithfulness": 0.6071,
+      "answer_relevancy": 1.0,
+      "context_precision": 1.0,
+      "context_recall": 0.4583
+    },
+    {
+      "id": "rag-002",
+      "question": "What are the termination rights in the NorgesGruppen supply contract?",
+      "faithfulness": 0.8293,
+      "answer_relevancy": 0.8,
+      "context_precision": 1.0,
+      "context_recall": 0.6364
+    },
+    {
+      "id": "rag-003",
+      "question": "What is the total spend by vendor for Q1 2024?",
+      "faithfulness": 0.6667,
+      "answer_relevancy": 0.8333,
+      "context_precision": 0.5,
+      "context_recall": 0.5283
+    },
+    {
+      "id": "rag-004",
+      "question": "Which contracts are expiring in the next 90 days?",
+      "faithfulness": 0.5806,
+      "answer_relevancy": 0.6,
+      "context_precision": 1.0,
+      "context_recall": 0.4561
+    },
+    {
+      "id": "rag-005",
+      "question": "What are the liability caps in our supplier agreements?",
+      "faithfulness": 0.7241,
+      "answer_relevancy": 0.5,
+      "context_precision": 1.0,
+      "context_recall": 0.4928
+    },
+    {
+      "id": "rag-006",
+      "question": "Show me all invoices from NorgesGruppen above NOK 100,000",
+      "faithfulness": 0.4444,
+      "answer_relevancy": 0.5556,
+      "context_precision": 1.0,
+      "context_recall": 0.375
+    },
+    {
+      "id": "rag-007",
+      "question": "What penalty clauses apply if we miss a delivery deadline?",
+      "faithfulness": 0.6923,
+      "answer_relevancy": 0.25,
+      "context_precision": 1.0,
+      "context_recall": 0.5455
+    },
+    {
+      "id": "rag-008",
+      "question": "What is the VAT total on invoices from March 2024?",
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.8571,
+      "context_precision": 1.0,
+      "context_recall": 0.3243
+    },
+    {
+      "id": "rag-009",
+      "question": "Which documents are pending CFO approval?",
+      "faithfulness": 0.5769,
+      "answer_relevancy": 1.0,
+      "context_precision": 1.0,
+      "context_recall": 0.5833
+    },
+    {
+      "id": "rag-010",
+      "question": "What are the governing law and dispute resolution terms across our contracts?",
+      "faithfulness": 0.7188,
+      "answer_relevancy": 0.2857,
+      "context_precision": 1.0,
+      "context_recall": 0.6061
+    }
+  ]
+}

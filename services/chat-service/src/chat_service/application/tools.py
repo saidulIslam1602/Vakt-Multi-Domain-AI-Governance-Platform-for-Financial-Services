@@ -26,6 +26,7 @@ INFRA_TOOL_NAMES = frozenset(
         "list_infra_findings",
         "get_infra_finding",
         "get_terraform_plan_summary",
+        "detect_infra_drift",
         "propose_remediation",
         "get_infra_context_bundle",
     }
@@ -243,13 +244,50 @@ TOOLS: list[dict] = [
             "name": "get_terraform_plan_summary",
             "description": (
                 "Return a structured summary of the most recent Terraform plan, "
-                "including resource change counts (create/update/delete/no-op) and "
-                "the list of resources being modified. "
-                "This uses a fixture-backed plan — not a live cloud state."
+                "including resource change counts (create/update/delete/no-op), "
+                "the list of resources being modified with changed attributes, "
+                "and any detected security risks. "
+                "Resolves from: (1) TERRAFORM_PLAN_PATH env var (local tfplan.json), "
+                "(2) Terraform Cloud API via TFC_TOKEN + TFC_WORKSPACE_ID, "
+                "(3) fixture file as fallback — source field indicates which was used."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {},
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "detect_infra_drift",
+            "description": (
+                "Detect infrastructure drift by analysing the current Terraform plan "
+                "or comparing two stored infra context snapshots. "
+                "Returns a list of drifted resources with severity (CRITICAL/HIGH/MEDIUM/LOW), "
+                "changed attributes, security risk flags, and a recommendation. "
+                "Use this when the user asks about drift, unexpected changes, state mismatches, "
+                "or wants to know what has changed since a baseline."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "snapshot_id_baseline": {
+                        "type": "string",
+                        "description": (
+                            "UUID of the baseline infra_context_snapshot to compare from. "
+                            "If omitted, the current Terraform plan is used instead."
+                        ),
+                    },
+                    "snapshot_id_current": {
+                        "type": "string",
+                        "description": (
+                            "UUID of the current infra_context_snapshot to compare to. "
+                            "Required when snapshot_id_baseline is provided."
+                        ),
+                    },
+                },
                 "required": [],
             },
         },

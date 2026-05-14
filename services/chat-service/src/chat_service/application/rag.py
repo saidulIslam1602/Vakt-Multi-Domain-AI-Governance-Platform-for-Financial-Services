@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import json
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Optional  # noqa: F401 — Optional used in type comments
 
 from azure.search.documents.aio import SearchClient
 from azure.search.documents.models import VectorizedQuery
@@ -44,20 +44,22 @@ _SESSION_ALLOWED_TOOLS: dict[str, frozenset[str]] = {
 
 # ── System prompt for infra remediation sessions ─────────────────────────────
 _INFRA_SYSTEM_PROMPT = """You are a governed infrastructure remediation agent for Allergo Nordic.
-Your role is to identify IaC policy violations, propose diffs that fix them, and create
-governed change proposals for human approval.
+Your role is to identify IaC policy violations, detect infrastructure drift, propose diffs
+that fix them, and create governed change proposals for human approval.
 
 TODAY'S DATE: {today}
 
-You have access to five tools:
+You have access to six tools:
 • list_infra_findings        — list open policy violations from Checkov CI scans
 • get_infra_finding          — get full detail + remediation hint for a specific finding
-• get_terraform_plan_summary — see what the latest Terraform plan would change
+• get_terraform_plan_summary — see what the latest Terraform plan would change (live or fixture fallback)
+• detect_infra_drift         — compare current plan or two snapshots to identify drifted resources
 • propose_remediation        — create a governed proposal (diff + rationale); NEVER applies changes
 • get_infra_context_bundle   — read a frozen context snapshot from a previous run
 
 CRITICAL constraints:
 - You MUST use list_infra_findings or get_infra_finding before proposing a remediation.
+- For drift questions, call detect_infra_drift first; use snapshot IDs if the user provides them.
 - propose_remediation creates a PROPOSAL only — it NEVER runs terraform apply.
 - The unified_diff MUST be a valid unified diff. Start with --- lines.
 - Always explain the risk level and rationale in plain language.
@@ -66,6 +68,7 @@ CRITICAL constraints:
 Response format:
 - Be concise and precise. You are talking to an infrastructure engineer.
 - When proposing a fix: show Finding → Root cause → Proposed diff → Resource addresses → Risk.
+- For drift reports: show Drifted resource → Attribute changes → Severity → Recommended action.
 - After your answer, suggest 2–3 follow-up questions as a JSON block:
   ```suggestions
   ["Follow-up 1?", "Follow-up 2?"]
@@ -212,6 +215,96 @@ Response format:
   ["Follow-up question 1?", "Follow-up question 2?", "Follow-up question 3?"]
   ```
 """
+
+
+# ── Drift / security helpers (module-level, no I/O) ──────────────────────────
+
+#: Terraform resource types that carry security-sensitive attributes.
+_SECURITY_SENSITIVE_TYPES: frozenset[str] = frozenset(
+    {
+        "azurerm_key_vault",
+        "azurerm_key_vault_secret",
+        "azurerm_network_security_group",
+        "azurerm_network_security_rule",
+        "azurerm_storage_account",
+        "azurerm_postgresql_flexible_server",
+        "azurerm_sql_server",
+        "azurerm_kubernetes_cluster",
+        "azurerm_role_assignment",
+        "aws_security_group",
+        "aws_s3_bucket",
+        "aws_iam_role_policy",
+        "aws_eks_cluster",
+        "google_storage_bucket",
+        "google_container_cluster",
+    }
+)
+
+#: Attributes whose change from a permissive to restrictive value indicates a security fix,
+#: and from restrictive to permissive indicates a regression.
+_SECURITY_REGRESSION_ATTRS: dict[str, tuple[Any, Any]] = {
+    # attr: (permissive_value, restrictive_value)
+    "purge_protection_enabled": (False, True),
+    "allow_blob_public_access": (True, False),
+    "public_network_access_enabled": (True, False),
+    "ssl_enforcement_enabled": (False, True),
+    "https_only": (False, True),
+    "enable_rbac_authorization": (False, True),
+}
+
+
+def _assess_security_risk(
+    resource_type: str,
+    before: dict,
+    after: dict,
+    action: str,
+) -> dict[str, Any] | None:
+    """Return a security risk entry if this resource change looks like a regression."""
+    if resource_type not in _SECURITY_SENSITIVE_TYPES:
+        return None
+    if action == "no-op":
+        return None
+    regressions: list[str] = []
+    fixes: list[str] = []
+    for attr, (permissive_val, restrictive_val) in _SECURITY_REGRESSION_ATTRS.items():
+        before_val = before.get(attr)
+        after_val = after.get(attr)
+        if before_val is None and after_val is None:
+            continue
+        if before_val == restrictive_val and after_val == permissive_val:
+            regressions.append(attr)
+        elif before_val == permissive_val and after_val == restrictive_val:
+            fixes.append(attr)
+    if regressions:
+        return {
+            "address": None,  # filled in by caller if available
+            "resource_type": resource_type,
+            "action": action,
+            "regressions": regressions,
+            "fixes": fixes,
+            "severity": "HIGH",
+            "note": f"Security regression detected: {regressions}",
+        }
+    return None
+
+
+def _classify_drift_severity(resource_type: str, changed_attributes: list[str]) -> str:
+    """Heuristically classify the severity of a drifted resource.
+
+    Returns one of: CRITICAL | HIGH | MEDIUM | LOW
+    """
+    if resource_type in _SECURITY_SENSITIVE_TYPES:
+        security_attrs = set(_SECURITY_REGRESSION_ATTRS.keys())
+        if security_attrs.intersection(changed_attributes):
+            return "HIGH"
+        return "MEDIUM"
+    # Deletions or replacements on data stores are always high
+    if any(t in resource_type for t in ("database", "storage", "postgresql", "sql", "cosmos")):
+        return "HIGH"
+    # Network changes are medium
+    if any(t in resource_type for t in ("network", "subnet", "firewall", "nsg")):
+        return "MEDIUM"
+    return "LOW"
 
 
 def _build_system_prompt() -> str:
@@ -595,6 +688,9 @@ class RagUseCase:
         if name == "get_infra_context_bundle":
             return await self._tool_get_context_bundle(args, tenant_id, auth_token), []
 
+        if name == "detect_infra_drift":
+            return await self._tool_detect_drift(args, tenant_id, auth_token), []
+
         return {"error": f"Unknown tool: {name}"}, []
 
     # ── Infra tool implementations ────────────────────────────────────────────
@@ -696,37 +792,241 @@ class RagUseCase:
             return {"error": f"Failed to get finding: {exc}"}
 
     async def _tool_plan_summary(self) -> dict[str, Any]:
-        """Return terraform plan summary from fixture file."""
+        """Return a structured Terraform plan summary.
+
+        Resolution order:
+        1. TERRAFORM_PLAN_PATH env var → parse a local tfplan.json produced by
+           ``terraform show -json tfplan.binary > tfplan.json``
+        2. TFC_TOKEN + TFC_WORKSPACE_ID env vars → Terraform Cloud API (latest run)
+        3. Fixture file (labelled ``fixture_fallback`` so the LLM knows it is not live)
+        """
         import json
+        import os
         from pathlib import Path
 
-        fixture = Path(__file__).parent.parent.parent.parent.parent.parent / "fixtures" / "terraform-plan-sample.json"
+        def _parse_plan_data(data: dict) -> dict[str, Any]:
+            changes = data.get("resource_changes", [])
+            action_counts: dict[str, int] = {}
+            resources = []
+            security_risks: list[dict] = []
+            for rc in changes:
+                raw_actions = rc.get("change", {}).get("actions", ["no-op"])
+                action = "no-op" if raw_actions == ["no-op"] else raw_actions[0]
+                action_counts[action] = action_counts.get(action, 0) + 1
+                before = rc.get("change", {}).get("before") or {}
+                after = rc.get("change", {}).get("after") or {}
+                entry: dict[str, Any] = {
+                    "address": rc.get("address"),
+                    "type": rc.get("type"),
+                    "action": action,
+                }
+                if action != "no-op":
+                    changed_attrs = [k for k in set(list(before) + list(after)) if before.get(k) != after.get(k)]
+                    if changed_attrs:
+                        entry["changed_attributes"] = changed_attrs
+                resources.append(entry)
+                risk = _assess_security_risk(rc.get("type", ""), before, after, action)
+                if risk:
+                    security_risks.append(risk)
+            return {
+                "terraform_version": data.get("terraform_version"),
+                "resource_changes_count": len(changes),
+                "action_summary": action_counts,
+                "resources": resources,
+                "security_risks": security_risks,
+            }
+
+        # ── Strategy 1: local tfplan.json ────────────────────────────────────
+        plan_path_env = os.environ.get("TERRAFORM_PLAN_PATH", "")
+        if plan_path_env:
+            plan_path = Path(plan_path_env)
+            try:
+                with plan_path.open() as fh:
+                    data = json.load(fh)
+                logger.info("plan_loaded_from_local_file", path=plan_path_env)
+                return {"source": "local_file", "path": plan_path_env, **_parse_plan_data(data)}
+            except Exception as exc:
+                logger.warning("plan_local_file_failed", path=plan_path_env, error=str(exc))
+
+        # ── Strategy 2: Terraform Cloud API ──────────────────────────────────
+        tfc_token = os.environ.get("TFC_TOKEN", "")
+        tfc_workspace = os.environ.get("TFC_WORKSPACE_ID", "")
+        if tfc_token and tfc_workspace:
+            try:
+                import aiohttp
+                headers = {
+                    "Authorization": f"Bearer {tfc_token}",
+                    "Content-Type": "application/vnd.api+json",
+                }
+                async with aiohttp.ClientSession(headers=headers) as session:
+                    runs_url = f"https://app.terraform.io/api/v2/workspaces/{tfc_workspace}/runs"
+                    async with session.get(runs_url, params={"page[size]": "1"}) as resp:
+                        resp.raise_for_status()
+                        runs = await resp.json()
+                    runs_data = runs.get("data", [])
+                    if not runs_data:
+                        raise ValueError("No runs found in Terraform Cloud workspace")
+                    run_id = runs_data[0]["id"]
+                    run_status = runs_data[0]["attributes"]["status"]
+                    plan_url = f"https://app.terraform.io/api/v2/runs/{run_id}/plan/json-output"
+                    async with session.get(plan_url) as plan_resp:
+                        plan_resp.raise_for_status()
+                        data = await plan_resp.json()
+                logger.info("plan_loaded_from_tfc", workspace=tfc_workspace, run_id=run_id)
+                return {
+                    "source": "terraform_cloud",
+                    "workspace_id": tfc_workspace,
+                    "run_id": run_id,
+                    "run_status": run_status,
+                    **_parse_plan_data(data),
+                }
+            except Exception as exc:
+                logger.warning("plan_tfc_api_failed", workspace=tfc_workspace, error=str(exc))
+
+        # ── Strategy 3: fixture fallback ─────────────────────────────────────
+        fixture = (
+            Path(__file__).parent.parent.parent.parent.parent.parent
+            / "fixtures"
+            / "terraform-plan-sample.json"
+        )
         try:
             if fixture.exists():
                 with fixture.open() as fh:
                     data = json.load(fh)
-                changes = data.get("resource_changes", [])
-                action_counts: dict[str, int] = {}
-                resources = []
-                for rc in changes:
-                    actions = rc.get("change", {}).get("actions", ["no-op"])
-                    action = "no-op" if actions == ["no-op"] else actions[0]
-                    action_counts[action] = action_counts.get(action, 0) + 1
-                    resources.append({
-                        "address": rc.get("address"),
-                        "type": rc.get("type"),
-                        "action": action,
-                    })
-                return {
-                    "source": "fixture",
-                    "terraform_version": data.get("terraform_version"),
-                    "resource_changes_count": len(changes),
-                    "action_summary": action_counts,
-                    "resources": resources,
-                }
+                logger.info("plan_loaded_from_fixture")
+                return {"source": "fixture_fallback", **_parse_plan_data(data)}
         except Exception as exc:
             logger.warning("plan_fixture_load_failed", error=str(exc))
-        return {"source": "fixture", "error": "Plan fixture not available"}
+
+        return {
+            "source": "unavailable",
+            "error": (
+                "No plan source configured. "
+                "Set TERRAFORM_PLAN_PATH (path to tfplan.json) or "
+                "TFC_TOKEN + TFC_WORKSPACE_ID for Terraform Cloud."
+            ),
+        }
+
+    async def _tool_detect_drift(
+        self, args: dict[str, Any], tenant_id: str, auth_token: str | None
+    ) -> dict[str, Any]:
+        """Detect infrastructure drift.
+
+        Two modes:
+        - Snapshot comparison: provide ``snapshot_id_baseline`` + ``snapshot_id_current``
+          to diff two stored infra_context_snapshots from the document-service.
+        - Plan analysis: no snapshot IDs → analyse the current Terraform plan and
+          surface any non-no-op resource changes with severity classification.
+        """
+        snapshot_id_baseline = args.get("snapshot_id_baseline", "")
+        snapshot_id_current = args.get("snapshot_id_current", "")
+
+        if snapshot_id_baseline and snapshot_id_current:
+            # ── Snapshot comparison mode ──────────────────────────────────────
+            try:
+                baseline = await self._doc_service_get(
+                    f"/posture/snapshots/{snapshot_id_baseline}", tenant_id, auth_token=auth_token
+                )
+                current_snap = await self._doc_service_get(
+                    f"/posture/snapshots/{snapshot_id_current}", tenant_id, auth_token=auth_token
+                )
+            except Exception as exc:
+                return {"error": f"Failed to retrieve snapshots for drift comparison: {exc}"}
+
+            def _index(snap: dict) -> dict[str, dict]:
+                return {
+                    r["address"]: r
+                    for r in (snap.get("terraform_plan", {}).get("resources") or [])
+                }
+
+            baseline_idx = _index(baseline)
+            current_idx = _index(current_snap)
+
+            drifted: list[dict] = []
+            added: list[dict] = []
+            removed: list[dict] = []
+
+            for addr, curr_r in current_idx.items():
+                if addr not in baseline_idx:
+                    added.append({
+                        "address": addr,
+                        "type": curr_r.get("type"),
+                        "status": "added_since_baseline",
+                    })
+                elif curr_r.get("action") != baseline_idx[addr].get("action"):
+                    changed_attrs = curr_r.get("changed_attributes", [])
+                    drifted.append({
+                        "address": addr,
+                        "type": curr_r.get("type"),
+                        "baseline_action": baseline_idx[addr].get("action"),
+                        "current_action": curr_r.get("action"),
+                        "changed_attributes": changed_attrs,
+                        "severity": _classify_drift_severity(curr_r.get("type", ""), changed_attrs),
+                    })
+
+            for addr in baseline_idx:
+                if addr not in current_idx:
+                    removed.append({
+                        "address": addr,
+                        "type": baseline_idx[addr].get("type"),
+                        "status": "removed_since_baseline",
+                    })
+
+            return {
+                "source": "snapshot_comparison",
+                "baseline_snapshot_id": snapshot_id_baseline,
+                "current_snapshot_id": snapshot_id_current,
+                "drift_count": len(drifted),
+                "added_count": len(added),
+                "removed_count": len(removed),
+                "drifted_resources": drifted,
+                "added_resources": added,
+                "removed_resources": removed,
+                "requires_review": len(drifted) + len(removed) > 0,
+                "recommendation": (
+                    f"{len(drifted)} resource(s) drifted, {len(removed)} removed. Review before next apply."
+                    if drifted or removed
+                    else "No drift detected between the two snapshots."
+                ),
+            }
+
+        # ── Plan analysis mode ────────────────────────────────────────────────
+        plan = await self._tool_plan_summary()
+        if "error" in plan and plan.get("source") == "unavailable":
+            return plan
+
+        resources = plan.get("resources", [])
+        drifted = [
+            {
+                "address": r["address"],
+                "type": r.get("type"),
+                "action": r["action"],
+                "changed_attributes": r.get("changed_attributes", []),
+                "severity": _classify_drift_severity(
+                    r.get("type", ""), r.get("changed_attributes", [])
+                ),
+            }
+            for r in resources
+            if r.get("action") not in ("no-op", None)
+        ]
+        security_risks = plan.get("security_risks", [])
+
+        return {
+            "source": plan.get("source", "plan"),
+            "plan_terraform_version": plan.get("terraform_version"),
+            "total_resources_in_plan": len(resources),
+            "drift_count": len(drifted),
+            "drifted_resources": drifted,
+            "security_risk_count": len(security_risks),
+            "security_risks": security_risks,
+            "action_summary": plan.get("action_summary", {}),
+            "requires_review": len(drifted) > 0,
+            "recommendation": (
+                f"{len(drifted)} resource(s) have pending changes — review before apply."
+                if drifted
+                else "No drift detected — Terraform plan is clean (all no-op)."
+            ),
+        }
 
     async def _tool_propose_remediation(
         self, args: dict[str, Any], tenant_id: str, auth_token: str | None

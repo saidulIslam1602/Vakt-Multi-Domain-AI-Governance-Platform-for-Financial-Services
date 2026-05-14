@@ -1,4 +1,4 @@
-name: Infra agent evals
+name: Agent and RAG evals
 
 on:
   push:
@@ -27,25 +27,85 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install chat-service dependencies
-        working-directory: services/chat-service
-        run: |
-          pip install -e ".[dev]" --quiet
-
       - name: Install shared lib
         working-directory: services/shared-lib
         run: pip install -e . --quiet
 
-      - name: Run infra evals (mock mode — no Azure keys required)
+      - name: Install chat-service dependencies
+        working-directory: services/chat-service
+        run: pip install -e ".[dev]" --quiet
+
+      - name: Run infra agent evals (mock mode — no Azure keys required)
         run: |
           python evals/infra/eval_runner.py \
             --cases evals/infra/cases.jsonl \
             --mock \
             --verbose
 
-      - name: Upload eval results
+      - name: Upload infra eval results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: eval-results
-          path: evals/
+          name: infra-eval-results
+          path: evals/infra/
+
+  rag-evals:
+    name: RAG quality evals (offline — no API key required)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install RAG eval dependencies
+        run: pip install ragas datasets openai --quiet
+
+      - name: Run RAG evals (offline lexical proxies)
+        run: |
+          python evals/rag/rag_eval.py \
+            --dataset evals/rag/eval_dataset.jsonl \
+            --output evals/rag/results.json \
+            --offline \
+            --fail-under 0.60
+
+      - name: Upload RAG eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-eval-results
+          path: evals/rag/results.json
+
+  rag-evals-live:
+    name: RAG quality evals (RAGAS + LLM judge)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [rag-evals]
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install RAG eval dependencies
+        run: pip install ragas datasets openai --quiet
+
+      - name: Run RAG evals (RAGAS live — requires OPENAI_API_KEY secret)
+        if: env.OPENAI_API_KEY != ''
+        run: |
+          python evals/rag/rag_eval.py \
+            --dataset evals/rag/eval_dataset.jsonl \
+            --output evals/rag/results-live.json \
+            --fail-under 0.65
+        continue-on-error: true
+
+      - name: Upload live RAG eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-eval-results-live
+          path: evals/rag/results-live.json
