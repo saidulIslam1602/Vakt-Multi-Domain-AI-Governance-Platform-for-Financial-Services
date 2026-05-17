@@ -1,6 +1,6 @@
 <div align="center">
 
-# Allergo Nordic — Multi-Domain Agentic Governance Platform
+# VAKT — Multi-Domain Agentic Governance Platform
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -12,7 +12,7 @@
 [![DSPy](https://img.shields.io/badge/DSPy-BootstrapFewShot-7B42BC)](https://dspy.ai)
 [![OpenTelemetry](https://img.shields.io/badge/OTel-Instrumented-425CC7?logo=opentelemetry)](https://opentelemetry.io)
 
-> **Allergo Nordic is a multi-domain AI governance platform for Norwegian financial services organisations. Three agent domains — CFO finance intelligence, banking compliance (AML/KYC/SAR), and infrastructure posture — share one governance control plane: the same workflow states, append-only audit trail, human approval gate, and tool policy enforcement. The LLM is a component inside governed workflows, not the product.**
+> **VAKT is a multi-domain AI governance platform for Norwegian financial services organisations. Three agent domains — CFO finance intelligence, banking compliance (AML/KYC/SAR), and infrastructure posture — share one governance control plane: the same workflow states, append-only audit trail, human approval gate, and tool policy enforcement. The LLM is a component inside governed workflows, not the product.**
 
 </div>
 
@@ -57,7 +57,7 @@ All three domains reuse the same primitives: **workflow states** (`gathering_con
 
 ## Financial Services Product Area Coverage
 
-Allergo Nordic demonstrates capabilities across core financial services engineering areas:
+VAKT demonstrates capabilities across core financial services engineering areas:
 
 | Area | Coverage in this project |
 |---------------------|--------------------------|
@@ -69,7 +69,7 @@ Allergo Nordic demonstrates capabilities across core financial services engineer
 | **Prompt optimisation (DSPy)** | `evals/prompt_optimization/dspy_banking_optimizer.py` — BootstrapFewShot against 10-sample eval dataset |
 | **LLM-as-judge evals** | `evals/banking/llm_judge_eval.py` — 4-dimension judge (regulatory_accuracy, grounding, safe_ai_compliance, norwegian_context) |
 | **Human oversight / responsible AI** | EU AI Act Article 14 pattern: uncertainty gate → escalate_to_human node; NEVER auto-file SAR, NEVER auto-freeze account |
-| **LLMOps / observability** | OpenTelemetry spans per tool call; Prometheus `allergo_tool_calls_total` + `allergo_tool_latency_seconds` |
+| **LLMOps / observability** | OpenTelemetry spans per tool call; Prometheus `VAKT_tool_calls_total` + `VAKT_tool_latency_seconds` |
 | **Kubernetes** | `k8s/` — 6 Deployments, HPA for chat-service, NetworkPolicy (deny-all default + explicit allows) |
 
 ---
@@ -410,7 +410,7 @@ gathering_context
   "pr_title": "fix: enable purge protection on azurerm_key_vault.main [CKV_AZURE_88]",
   "pr_body": "## Finding\n...\n## Change\n...\n## Risk\n...",
   "patch": "--- a/infra/keyvault.tf\n+++ ...",
-  "git_apply_command": "git apply --check allergo-fix-CKV_AZURE_88.patch"
+  "git_apply_command": "git apply --check VAKT-fix-CKV_AZURE_88.patch"
 }
 ```
 
@@ -475,7 +475,7 @@ The `infra_context_snapshots` table stores a frozen point-in-time bundle of infr
 ```json
 {
   "snapshot_id": "uuid",
-  "tenant_id": "allergo-prod",
+  "tenant_id": "VAKT-prod",
   "created_at": "2026-05-14T18:00:00Z",
   "terraform_plan": {
     "source": "local_file",
@@ -509,7 +509,7 @@ Context bundles are created automatically: `POST /posture/runs/{id}/context-snap
   run: |
     python scripts/import_checkov_findings.py \
       --input checkov-results.json \
-      --tenant ${{ vars.ALLERGO_TENANT_ID }} \
+      --tenant ${{ vars.VAKT_TENANT_ID }} \
       --source-scan-id ${{ github.sha }}
 ```
 
@@ -532,7 +532,7 @@ The PR export endpoint generates a patch and git-apply command compatible with b
 
 ### Webhook engine (outbound)
 
-For the finance domain, document lifecycle events are dispatched via HMAC-SHA256 signed webhooks — the same signing scheme GitHub uses (`X-Allergo-Signature: sha256=<hmac>`). Compatible with any ERP or downstream system that verifies webhook authenticity.
+For the finance domain, document lifecycle events are dispatched via HMAC-SHA256 signed webhooks — the same signing scheme GitHub uses (`X-VAKT-Signature: sha256=<hmac>`). Compatible with any ERP or downstream system that verifies webhook authenticity.
 
 ### Azure managed identity (no static keys)
 
@@ -789,9 +789,9 @@ with tracer.start_as_current_span(f"tool.{name}") as span:
 ```
 
 **Prometheus metrics**:
-- `allergo_tool_calls_total{session_type, tool_name}` — counter
-- `allergo_tool_latency_seconds{session_type, tool_name}` — histogram (p50/p95/p99)
-- `allergo_eval_score{eval_type, metric}` — gauge (updated by CI eval jobs)
+- `VAKT_tool_calls_total{session_type, tool_name}` — counter
+- `VAKT_tool_latency_seconds{session_type, tool_name}` — histogram (p50/p95/p99)
+- `VAKT_eval_score{eval_type, metric}` — gauge (updated by CI eval jobs)
 
 Metrics are exposed at `/metrics` via `prometheus_client.make_asgi_app()`.
 
@@ -805,7 +805,7 @@ The `k8s/` directory contains production-ready Kubernetes manifests:
 
 ```
 k8s/
-├── namespace.yaml        # allergo-nordic namespace
+├── namespace.yaml        # VAKT- namespace
 ├── configmap.yaml        # non-secret config (service URLs, feature flags)
 ├── secrets-template.yaml # Azure Key Vault CSI driver SecretProviderClass
 ├── deployments.yaml      # 6 Deployments + Services (ingest, document, processing, search, chat, frontend)
@@ -897,7 +897,7 @@ CI runs both eval suites on every PR that touches `evals/` or `services/chat-ser
 
 - Full document CRUD + review queue
 - `GET /api/v1/review/queue` → `POST /api/v1/review/{id}/decision`
-- Webhooks: HMAC-SHA256 signed outbound (`X-Allergo-Signature: sha256=<hmac>`)
+- Webhooks: HMAC-SHA256 signed outbound (`X-VAKT-Signature: sha256=<hmac>`)
 - CSV export: streaming `StreamingResponse`
 - **Governance API**: `/posture/findings`, `/posture/runs`, `/posture/proposals`, `/posture/snapshots`, `/audit`
 
@@ -951,8 +951,8 @@ CI runs both eval suites on every PR that touches `evals/` or `services/chat-ser
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/saidulIslam1602/Allergo_Nordic.git
-cd Allergo_Nordic
+git clone https://github.com/saidulIslam1602/VAKT_.git
+cd VAKT_
 cp .env.example .env
 # Edit .env: set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY
 ```
@@ -970,9 +970,9 @@ docker compose up --build
 | document-service API docs | http://localhost:8002/docs |
 | search-service API docs | http://localhost:8003/docs |
 | chat-service API docs | http://localhost:8004/docs |
-| RabbitMQ UI | http://localhost:15672 (allergo/allergo) |
+| RabbitMQ UI | http://localhost:15672 (VAKT/VAKT) |
 | Elasticsearch | http://localhost:9200 |
-| PostgreSQL | localhost:5435 (allergo/allergo/allergo) |
+| PostgreSQL | localhost:5435 (VAKT/VAKT/VAKT) |
 
 > Auth is disabled locally (`AUTH_ENABLED=false`). All endpoints are open without a Bearer token.
 
