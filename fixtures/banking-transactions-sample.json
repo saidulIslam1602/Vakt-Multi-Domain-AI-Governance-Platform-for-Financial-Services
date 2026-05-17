@@ -1,0 +1,410 @@
+{
+  "_comment": "Banking compliance demo transaction data. Patterns are modelled on published FATF typologies from FATF (2012–2025) Recommendations, the Norwegian Anti-Money Laundering Act (Act of 1 June 2018 No. 23, hvitvaskingsloven) and Finanstilsynet supervisory guidance. All customer IDs, account numbers and teller IDs are fictitious. Real regulatory section references are cited inline.",
+  "_sources": [
+    "Norwegian Anti-Money Laundering Act (hvitvaskingsloven), Act of 1 June 2018 No. 23 — unofficial English translation by Finanstilsynet",
+    "FATF (2012–2025), International Standards on Combating Money Laundering and the Financing of Terrorism & Proliferation, FATF, Paris — www.fatf-gafi.org",
+    "Commission Delegated Regulation (EU) 2018/389 (PSD2 RTS on SCA)",
+    "Regulation (EU) 2016/679 (GDPR)"
+  ],
+  "tenant_id": "dev-tenant",
+  "ctr_threshold_nok": 100000,
+  "_ctr_note": "NOK 100,000 per hvitvaskingsloven §10(1)(b)(1). Multiple linked transactions are aggregated per §10(2) — this is the statutory basis for detecting structuring.",
+  "patterns": {
+    "structuring": {
+      "description": "9 cash deposits by CUST-4471 within 6 hours, each intentionally kept below the NOK 100,000 CDD threshold. Spread across 3 branches in Oslo and Bergen. Classic smurfing/structuring typology.",
+      "regulatory_basis": {
+        "hvitvaskingsloven_section_10_2": "Threshold calculated on an aggregate basis for transactions carried out in several operations that appear to be linked.",
+        "hvitvaskingsloven_section_25_2b": "Transaction is unusually large or complex — further examination required.",
+        "hvitvaskingsloven_section_26_1": "If, after further examinations, there are circumstances giving grounds for suspicion, obliged entities shall submit information to Økokrim.",
+        "fatf_recommendation_3": "Countries should criminalise money laundering on the basis of the Vienna Convention and the Palermo Convention — structuring is a predicate offence.",
+        "fatf_typology_reference": "FATF (2015), Guidance for a Risk-Based Approach: Banking Sector — structuring typology: multiple sub-threshold cash deposits at different branches by the same customer."
+      },
+      "aggregate_amount_nok": 884300.00,
+      "aggregate_exceeds_ctr_threshold": true,
+      "transaction_count": 9
+    },
+    "velocity_violation": {
+      "description": "5 international wire transfers by CUST-8823 to National Bank of Abu Dhabi (UAE) within 2 hours, each above NOK 100,000. Rapid-fire cross-border layering pattern.",
+      "regulatory_basis": {
+        "hvitvaskingsloven_section_25_2c": "Transaction is unusual in view of the customer's known pattern of business or personal transactions — further examination required.",
+        "hvitvaskingsloven_section_25_2d": "Transaction made to or from a person in a country or area which does not have satisfactory measures to combat money laundering — UAE is monitored under FATF ICRG.",
+        "hvitvaskingsloven_section_26_1": "Reporting obligation to Økokrim upon grounds for suspicion.",
+        "fatf_recommendation_20": "If a financial institution suspects or has reasonable grounds to suspect that funds are the proceeds of a criminal activity, it should be required, by law, to report promptly its suspicions to the FIU.",
+        "fatf_recommendation_19": "Financial institutions should be required to apply enhanced due diligence measures to business relationships and transactions with natural and legal persons, and financial institutions, from countries for which this is called for by the FATF."
+      },
+      "aggregate_amount_nok": 675500.00,
+      "destination_country_iso": "AE",
+      "destination_swift_bic": "NBADAEAA",
+      "fatf_risk_notice": "FATF High-Risk Jurisdictions Subject to a Call for Action — monitored periodically; Norwegian institutions must apply enhanced scrutiny per §25(2)(d).",
+      "transaction_count": 5
+    },
+    "pep_counterparty": {
+      "description": "Single transfer of NOK 2,350,000 to CUST-1195, identified as a Politically Exposed Person (foreign government official). EDD mandatory under §18.",
+      "regulatory_basis": {
+        "hvitvaskingsloven_section_18_1": "Obliged entities shall apply enhanced customer due diligence measures when the customer, any person who acts on behalf of the customer, or any beneficial owner, is a politically exposed person.",
+        "hvitvaskingsloven_section_18_2a": "Senior management approval required before establishing or continuing the customer relationship.",
+        "hvitvaskingsloven_section_18_2b": "Adequate measures to establish the source of wealth and the source of funds.",
+        "hvitvaskingsloven_section_2f": "Politically exposed person — person who serves or has served as head of State, minister, member of national assembly, member of high-level judicial body, ambassador, or member of an international organisation board.",
+        "fatf_recommendation_12": "Financial institutions should obtain senior management approval for establishing business relationships with PEPs; take reasonable measures to establish the source of wealth and source of funds; conduct enhanced ongoing monitoring."
+      },
+      "aggregate_amount_nok": 2350000.00,
+      "pep_category": "foreign_official",
+      "edd_required": true,
+      "senior_management_approval_required": true,
+      "transaction_count": 1
+    },
+    "kyc_expired": {
+      "description": "Two high-value payments by CUST-3367 whose KYC verification expired on 2025-12-01 (167 days ago). Ongoing monitoring cannot be properly conducted without valid KYC.",
+      "regulatory_basis": {
+        "hvitvaskingsloven_section_24_2": "Customer due diligence measures shall in any event be applied when there are doubts about the veracity or adequacy of previously obtained information.",
+        "hvitvaskingsloven_section_24_4": "If customer due diligence measures as part of ongoing monitoring cannot be applied, obliged entities shall discontinue the customer relationship.",
+        "hvitvaskingsloven_section_21_1": "If customer due diligence measures cannot be applied, obliged entities shall not establish the customer relationship or carry out the transaction.",
+        "fatf_recommendation_10": "Ongoing due diligence on the business relationship and scrutiny of transactions throughout the course of that relationship — including updating CDD records."
+      },
+      "aggregate_amount_nok": 830000.00,
+      "kyc_expiry_date": "2025-12-01",
+      "days_since_expiry": 167,
+      "transaction_count": 2
+    }
+  },
+  "transactions": [
+    {
+      "id": "txn-4471-001",
+      "counterparty": "CUST-4471",
+      "amount_nok": 98500.00,
+      "currency": "NOK",
+      "transaction_type": "cash_deposit",
+      "timestamp_offset_hours": -6.00,
+      "risk_score": 72,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "structuring",
+      "above_ctr_threshold": false,
+      "_aml_note": "Amount NOK 98,500 — below §10(1)(b)(1) NOK 100,000 CDD threshold by NOK 1,500. Part of aggregate structuring series.",
+      "metadata": {
+        "branch": "Oslo-Sentrum",
+        "branch_id": "OSL-01",
+        "teller_id": "T-0041",
+        "sequence_in_pattern": 1
+      }
+    },
+    {
+      "id": "txn-4471-002",
+      "counterparty": "CUST-4471",
+      "amount_nok": 97200.00,
+      "currency": "NOK",
+      "transaction_type": "cash_deposit",
+      "timestamp_offset_hours": -5.75,
+      "risk_score": 72,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "structuring",
+      "above_ctr_threshold": false,
+      "_aml_note": "Amount NOK 97,200 — below §10(1)(b)(1) threshold by NOK 2,800.",
+      "metadata": {
+        "branch": "Oslo-Sentrum",
+        "branch_id": "OSL-01",
+        "teller_id": "T-0041",
+        "sequence_in_pattern": 2
+      }
+    },
+    {
+      "id": "txn-4471-003",
+      "counterparty": "CUST-4471",
+      "amount_nok": 99100.00,
+      "currency": "NOK",
+      "transaction_type": "cash_deposit",
+      "timestamp_offset_hours": -5.50,
+      "risk_score": 72,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "structuring",
+      "above_ctr_threshold": false,
+      "_aml_note": "Amount NOK 99,100 — below §10(1)(b)(1) threshold by NOK 900. Different branch to obscure linkage.",
+      "metadata": {
+        "branch": "Oslo-Grünerløkka",
+        "branch_id": "OSL-05",
+        "teller_id": "T-0087",
+        "sequence_in_pattern": 3
+      }
+    },
+    {
+      "id": "txn-4471-004",
+      "counterparty": "CUST-4471",
+      "amount_nok": 98800.00,
+      "currency": "NOK",
+      "transaction_type": "cash_deposit",
+      "timestamp_offset_hours": -5.25,
+      "risk_score": 72,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "structuring",
+      "above_ctr_threshold": false,
+      "metadata": {
+        "branch": "Oslo-Grünerløkka",
+        "branch_id": "OSL-05",
+        "teller_id": "T-0087",
+        "sequence_in_pattern": 4
+      }
+    },
+    {
+      "id": "txn-4471-005",
+      "counterparty": "CUST-4471",
+      "amount_nok": 97500.00,
+      "currency": "NOK",
+      "transaction_type": "cash_deposit",
+      "timestamp_offset_hours": -5.00,
+      "risk_score": 72,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "structuring",
+      "above_ctr_threshold": false,
+      "metadata": {
+        "branch": "Oslo-Aker-Brygge",
+        "branch_id": "OSL-09",
+        "teller_id": "T-0012",
+        "sequence_in_pattern": 5
+      }
+    },
+    {
+      "id": "txn-4471-006",
+      "counterparty": "CUST-4471",
+      "amount_nok": 98300.00,
+      "currency": "NOK",
+      "transaction_type": "cash_deposit",
+      "timestamp_offset_hours": -4.75,
+      "risk_score": 72,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "structuring",
+      "above_ctr_threshold": false,
+      "metadata": {
+        "branch": "Oslo-Aker-Brygge",
+        "branch_id": "OSL-09",
+        "teller_id": "T-0012",
+        "sequence_in_pattern": 6
+      }
+    },
+    {
+      "id": "txn-4471-007",
+      "counterparty": "CUST-4471",
+      "amount_nok": 99000.00,
+      "currency": "NOK",
+      "transaction_type": "cash_deposit",
+      "timestamp_offset_hours": -4.50,
+      "risk_score": 72,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "structuring",
+      "above_ctr_threshold": false,
+      "_aml_note": "Cross-city deposit in Bergen — characteristic of smurfing involving couriers.",
+      "metadata": {
+        "branch": "Bergen-Sentrum",
+        "branch_id": "BGN-01",
+        "teller_id": "T-0203",
+        "sequence_in_pattern": 7
+      }
+    },
+    {
+      "id": "txn-4471-008",
+      "counterparty": "CUST-4471",
+      "amount_nok": 97800.00,
+      "currency": "NOK",
+      "transaction_type": "cash_deposit",
+      "timestamp_offset_hours": -4.25,
+      "risk_score": 72,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "structuring",
+      "above_ctr_threshold": false,
+      "metadata": {
+        "branch": "Bergen-Sentrum",
+        "branch_id": "BGN-01",
+        "teller_id": "T-0203",
+        "sequence_in_pattern": 8
+      }
+    },
+    {
+      "id": "txn-4471-009",
+      "counterparty": "CUST-4471",
+      "amount_nok": 98100.00,
+      "currency": "NOK",
+      "transaction_type": "cash_deposit",
+      "timestamp_offset_hours": -4.00,
+      "risk_score": 72,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "structuring",
+      "above_ctr_threshold": false,
+      "_aml_note": "Aggregate of 9 deposits = NOK 884,300. §10(2): all linked transactions aggregated; aggregate far exceeds NOK 100,000 CDD threshold; §25 examination duty triggered; §26 STR obligation likely applies.",
+      "metadata": {
+        "branch": "Bergen-Sentrum",
+        "branch_id": "BGN-01",
+        "teller_id": "T-0203",
+        "sequence_in_pattern": 9
+      }
+    },
+    {
+      "id": "txn-8823-001",
+      "counterparty": "CUST-8823",
+      "amount_nok": 145000.00,
+      "currency": "NOK",
+      "transaction_type": "international_wire",
+      "timestamp_offset_hours": -2.00,
+      "risk_score": 88,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "velocity_violation",
+      "above_ctr_threshold": true,
+      "_aml_note": "SWIFT BIC NBADAEAA = First Abu Dhabi Bank (formerly NBAD). UAE is subject to FATF enhanced scrutiny. §25(2)(d) examination required.",
+      "metadata": {
+        "destination_country_iso": "AE",
+        "destination_country_name": "United Arab Emirates",
+        "beneficiary_bank_bic": "NBADAEAA",
+        "beneficiary_bank_name": "First Abu Dhabi Bank",
+        "sequence_in_pattern": 1
+      }
+    },
+    {
+      "id": "txn-8823-002",
+      "counterparty": "CUST-8823",
+      "amount_nok": 132000.00,
+      "currency": "NOK",
+      "transaction_type": "international_wire",
+      "timestamp_offset_hours": -1.75,
+      "risk_score": 88,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "velocity_violation",
+      "above_ctr_threshold": true,
+      "metadata": {
+        "destination_country_iso": "AE",
+        "destination_country_name": "United Arab Emirates",
+        "beneficiary_bank_bic": "NBADAEAA",
+        "beneficiary_bank_name": "First Abu Dhabi Bank",
+        "sequence_in_pattern": 2
+      }
+    },
+    {
+      "id": "txn-8823-003",
+      "counterparty": "CUST-8823",
+      "amount_nok": 118500.00,
+      "currency": "NOK",
+      "transaction_type": "international_wire",
+      "timestamp_offset_hours": -1.50,
+      "risk_score": 88,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "velocity_violation",
+      "above_ctr_threshold": true,
+      "metadata": {
+        "destination_country_iso": "AE",
+        "destination_country_name": "United Arab Emirates",
+        "beneficiary_bank_bic": "NBADAEAA",
+        "beneficiary_bank_name": "First Abu Dhabi Bank",
+        "sequence_in_pattern": 3
+      }
+    },
+    {
+      "id": "txn-8823-004",
+      "counterparty": "CUST-8823",
+      "amount_nok": 127000.00,
+      "currency": "NOK",
+      "transaction_type": "international_wire",
+      "timestamp_offset_hours": -1.25,
+      "risk_score": 88,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "velocity_violation",
+      "above_ctr_threshold": true,
+      "metadata": {
+        "destination_country_iso": "AE",
+        "destination_country_name": "United Arab Emirates",
+        "beneficiary_bank_bic": "NBADAEAA",
+        "beneficiary_bank_name": "First Abu Dhabi Bank",
+        "sequence_in_pattern": 4
+      }
+    },
+    {
+      "id": "txn-8823-005",
+      "counterparty": "CUST-8823",
+      "amount_nok": 153000.00,
+      "currency": "NOK",
+      "transaction_type": "international_wire",
+      "timestamp_offset_hours": -1.00,
+      "risk_score": 88,
+      "kyc_status": "verified",
+      "pep_flag": false,
+      "pattern": "velocity_violation",
+      "above_ctr_threshold": true,
+      "_aml_note": "5 wires to same SWIFT BIC within 2 hours. Aggregate NOK 675,500. Triggers §25(2)(b) (unusually complex), §25(2)(c) (unusual pattern), §25(2)(d) (FATF-monitored jurisdiction). §26 STR obligation applies.",
+      "metadata": {
+        "destination_country_iso": "AE",
+        "destination_country_name": "United Arab Emirates",
+        "beneficiary_bank_bic": "NBADAEAA",
+        "beneficiary_bank_name": "First Abu Dhabi Bank",
+        "sequence_in_pattern": 5
+      }
+    },
+    {
+      "id": "txn-1195-001",
+      "counterparty": "CUST-1195",
+      "amount_nok": 2350000.00,
+      "currency": "NOK",
+      "transaction_type": "transfer",
+      "timestamp_offset_hours": -72,
+      "risk_score": 91,
+      "kyc_status": "verified",
+      "pep_flag": true,
+      "pattern": "pep_counterparty",
+      "above_ctr_threshold": true,
+      "_aml_note": "CUST-1195 is a foreign PEP (government official). §18(1): EDD mandatory. §18(2a): senior management approval required before continuing relationship. §18(2b): source of wealth and funds must be established. §18(4): EDD continues for ≥1 year after PEP leaves position.",
+      "metadata": {
+        "pep_category": "foreign_official",
+        "pep_country_iso": "RU",
+        "pep_country_name": "Russia",
+        "edd_required": true,
+        "senior_management_approval_required": true,
+        "source_of_wealth_established": false
+      }
+    },
+    {
+      "id": "txn-3367-001",
+      "counterparty": "CUST-3367",
+      "amount_nok": 450000.00,
+      "currency": "NOK",
+      "transaction_type": "payment",
+      "timestamp_offset_hours": -24,
+      "risk_score": 65,
+      "kyc_status": "expired",
+      "pep_flag": false,
+      "pattern": "kyc_expired",
+      "above_ctr_threshold": true,
+      "_aml_note": "KYC expired 2025-12-01 (167 days ago). §24(2): CDD must be applied when there are doubts about the veracity or adequacy of previously obtained information. §24(4): if CDD cannot be applied, obliged entity shall discontinue the customer relationship.",
+      "metadata": {
+        "kyc_expiry_date": "2025-12-01",
+        "days_since_expiry": 167,
+        "sequence_in_pattern": 1
+      }
+    },
+    {
+      "id": "txn-3367-002",
+      "counterparty": "CUST-3367",
+      "amount_nok": 380000.00,
+      "currency": "NOK",
+      "transaction_type": "payment",
+      "timestamp_offset_hours": -48,
+      "risk_score": 65,
+      "kyc_status": "expired",
+      "pep_flag": false,
+      "pattern": "kyc_expired",
+      "above_ctr_threshold": true,
+      "_aml_note": "Continued high-value activity post-KYC-expiry. §21(1): if CDD measures cannot be applied, obliged entities shall not carry out the transaction.",
+      "metadata": {
+        "kyc_expiry_date": "2025-12-01",
+        "days_since_expiry": 168,
+        "sequence_in_pattern": 2
+      }
+    }
+  ]
+}

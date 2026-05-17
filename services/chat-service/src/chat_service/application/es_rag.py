@@ -23,9 +23,12 @@ from chat_service.application.rag import (
     ChatMessage,
     Citation,
     MAX_TOOL_ROUNDS,
+    _BANKING_COMPLIANCE_PROMPT,
     _build_system_prompt,
+    _INFRA_SYSTEM_PROMPT,
     _INTENT_MAP,
     _rec,
+    _SESSION_ALLOWED_TOOLS,
 )
 from chat_service.application.tools import TOOLS
 from chat_service.infrastructure.db_reader import FinancialDbReader
@@ -65,6 +68,14 @@ class ElasticsearchRagUseCase:
 
     # ── Public API (same signature as RagUseCase) ─────────────────────────────
 
+    @staticmethod
+    def _session_tools(session_type: str) -> list[dict]:
+        """Return the TOOLS subset allowed for this session_type."""
+        allowed = _SESSION_ALLOWED_TOOLS.get(session_type)
+        if allowed is None:
+            return TOOLS
+        return [t for t in TOOLS if t["function"]["name"] in allowed]
+
     async def answer(
         self,
         question: str,
@@ -74,7 +85,9 @@ class ElasticsearchRagUseCase:
         session_type: str = "finance_chat",
         auth_token: str | None = None,
     ) -> AgentResponse:
-        messages = self._build_messages(question, history)
+        allowed_tools = _SESSION_ALLOWED_TOOLS.get(session_type)
+        session_tools = self._session_tools(session_type)
+        messages = self._build_messages(question, history, session_type)
         citations: list[Citation] = []
         tools_used: list[str] = []
 
@@ -82,7 +95,7 @@ class ElasticsearchRagUseCase:
             response = await self._openai.chat.completions.create(  # type: ignore[call-overload]
                 model=self._chat_deployment,
                 messages=messages,  # type: ignore[arg-type]
-                tools=TOOLS,  # type: ignore[arg-type]
+                tools=session_tools,  # type: ignore[arg-type]
                 tool_choice="auto",
                 temperature=0.1,
                 max_tokens=2048,
@@ -95,6 +108,7 @@ class ElasticsearchRagUseCase:
                 logger.info(
                     "agent_answer_ready",
                     tenant_id=tenant_id,
+                    session_type=session_type,
                     tools=tools_used,
                     citations=len(citations),
                     rounds=_round + 1,
@@ -106,12 +120,13 @@ class ElasticsearchRagUseCase:
                     suggestions=suggestions,
                     model=response.model,
                     intent=_detect_intent(tools_used),
+                    session_type=session_type,
                 )
 
             messages.append(msg.model_dump(exclude_none=True))  # type: ignore[arg-type]
             for tool_call in msg.tool_calls:
                 result, new_cits = await self._execute_tool(
-                    tool_call, tenant_id, document_ids
+                    tool_call, tenant_id, document_ids, allowed_tools=allowed_tools, session_type=session_type
                 )
                 citations.extend(new_cits)
                 if tool_call.function.name == "query_financial_database":
@@ -147,6 +162,7 @@ class ElasticsearchRagUseCase:
             suggestions=suggestions,
             model=final.model,
             intent=_detect_intent(tools_used),
+            session_type=session_type,
         )
 
     async def answer_stream(
@@ -159,7 +175,9 @@ class ElasticsearchRagUseCase:
         auth_token: str | None = None,
     ) -> "tuple[AgentResponse, AsyncIterator[str]]":
         """Tool-call phase (blocking) → streaming final answer."""
-        messages = self._build_messages(question, history)
+        allowed_tools = _SESSION_ALLOWED_TOOLS.get(session_type)
+        session_tools = self._session_tools(session_type)
+        messages = self._build_messages(question, history, session_type)
         citations: list[Citation] = []
         tools_used: list[str] = []
 
@@ -167,17 +185,19 @@ class ElasticsearchRagUseCase:
             response = await self._openai.chat.completions.create(  # type: ignore[call-overload]
                 model=self._chat_deployment,
                 messages=messages,  # type: ignore[arg-type]
-                tools=TOOLS,  # type: ignore[arg-type]
+                tools=session_tools,  # type: ignore[arg-type]
                 tool_choice="auto",
                 temperature=0.1,
-                max_tokens=1024,  # Enough for tool selection + arguments; 128 was too small
+                max_tokens=1024,
             )
             msg = response.choices[0].message
             if not msg.tool_calls:
                 break
             messages.append(msg.model_dump(exclude_none=True))  # type: ignore[arg-type]
             for tc in msg.tool_calls:
-                result, new_cits = await self._execute_tool(tc, tenant_id, document_ids)
+                result, new_cits = await self._execute_tool(
+                    tc, tenant_id, document_ids, allowed_tools=allowed_tools, session_type=session_type
+                )
                 citations.extend(new_cits)
                 if tc.function.name == "query_financial_database":
                     try:
@@ -228,12 +248,27 @@ class ElasticsearchRagUseCase:
         tool_call: Any,
         tenant_id: str,
         document_ids: list[str] | None,
+        allowed_tools: frozenset[str] | None = None,
+        session_type: str = "finance_chat",
     ) -> tuple[Any, list[Citation]]:
         name = tool_call.function.name
         try:
             args: dict[str, Any] = json.loads(tool_call.function.arguments)
         except json.JSONDecodeError:
             return {"error": "Invalid tool arguments"}, []
+
+        # Policy gate — same enforcement as RagUseCase
+        if allowed_tools is not None and name not in allowed_tools:
+            logger.warning(
+                "tool_policy_violation",
+                tool=name,
+                session_type=session_type,
+                tenant_id=tenant_id,
+            )
+            return {
+                "error": f"Tool '{name}' is not allowed in session_type='{session_type}'. "
+                f"Allowed: {sorted(allowed_tools)}"
+            }, []
 
         if name == "search_document_content":
             return await self._tool_search(
@@ -244,6 +279,16 @@ class ElasticsearchRagUseCase:
             )
         if name == "query_financial_database":
             return await self._tool_db(args, tenant_id), []
+
+        # Banking compliance tools are only available on the Azure Search path (RagUseCase).
+        # Return an informative error if somehow reached on the ES path.
+        if name in ("query_banking_compliance", "flag_transaction_for_review", "generate_sar_draft"):
+            return {
+                "error": (
+                    f"Tool '{name}' requires the Azure Search path (RagUseCase). "
+                    "Banking compliance is not supported in the local Elasticsearch development mode."
+                )
+            }, []
 
         return {"error": f"Unknown tool: {name}"}, []
 
@@ -444,9 +489,17 @@ class ElasticsearchRagUseCase:
 
     @staticmethod
     def _build_messages(
-        question: str, history: list[ChatMessage] | None
+        question: str, history: list[ChatMessage] | None, session_type: str = "finance_chat"
     ) -> list[dict[str, str]]:
-        msgs: list[dict[str, str]] = [{"role": "system", "content": _build_system_prompt()}]
+        from datetime import date
+        today = date.today().isoformat()
+        if session_type == "infra_remediation":
+            system_content = _INFRA_SYSTEM_PROMPT.format(today=today)
+        elif session_type == "banking_compliance":
+            system_content = _BANKING_COMPLIANCE_PROMPT.format(today=today)
+        else:
+            system_content = _build_system_prompt()
+        msgs: list[dict[str, str]] = [{"role": "system", "content": system_content}]
         for h in (history or [])[-10:]:
             msgs.append({"role": h.role, "content": h.content})
         msgs.append({"role": "user", "content": question})

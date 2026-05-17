@@ -8,8 +8,11 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Azure](https://img.shields.io/badge/Azure-Container_Apps-0078D4?logo=microsoft-azure&logoColor=white)](https://azure.microsoft.com)
 [![Terraform](https://img.shields.io/badge/IaC-Terraform-7B42BC?logo=terraform&logoColor=white)](https://terraform.io)
+[![LangGraph](https://img.shields.io/badge/LangGraph-StateGraph-FF6B35)](https://langchain-ai.github.io/langgraph/)
+[![DSPy](https://img.shields.io/badge/DSPy-BootstrapFewShot-7B42BC)](https://dspy.ai)
+[![OpenTelemetry](https://img.shields.io/badge/OTel-Instrumented-425CC7?logo=opentelemetry)](https://opentelemetry.io)
 
-> **AI agents that detect issues, generate reviewable change proposals, and require human approval before anything is applied — across both financial documents and cloud infrastructure.**
+> **Allergo Nordic is a multi-domain AI governance platform for Norwegian financial services organisations. Three agent domains — CFO finance intelligence, banking compliance (AML/KYC/SAR), and infrastructure posture — share one governance control plane: the same workflow states, append-only audit trail, human approval gate, and tool policy enforcement. The LLM is a component inside governed workflows, not the product.**
 
 </div>
 
@@ -18,40 +21,56 @@
 ## Table of Contents
 
 - [What This Demonstrates](#what-this-demonstrates)
+- [Financial Services Product Area Coverage](#financial-services-product-area-coverage)
 - [Architecture Overview](#architecture-overview)
-- [AI Agent Layer](#ai-agent-layer)
+- [AI Agent Layer — ReAct vs LangGraph](#ai-agent-layer--react-vs-langgraph)
+- [Banking Compliance Domain](#banking-compliance-domain)
 - [Infrastructure Governance Agent](#infrastructure-governance-agent)
 - [Drift Detection](#drift-detection)
 - [Human-in-the-Loop Review](#human-in-the-loop-review)
 - [Agent Guardrails and Auditability](#agent-guardrails-and-auditability)
-- [Infrastructure Context System](#infrastructure-context-system)
-- [Integrations](#integrations)
-- [Fullstack Product](#fullstack-product)
-- [Enterprise Requirements](#enterprise-requirements)
+- [Evaluation Suite](#evaluation-suite)
+- [DSPy Prompt Optimization](#dspy-prompt-optimization)
+- [Observability — OpenTelemetry + Prometheus](#observability--opentelemetry--prometheus)
+- [Kubernetes Deployment](#kubernetes-deployment)
 - [Infrastructure as Code (Terraform)](#infrastructure-as-code-terraform)
 - [CI/CD Pipelines](#cicd-pipelines)
-- [RAG Pipeline and Evals](#rag-pipeline-and-evals)
 - [Services Reference](#services-reference)
 - [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
-- [Environment Variables](#environment-variables)
-- [API Reference](#api-reference)
-- [ADRs and Design Decisions](#adrs-and-design-decisions)
 
 ---
 
 ## What This Demonstrates
 
-This project was built to address the exact problem space that Cloudgeni targets: **AI agents that help infrastructure and DevOps teams move faster, while keeping humans in control of what actually gets applied.**
+The platform has three agent domains sharing one governance control plane:
 
-The platform has two domains sharing one governance control plane:
+| Domain | Session Type | What the agent does |
+|--------|--------------|-------------------|
+| **Finance (CFO)** | `finance_chat` | Ingests invoices/contracts via LLM extraction → answers questions via hybrid RAG → flags anomalies for human review |
+| **Banking Compliance** | `banking_compliance` | AML/KYC/SAR intelligence: detects structuring, velocity violations, PEP hits → generates flag records and SAR drafts → human approval required before any regulatory action |
+| **Infrastructure posture** | `infra_remediation` | Reads Checkov scan results → reads live Terraform plan → detects drift → generates a reviewable change proposal → requires human approval before any change is applied |
 
-| Domain | What the agent does |
-|--------|-------------------|
-| **Finance (CFO)** | Ingests invoices/contracts via LLM extraction → answers questions via RAG → flags anomalies for human review |
-| **Infrastructure posture** | Reads Checkov scan results → reads live Terraform plan → detects drift → generates a unified diff + rationale as a reviewable change proposal → requires human approval before any change is applied |
+All three domains reuse the same primitives: **workflow states** (`gathering_context → proposing → approved/rejected`), **append-only audit trail**, **human approval gate**, and **policy-enforced tool access**. The LLM is a component inside those workflows — not the product.
 
-Both domains reuse the same primitives: **workflow states** (`gathering_context → proposing → approved/rejected`), **append-only audit trail**, **human approval gate**, and **policy-enforced tool access**. The LLM is a component inside those workflows — not the product.
+---
+
+## Financial Services Product Area Coverage
+
+Allergo Nordic demonstrates capabilities across core financial services engineering areas:
+
+| Area | Coverage in this project |
+|---------------------|--------------------------|
+| **Financial crime compliance** | `banking_compliance` agent session: AML flag detection, PEP screening, SAR draft generation, velocity/structuring pattern identification — all with HITL gates |
+| **Core banking document intelligence** | `finance_chat` session: hybrid RAG over invoices, contracts, regulatory documents; CFO review queue; LLM extraction pipeline (GPT-4o) |
+| **Lending / contract management** | Document service: contract extraction, expiry tracking, pending approvals queue, ledger-by-account queries |
+| **Regulatory reporting** | Norwegian AML Act §26 (mandatory STR to Økokrim), §30 (5-year retention), §18 (PEP EDD), FATF Recommendation 20, PSD2 RTS (EU) 2018/389 Art. 16; encoded in agent system prompts and eval dataset using actual statutory text |
+| **LLM agent frameworks (LangGraph)** | `BankingComplianceGraph` in `langgraph_agent.py` — StateGraph with 6 nodes, explicit uncertainty gate, human escalation path |
+| **Prompt optimisation (DSPy)** | `evals/prompt_optimization/dspy_banking_optimizer.py` — BootstrapFewShot against 10-sample eval dataset |
+| **LLM-as-judge evals** | `evals/banking/llm_judge_eval.py` — 4-dimension judge (regulatory_accuracy, grounding, safe_ai_compliance, norwegian_context) |
+| **Human oversight / responsible AI** | EU AI Act Article 14 pattern: uncertainty gate → escalate_to_human node; NEVER auto-file SAR, NEVER auto-freeze account |
+| **LLMOps / observability** | OpenTelemetry spans per tool call; Prometheus `allergo_tool_calls_total` + `allergo_tool_latency_seconds` |
+| **Kubernetes** | `k8s/` — 6 Deployments, HPA for chat-service, NetworkPolicy (deny-all default + explicit allows) |
 
 ---
 
@@ -90,11 +109,37 @@ IaC:    Terraform (infra/)  ·  GitHub Actions (OIDC → ACR → Container Apps)
 
 ---
 
-## AI Agent Layer
+## AI Agent Layer — ReAct vs LangGraph
 
-The `chat-service` implements a **ReAct (Reason + Act) agent** using OpenAI tool-calling. The LLM iterates up to 6 tool rounds before composing a final answer grounded entirely in retrieved data.
+The `chat-service` implements two complementary orchestration strategies for different session types:
 
-### How it works
+### ReAct Agent (`rag.py`) — default for all sessions
+
+The standard path: a **ReAct (Reason + Act) loop** using OpenAI tool-calling. The LLM iterates up to 6 tool rounds before composing a final answer grounded entirely in retrieved data.
+
+### LangGraph Agent (`langgraph_agent.py`) — `banking_compliance_v2`
+
+An alternative path for banking compliance, available via `session_type=banking_compliance_v2`. Uses a **LangGraph `StateGraph`** with an explicit 6-node topology and a named uncertainty gate.
+
+| Property | ReAct (`rag.py`) | LangGraph (`langgraph_agent.py`) |
+|----------|-------------------|----------------------------------|
+| Orchestration | LLM decides tool sequence | Explicit graph: nodes enforce sequence |
+| State | Stateless per request | Checkpointed `BankingComplianceState` |
+| Uncertainty handling | Implicit (LLM's discretion) | Explicit `uncertainty_gate` node: confidence < 0.70 → `escalate_to_human` |
+| Audit lineage | `tools_used` list | `node_trace` (ordered visited nodes) + tool log |
+| Latency | Lower (fewer round trips) | Higher (structured reasoning steps) |
+| Preferred for | General finance/infra queries | Regulated banking compliance (EU AI Act Art. 14) |
+
+The graph topology:
+```
+START → gather_context → analyze_risk
+  → (risk found) → propose_action → uncertainty_gate
+    → (low confidence) → escalate_to_human → END
+    → (high confidence) → synthesize → END
+  → (no risk) → synthesize → END
+```
+
+### How it works (ReAct)
 
 ```
 User question
@@ -150,9 +195,51 @@ data: [DONE]
 
 ---
 
+## Banking Compliance Domain
+
+The `banking_compliance` session type adds a third AI agent domain targeting Norwegian financial crime compliance.
+
+### AML/KYC/SAR Toolset
+
+| Tool | Purpose | HITL required? |
+|------|---------|---------------|
+| `search_document_content` | Hybrid retrieval of AML policies, KYC procedures, regulatory docs | No |
+| `query_banking_compliance` | Structured DB queries: AML flags, SAR candidates, KYC status, PEP screening, regulatory calendar | No |
+| `flag_transaction_for_review` | Creates a governed compliance flag (status: `open`) — enforcement requires human decision | **Yes** |
+| `generate_sar_draft` | Writes a SAR narrative to `sar_drafts` table (status: `pending_review`) — NEVER auto-files | **Yes** |
+
+### Regulatory Framework (encoded in agent system prompt)
+
+- Norwegian AML Act (hvitvaskingsloven, Act of 1 June 2018 No. 23, unofficial English translation by Finanstilsynet) — §10(1)(b)(1) NOK 100,000 CDD threshold, §10(2) aggregate threshold for linked transactions, §18 PEP Enhanced Due Diligence, §24 ongoing monitoring / KYC refresh, §25 examination duty, §26 mandatory STR to Økokrim (EFE), §30 five-year retention (max ten years)
+- EU Anti-Money Laundering Directive 6 (AMLD6) — Art. 23 PEP EDD, Art. 33 STR
+- FATF 40 Recommendations — risk-based approach, structuring, PEP, correspondent banking
+- PSD2 (EU 2015/2366) — SCA exemptions, RTS thresholds
+- **EU AI Act Article 6** — high-risk AI classification; Article 14 human oversight
+- GDPR Article 5(1)(e) — data minimisation; Article 6(1)(c) — legal obligation override
+
+### Compliance Anomaly Patterns (demo seed data)
+
+The `fixtures/banking-transactions-sample.json` and DB migration `014_banking_compliance.sql` seed three known typologies for demo and eval use:
+
+| Pattern | Customer | Description |
+|---------|----------|-------------|
+| **Structuring** | CUST-4471 | 9 cash deposits of NOK 97,200–99,100 in 6 hours across 3 branches |
+| **Velocity violation** | CUST-8823 | 5 international wires to UAE totalling NOK 675,500 in 2 hours |
+| **PEP counterparty** | CUST-1195 | Single transfer of NOK 2,350,000 to a foreign official PEP |
+
+### Safety Constraints (non-negotiable)
+
+The agent system prompt and `assert_no_auto_submit` eval assertion enforce:
+- **NEVER** automatically file a SAR with Finanstilsynet or any regulator
+- **NEVER** automatically freeze accounts or block transactions
+- **ALWAYS** require human compliance officer approval before enforcement action
+- **ALWAYS** cite source transaction IDs and regulatory articles
+
+---
+
 ## Infrastructure Governance Agent
 
-This is the core of the infra posture domain — directly analogous to what Cloudgeni builds.
+This is the core of the infrastructure posture domain — continuous policy scanning, drift detection and AI-assisted remediation.
 
 ### The loop
 
@@ -327,7 +414,7 @@ gathering_context
 }
 ```
 
-This mirrors the GitHub / Azure DevOps PR-based workflow that Cloudgeni uses: the AI proposes, the human reviews, the engineer merges.
+This implements a GitHub / Azure DevOps PR-based governance workflow: the AI proposes, the human reviews, the engineer merges.
 
 ---
 
@@ -632,6 +719,108 @@ All workflows use **OIDC federated credentials** — no long-lived secrets in Gi
 ```
 
 Checkov and tfsec run as part of `ci-infra-scan.yml` on every infrastructure change. Findings are imported to the DB and become queryable by the infra agent immediately after CI completes.
+
+---
+
+## Evaluation Suite
+
+The project has a three-tier eval strategy covering all agent sessions:
+
+| Eval | Location | Mode | Blocks merge? |
+|------|----------|------|---------------|
+| **Infra agent evals** (10 cases, mock) | `evals/infra/` | `--mock` (no API key) | Yes |
+| **Banking compliance evals** (10 cases, mock) | `evals/banking/` | `--mock` (no API key) | Yes |
+| **RAG quality evals** (10 Q&A pairs, offline) | `evals/rag/` | `--offline` lexical | Yes |
+| **LLM-as-judge banking** (GPT-4o judge) | `evals/banking/llm_judge_eval.py` | Live on `main` only | No (artefact) |
+| **RAGAS live** | `evals/rag/rag_eval.py` | Live on `main` only | No (artefact) |
+| **DSPy optimizer** | `evals/prompt_optimization/` | Offline on `main` only | No (artefact) |
+
+### Banking eval assertions
+
+- `assert_tools_called` — specific tools must be called (optionally in order)
+- `assert_no_tools` — policy violation: blocked tools must NOT be called
+- `assert_answer_contains` — key phrases must appear in the answer
+- `assert_no_auto_submit` — **critical safety**: answer must not claim to auto-file a SAR
+
+### LLM-as-Judge scoring (4 dimensions)
+
+| Dimension | What it measures | Threshold |
+|-----------|-----------------|-----------|
+| `regulatory_accuracy` | Cited regulations correct + applicable to Norway | 0.70 |
+| `grounding` | Every claim traceable to retrieved context | 0.75 |
+| `safe_ai_compliance` | Agent correctly refuses to auto-file/auto-act | **0.90** |
+| `norwegian_context` | Finanstilsynet, NOK thresholds, Norwegian § citations | 0.65 |
+
+---
+
+## DSPy Prompt Optimization
+
+`evals/prompt_optimization/dspy_banking_optimizer.py` uses **DSPy `BootstrapFewShot`** to automatically tune the banking compliance system prompt against the `eval_dataset.jsonl` golden set.
+
+**Signature**: `BankingComplianceSignature`
+- Inputs: `question: str`, `retrieved_context: str`
+- Outputs: `answer: str`, `regulatory_citations: list[str]`, `requires_human_review: bool`
+
+**Metric**: `0.4 × grounding + 0.4 × regulatory_accuracy + 0.2 × safety_score`
+
+**Output**: `evals/prompt_optimization/optimized_banking_prompt.txt` — reviewed manually before adoption into `_BANKING_COMPLIANCE_PROMPT`.
+
+```bash
+# Offline (CI — no API key)
+python evals/prompt_optimization/dspy_banking_optimizer.py --offline
+
+# Live
+OPENAI_API_KEY=sk-... python evals/prompt_optimization/dspy_banking_optimizer.py
+```
+
+---
+
+## Observability — OpenTelemetry + Prometheus
+
+Every tool call in the `chat-service` is instrumented with:
+
+**OpenTelemetry spans** (`tool.{name}` span per call):
+```python
+with tracer.start_as_current_span(f"tool.{name}") as span:
+    span.set_attribute("tool.name", name)
+    span.set_attribute("session.type", session_type)
+    span.set_attribute("tool.round", current_round)
+    span.set_attribute("tenant.id", tenant_id)
+```
+
+**Prometheus metrics**:
+- `allergo_tool_calls_total{session_type, tool_name}` — counter
+- `allergo_tool_latency_seconds{session_type, tool_name}` — histogram (p50/p95/p99)
+- `allergo_eval_score{eval_type, metric}` — gauge (updated by CI eval jobs)
+
+Metrics are exposed at `/metrics` via `prometheus_client.make_asgi_app()`.
+
+Configure OTLP endpoint: `OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317`
+
+---
+
+## Kubernetes Deployment
+
+The `k8s/` directory contains production-ready Kubernetes manifests:
+
+```
+k8s/
+├── namespace.yaml        # allergo-nordic namespace
+├── configmap.yaml        # non-secret config (service URLs, feature flags)
+├── secrets-template.yaml # Azure Key Vault CSI driver SecretProviderClass
+├── deployments.yaml      # 6 Deployments + Services (ingest, document, processing, search, chat, frontend)
+├── hpa.yaml              # HPA for chat-service: CPU 60% | http_rps 10 → min 2 / max 8 replicas
+└── network-policy.yaml   # Default deny-all ingress + explicit service-to-service allow rules
+```
+
+**Network policy** (least-privilege):
+```
+frontend       → chat-service, ingest-service, document-service, search-service
+chat-service   → document-service, search-service
+processing     → search-service, document-service
+all services   → postgres (5432), rabbitmq (5672)
+monitoring ns  → all :8001–:8005 (Prometheus scraping)
+```
 
 ---
 

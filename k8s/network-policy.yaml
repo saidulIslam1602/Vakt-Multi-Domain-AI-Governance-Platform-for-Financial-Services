@@ -1,0 +1,161 @@
+# Network policies for Allergo Nordic
+# Default: deny all ingress.
+# Explicit allow rules implement least-privilege service-to-service communication.
+#
+# Allowed paths:
+#   frontend       → chat-service, ingest-service, document-service, search-service
+#   chat-service   → document-service, search-service
+#   processing-service → search-service, document-service
+#   all services   → postgres (5432), rabbitmq (5672)
+---
+# Deny all ingress by default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: allergo-nordic
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# frontend → backend services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backends
+  namespace: allergo-nordic
+spec:
+  podSelector:
+    matchLabels:
+      app: chat-service
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - port: 8005
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-ingest
+  namespace: allergo-nordic
+spec:
+  podSelector:
+    matchLabels:
+      app: ingest-service
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - port: 8001
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-document
+  namespace: allergo-nordic
+spec:
+  podSelector:
+    matchLabels:
+      app: document-service
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - podSelector:
+            matchLabels:
+              app: chat-service
+        - podSelector:
+            matchLabels:
+              app: processing-service
+      ports:
+        - port: 8002
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-search
+  namespace: allergo-nordic
+spec:
+  podSelector:
+    matchLabels:
+      app: search-service
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: frontend
+        - podSelector:
+            matchLabels:
+              app: chat-service
+        - podSelector:
+            matchLabels:
+              app: processing-service
+      ports:
+        - port: 8004
+---
+# Allow all services to reach PostgreSQL (external, handled via egress — not modelled here)
+# and RabbitMQ (internal pod)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-rabbitmq
+  namespace: allergo-nordic
+spec:
+  podSelector:
+    matchLabels:
+      app: rabbitmq
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - ingest-service
+                  - document-service
+                  - processing-service
+                  - chat-service
+      ports:
+        - port: 5672
+        - port: 15672
+---
+# Allow external ingress to frontend (LoadBalancer)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-external-to-frontend
+  namespace: allergo-nordic
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  ingress:
+    - ports:
+        - port: 3000
+---
+# Allow Prometheus scraping from monitoring namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape
+  namespace: allergo-nordic
+spec:
+  podSelector: {}
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 8001
+        - port: 8002
+        - port: 8003
+        - port: 8004
+        - port: 8005

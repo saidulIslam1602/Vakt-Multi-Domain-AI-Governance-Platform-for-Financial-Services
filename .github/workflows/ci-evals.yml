@@ -109,3 +109,116 @@ jobs:
         with:
           name: rag-eval-results-live
           path: evals/rag/results-live.json
+
+  banking-evals:
+    name: Banking compliance agent evals (mock — no API key required)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install shared lib
+        working-directory: services/shared-lib
+        run: pip install -e . --quiet
+
+      - name: Install chat-service dependencies
+        working-directory: services/chat-service
+        run: pip install -e ".[dev]" --quiet
+
+      - name: Run banking compliance evals (mock mode — no Azure keys required)
+        run: |
+          python evals/banking/eval_runner.py \
+            --cases evals/banking/cases.jsonl \
+            --mock \
+            --verbose
+
+      - name: Upload banking eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: banking-eval-results
+          path: evals/banking/
+
+  banking-llm-judge:
+    name: Banking LLM-as-Judge evaluation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [banking-evals]
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install LLM judge dependencies
+        run: pip install openai --quiet
+
+      - name: Run LLM-as-Judge eval (live — requires OPENAI_API_KEY secret)
+        if: env.OPENAI_API_KEY != ''
+        run: |
+          python evals/banking/llm_judge_eval.py \
+            --dataset evals/banking/eval_dataset.jsonl \
+            --output evals/banking/results_judge.json \
+            --fail-under 0.65
+        continue-on-error: true
+
+      - name: Run LLM-as-Judge eval (offline fallback)
+        if: env.OPENAI_API_KEY == ''
+        run: |
+          python evals/banking/llm_judge_eval.py \
+            --dataset evals/banking/eval_dataset.jsonl \
+            --output evals/banking/results_judge.json \
+            --offline
+
+      - name: Upload LLM judge results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: banking-llm-judge-results
+          path: evals/banking/results_judge.json
+
+  dspy-optimize:
+    name: DSPy prompt optimization (offline)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [banking-evals]
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install DSPy dependencies
+        run: pip install dspy-ai openai --quiet || true
+
+      - name: Run DSPy optimizer (live if API key available)
+        if: env.OPENAI_API_KEY != ''
+        run: |
+          python evals/prompt_optimization/dspy_banking_optimizer.py \
+            --dataset evals/banking/eval_dataset.jsonl \
+            --output evals/prompt_optimization/optimized_banking_prompt.txt \
+            --verbose
+        continue-on-error: true
+
+      - name: Run DSPy optimizer (offline fallback)
+        run: |
+          python evals/prompt_optimization/dspy_banking_optimizer.py \
+            --dataset evals/banking/eval_dataset.jsonl \
+            --output evals/prompt_optimization/optimized_banking_prompt.txt \
+            --offline
+
+      - name: Upload optimized prompt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dspy-optimized-prompt
+          path: evals/prompt_optimization/optimized_banking_prompt.txt

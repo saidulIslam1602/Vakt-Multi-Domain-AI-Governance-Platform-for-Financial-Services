@@ -16,7 +16,9 @@ from openai import AsyncAzureOpenAI
 from allergo_shared.infrastructure.health import make_health_router
 from allergo_shared.infrastructure.logging import configure_logging
 from chat_service.application.rag import RagUseCase
+from chat_service.infrastructure.banking_db_reader import BankingDbReader
 from chat_service.infrastructure.db_reader import FinancialDbReader
+from chat_service.infrastructure.observability import setup_telemetry, setup_prometheus
 from chat_service.presentation.config import Settings  # re-exported for backward compat
 from chat_service.presentation.routes.chat import router as chat_router
 from chat_service.presentation.routes.saved_queries import router as saved_queries_router
@@ -43,10 +45,14 @@ def create_app() -> FastAPI:
                 schema="pg_catalog",
             )
 
+        # Initialise OTel + Prometheus before any request handling
+        setup_telemetry()
+
         pool = await asyncpg.create_pool(
             cfg.database_url, min_size=2, max_size=8, init=_init_conn
         )
         db_reader = FinancialDbReader(pool)
+        banking_db_reader = BankingDbReader(pool)
         # Store pool so saved_queries route can access it
         application.state.pool = pool
 
@@ -109,6 +115,7 @@ def create_app() -> FastAPI:
                 chat_deployment=cfg.azure_openai_chat_deployment,
                 top_k=cfg.rag_top_k,
                 document_service_url=cfg.document_service_url,
+                banking_db_reader=banking_db_reader,
             )
             yield
             await pool.close()
@@ -144,6 +151,10 @@ def create_app() -> FastAPI:
     app.include_router(make_health_router(cfg.service_name, cfg.service_version))
     app.include_router(chat_router, prefix="/api/v1")
     app.include_router(saved_queries_router, prefix="/api/v1")
+
+    # Mount /metrics endpoint for Prometheus scraping (no-op if prometheus_client not installed)
+    setup_prometheus(app)
+
     return app
 
 

@@ -1,4 +1,4 @@
-"""OpenAI function/tool definitions for the CFO and infra-remediation chat agents.
+"""OpenAI function/tool definitions for the CFO, infra-remediation, and banking compliance agents.
 
 The LLM decides which tools to call. Each tool maps 1:1 to a handler
 in RagUseCase._execute_tool.
@@ -13,6 +13,12 @@ Infra remediation tools (session_type=infra_remediation):
   - get_terraform_plan_summary → fixture-backed plan summary
   - propose_remediation        → creates agent_workflow_run + change_proposal
   - get_infra_context_bundle   → reads a stored infra_context_snapshots row
+
+Banking compliance tools (session_type=banking_compliance):
+  - search_document_content      → shared hybrid retrieval (grounding for regulatory docs)
+  - query_banking_compliance     → structured AML/KYC/SAR queries against compliance DB
+  - flag_transaction_for_review  → raises a governed compliance flag (HITL required)
+  - generate_sar_draft           → creates a SAR-style narrative draft (HITL required)
 
 The agentic loop in RagUseCase can call tools multiple times before
 composing the final answer (ReAct pattern).
@@ -29,6 +35,14 @@ INFRA_TOOL_NAMES = frozenset(
         "detect_infra_drift",
         "propose_remediation",
         "get_infra_context_bundle",
+    }
+)
+BANKING_TOOL_NAMES = frozenset(
+    {
+        "search_document_content",
+        "query_banking_compliance",
+        "flag_transaction_for_review",
+        "generate_sar_draft",
     }
 )
 
@@ -356,6 +370,166 @@ TOOLS: list[dict] = [
                     },
                 },
                 "required": ["snapshot_id"],
+            },
+        },
+    },
+    # ── Banking compliance tools ──────────────────────────────────────────────
+    {
+        "type": "function",
+        "function": {
+            "name": "query_banking_compliance",
+            "description": (
+                "Query the structured AML/KYC/SAR compliance database. "
+                "Use for: listing open AML flags, finding customers with expired/pending KYC, "
+                "identifying transactions above Norwegian CTR reporting thresholds (NOK 100,000), "
+                "retrieving PEP screening hits pending manual review, summarising portfolio risk "
+                "score distribution, and checking upcoming regulatory reporting deadlines. "
+                "Always use this tool before flagging a transaction or drafting a SAR."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query_type": {
+                        "type": "string",
+                        "enum": [
+                            "aml_flags",
+                            "kyc_pending_reviews",
+                            "sar_candidates",
+                            "risk_score_summary",
+                            "regulatory_calendar",
+                            "pep_screening_results",
+                        ],
+                        "description": (
+                            "aml_flags: open AML compliance flags awaiting human review. "
+                            "kyc_pending_reviews: customers with expired or pending KYC status. "
+                            "sar_candidates: transactions above CTR threshold (NOK 100,000) "
+                            "or matching structuring/velocity/layering patterns. "
+                            "risk_score_summary: aggregated risk score distribution across portfolio. "
+                            "regulatory_calendar: upcoming Finanstilsynet reporting deadlines. "
+                            "pep_screening_results: PEP hits from latest screening run, pending review."
+                        ),
+                    },
+                    "risk_level": {
+                        "type": "string",
+                        "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+                        "description": "Filter results by minimum risk level. Omit to return all levels.",
+                    },
+                    "date_from": {
+                        "type": "string",
+                        "description": "ISO 8601 date (YYYY-MM-DD) range start for time-bounded queries.",
+                    },
+                    "date_to": {
+                        "type": "string",
+                        "description": "ISO 8601 date (YYYY-MM-DD) range end.",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum records to return (default 20, max 50).",
+                        "default": 20,
+                    },
+                },
+                "required": ["query_type"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "flag_transaction_for_review",
+            "description": (
+                "Raise a governed compliance flag on a specific transaction or customer, "
+                "triggering enhanced due diligence. This writes a record to the compliance_flags "
+                "table with status 'open' and returns a flag_id. "
+                "A human compliance officer MUST review and approve the flag before any "
+                "regulatory action (freeze, SAR filing, account closure) can be taken. "
+                "NEVER use this tool to automatically trigger regulatory actions — "
+                "it only creates a reviewable flag record. "
+                "Always call query_banking_compliance first to gather evidence before flagging."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "transaction_id": {
+                        "type": "string",
+                        "description": "ID of the transaction to flag (from sar_candidates or aml_flags results).",
+                    },
+                    "flag_reason": {
+                        "type": "string",
+                        "enum": [
+                            "structuring",
+                            "velocity_violation",
+                            "pep_counterparty",
+                            "layering_pattern",
+                            "unusual_geography",
+                            "kyc_mismatch",
+                            "threshold_breach",
+                            "other",
+                        ],
+                        "description": "Primary AML/compliance reason for the flag.",
+                    },
+                    "evidence_summary": {
+                        "type": "string",
+                        "description": (
+                            "Plain-language summary of the evidence supporting this flag. "
+                            "Must cite specific transaction IDs, amounts, dates, or document passages."
+                        ),
+                    },
+                    "risk_level": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high", "critical"],
+                        "description": "Estimated compliance risk level of this flag.",
+                        "default": "high",
+                    },
+                },
+                "required": ["transaction_id", "flag_reason", "evidence_summary"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "generate_sar_draft",
+            "description": (
+                "Generate a structured Suspicious Activity Report (SAR) draft narrative "
+                "grounded in compliance flags and retrieved regulatory documents. "
+                "This writes a draft to the sar_drafts table with status 'pending_review'. "
+                "CRITICAL: This tool NEVER submits a SAR to Finanstilsynet or any regulator. "
+                "The draft requires explicit human approval before it can be marked 'approved'. "
+                "Only call this after flag_transaction_for_review has been called and a flag_id exists. "
+                "The narrative must cite source documents and flag IDs — never fabricate transaction details."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "flag_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "One or more compliance flag IDs that this SAR covers.",
+                    },
+                    "narrative_md": {
+                        "type": "string",
+                        "description": (
+                            "Markdown-formatted SAR narrative. Must include: "
+                            "1. Subject description (transaction/customer ID only, no PII beyond what is in DB). "
+                            "2. Description of suspicious activity with dates and amounts. "
+                            "3. Regulatory basis (FATF recommendation, EU AMLD6 article, Norwegian AML Act section). "
+                            "4. List of source evidence (flag IDs, document IDs, DB query results). "
+                            "5. Recommended next action (EDD, freeze, file with Finanstilsynet). "
+                            "6. Explicit statement: 'This draft requires human compliance officer approval.'"
+                        ),
+                    },
+                    "reporting_obligation": {
+                        "type": "string",
+                        "enum": ["discretionary", "mandatory_ctr", "mandatory_str"],
+                        "description": (
+                            "discretionary: voluntary SAR based on suspicion. "
+                            "mandatory_ctr: Currency Transaction Report — transactions >= NOK 100,000. "
+                            "mandatory_str: Suspicious Transaction Report — mandatory under Norwegian AML Act §26."
+                        ),
+                        "default": "discretionary",
+                    },
+                },
+                "required": ["flag_ids", "narrative_md"],
             },
         },
     },

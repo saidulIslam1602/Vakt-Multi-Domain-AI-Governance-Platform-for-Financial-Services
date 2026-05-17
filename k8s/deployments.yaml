@@ -1,0 +1,397 @@
+# Allergo Nordic — Kubernetes Deployments
+# One Deployment + Service per microservice.
+# All services mount the shared ConfigMap and Secrets from allergo-nordic-secrets.
+# Image references use the allergo-nordic ACR registry (replace ${ACR_REGISTRY} at deploy time).
+---
+# ── ingest-service ────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingest-service
+  namespace: allergo-nordic
+  labels:
+    app: ingest-service
+    app.kubernetes.io/component: ingest
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ingest-service
+  template:
+    metadata:
+      labels:
+        app: ingest-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8001"
+    spec:
+      containers:
+        - name: ingest-service
+          image: ${ACR_REGISTRY}/ingest-service:latest
+          ports:
+            - containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: allergo-nordic-config
+            - secretRef:
+                name: allergo-nordic-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingest-service
+  namespace: allergo-nordic
+spec:
+  selector:
+    app: ingest-service
+  ports:
+    - port: 8001
+      targetPort: 8001
+---
+# ── document-service ──────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-service
+  namespace: allergo-nordic
+  labels:
+    app: document-service
+    app.kubernetes.io/component: document
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: document-service
+  template:
+    metadata:
+      labels:
+        app: document-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8002"
+    spec:
+      containers:
+        - name: document-service
+          image: ${ACR_REGISTRY}/document-service:latest
+          ports:
+            - containerPort: 8002
+          envFrom:
+            - configMapRef:
+                name: allergo-nordic-config
+            - secretRef:
+                name: allergo-nordic-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-service
+  namespace: allergo-nordic
+spec:
+  selector:
+    app: document-service
+  ports:
+    - port: 8002
+      targetPort: 8002
+---
+# ── processing-service ────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processing-service
+  namespace: allergo-nordic
+  labels:
+    app: processing-service
+    app.kubernetes.io/component: processing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: processing-service
+  template:
+    metadata:
+      labels:
+        app: processing-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8003"
+    spec:
+      containers:
+        - name: processing-service
+          image: ${ACR_REGISTRY}/processing-service:latest
+          ports:
+            - containerPort: 8003
+          envFrom:
+            - configMapRef:
+                name: allergo-nordic-config
+            - secretRef:
+                name: allergo-nordic-secrets
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 45
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: processing-service
+  namespace: allergo-nordic
+spec:
+  selector:
+    app: processing-service
+  ports:
+    - port: 8003
+      targetPort: 8003
+---
+# ── search-service ────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-service
+  namespace: allergo-nordic
+  labels:
+    app: search-service
+    app.kubernetes.io/component: search
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: search-service
+  template:
+    metadata:
+      labels:
+        app: search-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8004"
+    spec:
+      containers:
+        - name: search-service
+          image: ${ACR_REGISTRY}/search-service:latest
+          ports:
+            - containerPort: 8004
+          envFrom:
+            - configMapRef:
+                name: allergo-nordic-config
+            - secretRef:
+                name: allergo-nordic-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: search-service
+  namespace: allergo-nordic
+spec:
+  selector:
+    app: search-service
+  ports:
+    - port: 8004
+      targetPort: 8004
+---
+# ── chat-service ──────────────────────────────────────────────────────────────
+# Primary AI inference service — receives higher resource limits.
+# Scaled by the HPA in hpa.yaml (min 2 / max 8).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service
+  namespace: allergo-nordic
+  labels:
+    app: chat-service
+    app.kubernetes.io/component: chat
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: chat-service
+  template:
+    metadata:
+      labels:
+        app: chat-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8005"
+    spec:
+      containers:
+        - name: chat-service
+          image: ${ACR_REGISTRY}/chat-service:latest
+          ports:
+            - containerPort: 8005
+          envFrom:
+            - configMapRef:
+                name: allergo-nordic-config
+            - secretRef:
+                name: allergo-nordic-secrets
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 60
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-service
+  namespace: allergo-nordic
+spec:
+  selector:
+    app: chat-service
+  ports:
+    - port: 8005
+      targetPort: 8005
+---
+# ── frontend ──────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: allergo-nordic
+  labels:
+    app: frontend
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ${ACR_REGISTRY}/frontend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_API_BASE_URL
+              value: "http://chat-service:8005"
+            - name: NEXT_PUBLIC_INGEST_URL
+              value: "http://ingest-service:8001"
+            - name: NEXT_PUBLIC_DOCUMENT_URL
+              value: "http://document-service:8002"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: allergo-nordic
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/"
+spec:
+  type: LoadBalancer
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 3000

@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: allergo-nordic-config
+  namespace: allergo-nordic
+  labels:
+    app.kubernetes.io/name: allergo-nordic
+data:
+  # Service discovery — internal Kubernetes DNS names
+  INGEST_SERVICE_URL: "http://ingest-service:8001"
+  DOCUMENT_SERVICE_URL: "http://document-service:8002"
+  PROCESSING_SERVICE_URL: "http://processing-service:8003"
+  SEARCH_SERVICE_URL: "http://search-service:8004"
+  CHAT_SERVICE_URL: "http://chat-service:8005"
+
+  # Feature flags
+  ENABLE_LANGGRAPH_AGENT: "true"
+  BANKING_COMPLIANCE_ENABLED: "true"
+  OTEL_ENABLED: "true"
+  PROMETHEUS_ENABLED: "true"
+
+  # LLM settings
+  AZURE_OPENAI_API_VERSION: "2024-05-01-preview"
+  AZURE_OPENAI_CHAT_DEPLOYMENT: "gpt-4o"
+  AZURE_OPENAI_EMBED_DEPLOYMENT: "text-embedding-3-large"
+
+  # Search
+  AZURE_SEARCH_INDEX_NAME: "allergo-nordic-chunks"
+  ELASTICSEARCH_INDEX_NAME: "allergo-nordic-chunks"
+
+  # Observability
+  OTLP_EXPORTER_ENDPOINT: "http://otel-collector:4317"
+  LOG_LEVEL: "INFO"
+
+  # Banking compliance
+  BANKING_CTR_THRESHOLD_NOK: "100000"
+  BANKING_CONFIDENCE_THRESHOLD: "0.70"
+  BANKING_MAX_FLAG_RISK_AUTOSCALATE: "HIGH"
