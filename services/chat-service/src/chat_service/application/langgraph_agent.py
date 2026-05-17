@@ -586,7 +586,7 @@ class BankingComplianceGraph:
         )
 
         # Conditional edge: propose_action or short-circuit to synthesize
-        next_node = _route_from_analyze_risk(state)
+        next_node: str = _route_from_analyze_risk(state)
         if next_node == "propose_action":
             # Node 3: propose action (SAR draft)
             state = await propose_action(

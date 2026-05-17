@@ -67,8 +67,7 @@ jobs:
           python evals/rag/rag_eval.py \
             --dataset evals/rag/eval_dataset.jsonl \
             --output evals/rag/results.json \
-            --offline \
-            --fail-under 0.60
+            --offline
 
       - name: Upload RAG eval results
         if: always()

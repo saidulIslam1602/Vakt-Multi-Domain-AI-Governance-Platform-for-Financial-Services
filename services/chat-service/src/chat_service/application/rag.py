@@ -742,27 +742,28 @@ class RagUseCase:
             _span.set_attribute("session.type", session_type)
             _span.set_attribute("tool.round", 0)
             _span.set_attribute("tenant.id", tenant_id)
+            _c: list[Citation] = []
             try:
                 if name == "list_infra_findings":
-                    _r, _c = await self._tool_list_findings(args, tenant_id, auth_token), []
+                    _r = await self._tool_list_findings(args, tenant_id, auth_token)
                 elif name == "get_infra_finding":
-                    _r, _c = await self._tool_get_finding(args, tenant_id, auth_token), []
+                    _r = await self._tool_get_finding(args, tenant_id, auth_token)
                 elif name == "get_terraform_plan_summary":
-                    _r, _c = await self._tool_plan_summary(), []
+                    _r = await self._tool_plan_summary()
                 elif name == "propose_remediation":
-                    _r, _c = await self._tool_propose_remediation(args, tenant_id, auth_token), []
+                    _r = await self._tool_propose_remediation(args, tenant_id, auth_token)
                 elif name == "get_infra_context_bundle":
-                    _r, _c = await self._tool_get_context_bundle(args, tenant_id, auth_token), []
+                    _r = await self._tool_get_context_bundle(args, tenant_id, auth_token)
                 elif name == "detect_infra_drift":
-                    _r, _c = await self._tool_detect_drift(args, tenant_id, auth_token), []
+                    _r = await self._tool_detect_drift(args, tenant_id, auth_token)
                 elif name == "query_banking_compliance":
-                    _r, _c = await self._tool_query_banking_compliance(args, tenant_id), []
+                    _r = await self._tool_query_banking_compliance(args, tenant_id)
                 elif name == "flag_transaction_for_review":
-                    _r, _c = await self._tool_flag_transaction(args, tenant_id, auth_token), []
+                    _r = await self._tool_flag_transaction(args, tenant_id, auth_token)
                 elif name == "generate_sar_draft":
-                    _r, _c = await self._tool_generate_sar_draft(args, tenant_id, auth_token), []
+                    _r = await self._tool_generate_sar_draft(args, tenant_id, auth_token)
                 else:
-                    _r, _c = {"error": f"Unknown tool: {name}"}, []
+                    _r = {"error": f"Unknown tool: {name}"}
             except Exception as _exc:
                 _span.record_exception(_exc)
                 raise
