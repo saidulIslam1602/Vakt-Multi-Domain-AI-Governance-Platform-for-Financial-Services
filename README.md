@@ -1125,4 +1125,4 @@ POST /api/v1/posture/proposals/{id}/export
 
 ## License
 
-Private repository — Allergo Nordic. All rights reserved.
+Private repository. All rights reserved.
